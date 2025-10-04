@@ -1,0 +1,40 @@
+from app.db.schemas.company import Company
+
+
+def create_company(db_session, **overrides):
+    """
+    Insert a Company record into the test DB.
+
+    Args:
+        db_session: SQLAlchemy session.
+        overrides: Fields to override default values.
+
+    Returns:
+        Company instance added to the DB.
+    """
+    defaults = dict(
+        symbol="AAPL",
+        company_name="Apple Inc.",
+        price=180.50,
+        market_cap=2800000000000,
+        currency="USD",
+        exchange_full_name="NASDAQ Global Select",
+        exchange="NASDAQ",
+        industry="Technology",
+        website="https://www.apple.com",
+        description="Apple designs and sells electronics and software.",
+        sector="Consumer Electronics",
+        country="United States",
+        phone="1-800-275-2273",
+        address="One Apple Park Way",
+        city="Cupertino",
+        state="California",
+        zip="95014",
+        image="https://logo.clearbit.com/apple.com",
+        ipo_date="1980-12-12",
+    )
+
+    company = Company(**{**defaults, **overrides})
+    db_session.add(company)
+    db_session.commit()
+    return company
