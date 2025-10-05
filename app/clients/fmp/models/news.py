@@ -1,0 +1,51 @@
+from datetime import datetime
+
+from pydantic import BaseModel, HttpUrl, Field
+from typing import Optional
+
+
+class GeneralNews(BaseModel):
+    symbol: Optional[str] = None
+    published_date: str = Field(..., alias="publishedDate")
+    publisher: str
+    title: str
+    image: HttpUrl
+    site: str
+    text: str
+    url: HttpUrl
+
+    class Config:
+        populate_by_name = True
+
+class PriceTargetNews(BaseModel):
+    symbol: str
+    published_date: datetime = Field(..., alias="publishedDate")
+    news_url: HttpUrl = Field(..., alias="newsURL")
+    news_title: str = Field(..., alias="newsTitle")
+    analyst_name: str = Field(..., alias="analystName")
+    price_target: float = Field(..., alias="priceTarget")
+    adj_price_target: float = Field(..., alias="adjPriceTarget")
+    price_when_posted: float = Field(..., alias="priceWhenPosted")
+    news_publisher: str = Field(..., alias="newsPublisher")
+    news_base_url: str = Field(..., alias="newsBaseURL")
+    analyst_company: str = Field(..., alias="analystCompany")
+
+    class Config:
+        populate_by_name = True
+
+
+class StockGradingNews(BaseModel):
+    symbol: str
+    published_date: datetime = Field(..., alias="publishedDate")
+    news_url: HttpUrl = Field(..., alias="newsURL")
+    news_title: str = Field(..., alias="newsTitle")
+    news_base_url: str = Field(..., alias="newsBaseURL")
+    news_publisher: str = Field(..., alias="newsPublisher")
+    new_grade: str = Field(..., alias="newGrade")
+    previous_grade: str = Field(..., alias="previousGrade")
+    grading_company: str = Field(..., alias="gradingCompany")
+    action: str
+    price_when_posted: float = Field(..., alias="priceWhenPosted")
+
+    class Config:
+        populate_by_name = True
