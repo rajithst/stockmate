@@ -1,11 +1,13 @@
-from sqlalchemy import String, Integer, ForeignKey, Index
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db.engine import Base
+
 
 class CompanyCashFlowStatement(Base):
     __tablename__ = "company_cash_flow_statements"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), index=True)
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
@@ -66,11 +68,7 @@ class CompanyCashFlowStatement(Base):
     interest_paid: Mapped[int]
 
     # Relationship to company profile
-    company: Mapped["CompanyProfile"] = relationship(back_populates="cash_flows")
-
-    __table_args__ = (
-        Index("ix_cashflow_symbol_date", "symbol", "date", unique=True),
-    )
+    company: Mapped["Company"] = relationship(back_populates="cash_flow_statements")
 
     def __repr__(self):
         return f"<CompanyCashFlowStatement(symbol={self.symbol}, date={self.date})>"

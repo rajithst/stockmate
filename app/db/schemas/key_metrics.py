@@ -66,11 +66,7 @@ class CompanyKeyMetrics(Base):
     net_current_asset_value: Mapped[int] = mapped_column(nullable=True)
 
     # Relationship to company
-    company: Mapped["CompanyProfile"] = relationship(back_populates="company_key_metrics")
-
-    __table_args__ = (
-        Index("ix_company_key_metrics_symbol_date", "symbol", "date"),
-    )
+    company: Mapped["Company"] = relationship(back_populates="key_metrics")
 
     def __repr__(self):
         return f"<CompanyKeyMetrics(symbol={self.symbol}, date={self.date})>"

@@ -1,4 +1,4 @@
-from sqlalchemy import String, ForeignKey, UniqueConstraint, Index
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -8,7 +8,7 @@ class CompanyDividend(Base):
     __tablename__ = "company_dividends"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), nullable=False)
+    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=False)
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
     date: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -23,11 +23,6 @@ class CompanyDividend(Base):
 
     # Relationship
     company: Mapped["Company"] = relationship(back_populates="dividends")
-
-    __table_args__ = (
-        UniqueConstraint("company_id", "date", name="uq_company_dividend_unique_date"),
-        Index("ix_company_dividend_symbol", "symbol"),
-    )
 
     def __repr__(self):
         return f"<CompanyDividend(symbol={self.symbol}, date={self.date}, dividend={self.dividend})>"

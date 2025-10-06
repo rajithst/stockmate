@@ -1,18 +1,5 @@
-import pytest
 from app.services.company_service import CompanyService
 from data.company_test_data import create_company
-from tests.test_db import TestingSessionLocal, init_test_db
-
-
-@pytest.fixture(scope="function")
-def db_session():
-    """Provide a fresh DB session for each test."""
-    init_test_db()  # clean slate each time
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 class TestCompanyService:

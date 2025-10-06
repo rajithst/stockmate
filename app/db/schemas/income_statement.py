@@ -1,4 +1,4 @@
-from sqlalchemy import String, ForeignKey, Index
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -68,11 +68,7 @@ class CompanyIncomeStatement(Base):
     weighted_average_shs_out_dil: Mapped[int]
 
     # Relationship to company profile
-    company: Mapped["CompanyProfile"] = relationship(back_populates="income_statements")
-
-    __table_args__ = (
-        Index("ix_company_income_symbol_date", "symbol", "date", unique=True),
-    )
+    company: Mapped["Company"] = relationship(back_populates="income_statements")
 
     def __repr__(self):
         return f"<CompanyIncomeStatement(symbol={self.symbol}, date={self.date})>"

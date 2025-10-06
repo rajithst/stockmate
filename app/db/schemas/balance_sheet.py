@@ -1,11 +1,13 @@
-from sqlalchemy import String, Integer, Float, ForeignKey, Index
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db.engine import Base
+
 
 class CompanyBalanceSheet(Base):
     __tablename__ = "company_balance_sheets"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), index=True)
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
@@ -83,11 +85,7 @@ class CompanyBalanceSheet(Base):
     net_debt: Mapped[int]
 
     # Relationship to company profile
-    company: Mapped["CompanyProfile"] = relationship(back_populates="balance_sheets")
-
-    __table_args__ = (
-        Index("ix_company_balance_symbol_date", "symbol", "date", unique=True),
-    )
+    company: Mapped["Company"] = relationship(back_populates="balance_sheets")
 
     def __repr__(self):
         return f"<CompanyBalanceSheet(symbol={self.symbol}, date={self.date})>"

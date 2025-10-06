@@ -1,5 +1,6 @@
-from sqlalchemy import String, Integer, Float, ForeignKey, Index
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db.engine import Base
 
 
@@ -92,11 +93,7 @@ class CompanyFinancialRatios(Base):
     enterprise_value_multiple: Mapped[float] = mapped_column(nullable=True)
 
     # Relationship
-    company: Mapped["CompanyProfile"] = relationship(back_populates="financial_ratios")
-
-    __table_args__ = (
-        Index("ix_company_financial_ratios_symbol_date", "symbol", "date"),
-    )
+    company: Mapped["Company"] = relationship(back_populates="financial_ratios")
 
     def __repr__(self):
         return f"<CompanyFinancialRatios(symbol={self.symbol}, date={self.date})>"

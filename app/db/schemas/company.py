@@ -8,7 +8,7 @@ class Company(Base):
     __tablename__ = "company"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    symbol: Mapped[str] = mapped_column(String(250), nullable=False)
+    symbol: Mapped[str] = mapped_column(String(250), index=True)
     company_name: Mapped[str] = mapped_column(String(250), nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
     market_cap: Mapped[float] = mapped_column(Float, nullable=False)
@@ -62,6 +62,11 @@ class Company(Base):
         uselist=False,  # 1:1 mapping
         cascade="all, delete-orphan"
     )
+    financial_score: Mapped["CompanyFinancialScores"] = relationship(
+        back_populates="company",
+        uselist=False,  # 1:1 mapping
+        cascade="all, delete-orphan"
+    )
     general_news: Mapped[list["CompanyGeneralNews"]] = relationship(
         back_populates="company",
         cascade="all, delete-orphan"
@@ -70,7 +75,7 @@ class Company(Base):
         back_populates="company",
         cascade="all, delete-orphan"
     )
-    stock_grading_news: Mapped[list["CompanyGradingNews"]] = relationship(
+    grading_news: Mapped[list["CompanyGradingNews"]] = relationship(
         back_populates="company",
         cascade="all, delete-orphan"
     )
@@ -83,7 +88,6 @@ class Company(Base):
         cascade="all, delete-orphan"
     )
     stock_peers: Mapped[list["CompanyStockPeer"]] = relationship(
-        "StockPeer",
         back_populates="company",
         cascade="all, delete-orphan"
     )
