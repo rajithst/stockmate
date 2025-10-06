@@ -1,0 +1,33 @@
+from sqlalchemy import String, ForeignKey, UniqueConstraint, Index
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db.engine import Base
+
+
+class CompanyDividend(Base):
+    __tablename__ = "company_dividends"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), nullable=False)
+    symbol: Mapped[str] = mapped_column(String(12), index=True)
+
+    date: Mapped[str] = mapped_column(String(20), nullable=False)
+    record_date: Mapped[str] = mapped_column(String(20), nullable=True)
+    payment_date: Mapped[str] = mapped_column(String(20), nullable=True)
+    declaration_date: Mapped[str] = mapped_column(String(20), nullable=True)
+
+    dividend: Mapped[float] = mapped_column(nullable=True)
+    adj_dividend: Mapped[float] = mapped_column(nullable=True)
+    dividend_yield: Mapped[float] = mapped_column(nullable=True)
+    frequency: Mapped[str] = mapped_column(String(20), nullable=True)
+
+    # Relationship
+    company: Mapped["Company"] = relationship(back_populates="dividends")
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "date", name="uq_company_dividend_unique_date"),
+        Index("ix_company_dividend_symbol", "symbol"),
+    )
+
+    def __repr__(self):
+        return f"<CompanyDividend(symbol={self.symbol}, date={self.date}, dividend={self.dividend})>"
