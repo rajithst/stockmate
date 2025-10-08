@@ -34,14 +34,3 @@ class Base(DeclarativeBase):
     """Base class for all SQLAlchemy schemas."""
     pass
 
-
-# ---------------------------------------------------------
-# 4️⃣  Dependency for FastAPI routes
-# ---------------------------------------------------------
-def get_db():
-    """Provide a new database session per request."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()

@@ -4,4 +4,5 @@ from app.core.config import config
 
 
 def get_fmp_client() -> FMPClientProtocol:
+    """Dependency that provides an FMPClient instance."""
     return FMPClient(token=config.fmp_api_key)

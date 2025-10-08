@@ -1,7 +1,7 @@
 from app.db.engine import SessionLocal
-from sqlalchemy.orm import Session
 
-def get_db_session() -> Session:
+def get_db_session():
+    """Dependency that provides a database session."""
     db = SessionLocal()
     try:
         yield db
