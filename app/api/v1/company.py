@@ -1,17 +1,18 @@
-import logging
-
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
-from app.db.engine import SessionLocal
-from app.models.company import CompanyProfileRead
+from app.dependencies import get_db_session
+from app.schemas.company import CompanyRead
 from app.services.company_service import CompanyService
 
 router = APIRouter(prefix="/company")
 
-def get_company_service() -> CompanyService:
-    return CompanyService(session=SessionLocal())
+def get_company_service(
+    session: Session = Depends(get_db_session),
+) -> CompanyService:
+    return CompanyService(session=session)
 
-@router.get("/profile/{symbol}", response_model=CompanyProfileRead)
+@router.get("/{symbol}", response_model=CompanyRead)
 def get_company_profile(symbol: str, service: CompanyService = Depends(get_company_service)):
     company = service.get_company_profile(symbol)
     if not company:
