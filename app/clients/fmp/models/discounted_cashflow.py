@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import date
 
-class DFCValuation(BaseModel):
+class FMPDFCValuation(BaseModel):
     symbol: str
     date: date
     dcf: float
@@ -11,7 +11,7 @@ class DFCValuation(BaseModel):
         populate_by_name = True
 
 
-class CustomDFCValuation(BaseModel):
+class FMPCustomDFCValuation(BaseModel):
     year: str
     symbol: str
     revenue: float

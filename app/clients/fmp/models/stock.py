@@ -3,14 +3,14 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 
 
-class StockSplit(BaseModel):
+class FMPStockSplit(BaseModel):
     symbol: str
     date: str
     numerator: int
     denominator: int
 
 
-class StockPeer(BaseModel):
+class FMPStockPeer(BaseModel):
     symbol: str
     company_name: str = Field(..., alias="companyName")
     price: float
@@ -19,7 +19,7 @@ class StockPeer(BaseModel):
     class Config:
         populate_by_name = True
 
-class StockScreenResult(BaseModel):
+class FMPStockScreenResult(BaseModel):
     symbol: str = Field(..., description="Ticker symbol of the company")
     company_name: str = Field(..., alias="companyName", description="Full company name")
     market_cap: int = Field(..., alias="marketCap", description="Market capitalization in USD")
@@ -40,7 +40,7 @@ class StockScreenResult(BaseModel):
     class Config:
         populate_by_name = True  # allows both API camelCase and Python snake_case
 
-class StockRating(BaseModel):
+class FMPStockRating(BaseModel):
     symbol: str
     rating: Optional[str] = None
     overall_score: Optional[int] = Field(None, alias="overallScore")
@@ -51,7 +51,7 @@ class StockRating(BaseModel):
     price_to_earnings_score: Optional[int] = Field(None, alias="priceToEarningsScore")
     price_to_book_score: Optional[int] = Field(None, alias="priceToBookScore")
 
-class StockGrading(BaseModel):
+class FMPStockGrading(BaseModel):
     symbol: str
     date: str
     grading_company: Optional[str] = Field(None, alias="gradingCompany")
@@ -63,7 +63,7 @@ class StockGrading(BaseModel):
         populate_by_name = True
 
 
-class StockGradingSummary(BaseModel):
+class FMPStockGradingSummary(BaseModel):
     symbol: str
     strong_buy: int = Field(..., alias="strongBuy")
     buy: int
@@ -76,7 +76,7 @@ class StockGradingSummary(BaseModel):
         populate_by_name = True
 
 
-class StockPriceTarget(BaseModel):
+class FMPStockPriceTarget(BaseModel):
     symbol: str
     last_month_count: Optional[int] = Field(None, alias="lastMonthCount")
     last_month_avg_price_target: Optional[float] = Field(None, alias="lastMonthAvgPriceTarget")

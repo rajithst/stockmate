@@ -4,7 +4,7 @@ from pydantic import BaseModel, HttpUrl, Field
 from typing import Optional
 
 
-class GeneralNews(BaseModel):
+class FMPGeneralNews(BaseModel):
     symbol: Optional[str] = None
     published_date: str = Field(..., alias="publishedDate")
     publisher: str
@@ -17,7 +17,7 @@ class GeneralNews(BaseModel):
     class Config:
         populate_by_name = True
 
-class PriceTargetNews(BaseModel):
+class FMPPriceTargetNews(BaseModel):
     symbol: str
     published_date: datetime = Field(..., alias="publishedDate")
     news_url: HttpUrl = Field(..., alias="newsURL")
@@ -34,7 +34,7 @@ class PriceTargetNews(BaseModel):
         populate_by_name = True
 
 
-class StockGradingNews(BaseModel):
+class FMPStockGradingNews(BaseModel):
     symbol: str
     published_date: datetime = Field(..., alias="publishedDate")
     news_url: HttpUrl = Field(..., alias="newsURL")

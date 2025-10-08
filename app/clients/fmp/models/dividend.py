@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class Dividend(BaseModel):
+class FMPDividend(BaseModel):
     symbol: str
     date: str
     record_date: str = Field(..., alias="recordDate")

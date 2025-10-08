@@ -1,6 +1,6 @@
 from pydantic import BaseModel, HttpUrl, Field
 
-class CompanyProfile(BaseModel):
+class FMPCompanyProfile(BaseModel):
     symbol: str
     company_name: str = Field(..., alias="companyName")
     price: float

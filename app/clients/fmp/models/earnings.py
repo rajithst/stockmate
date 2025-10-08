@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-class Earnings(BaseModel):
+class FMPEarnings(BaseModel):
     symbol: str
     date: str
     eps_actual: float = Field(..., alias="epsActual")

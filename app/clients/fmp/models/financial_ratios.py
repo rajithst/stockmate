@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-class KeyMetrics(BaseModel):
+class FMPKeyMetrics(BaseModel):
     symbol: str
     date: str
     fiscal_year: str = Field(alias="fiscalYear")
@@ -68,7 +68,7 @@ class KeyMetrics(BaseModel):
     class Config:
         populate_by_name = True
 
-class FinancialRatios(BaseModel):
+class FMPFinancialRatios(BaseModel):
     symbol: str
     date: Optional[str] = None
     fiscal_year: Optional[str] = Field(None, alias="fiscalYear")
@@ -143,7 +143,7 @@ class FinancialRatios(BaseModel):
     effective_tax_rate: Optional[float] = Field(None, alias="effectiveTaxRate")
     enterprise_value_multiple: Optional[float] = Field(None, alias="enterpriseValueMultiple")
 
-class FinancialScores(BaseModel):
+class FMPFinancialScores(BaseModel):
     symbol: str
     reported_currency: Optional[str] = Field(None, alias="reportedCurrency")
     altman_z_score: Optional[float] = Field(None, alias="altmanZScore")

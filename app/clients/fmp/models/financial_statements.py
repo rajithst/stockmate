@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class CompanyIncomeStatement(BaseModel):
+class FMPCompanyIncomeStatement(BaseModel):
     date: str = Field(..., description="Financial report date")
     symbol: str = Field(..., description="Ticker symbol of the company")
     reported_currency: str = Field(..., alias="reportedCurrency", description="Currency used in the report")
@@ -54,7 +54,7 @@ class CompanyIncomeStatement(BaseModel):
         populate_by_name = True  # allows both API camelCase and Python snake_case
 
 
-class CompanyBalanceSheet(BaseModel):
+class FMPCompanyBalanceSheet(BaseModel):
     date: str = Field(..., description="Date of the financial statement")
     symbol: str = Field(..., description="Ticker symbol of the company")
     reported_currency: str = Field(..., alias="reportedCurrency", description="Currency reported in the statement")
@@ -129,7 +129,7 @@ class CompanyBalanceSheet(BaseModel):
         populate_by_name = True  # allows both snake_case and API camelCase
 
 
-class CompanyCashFlowStatement(BaseModel):
+class FMPCompanyCashFlowStatement(BaseModel):
     date: str
     symbol: str
     reported_currency: str = Field(alias="reportedCurrency")

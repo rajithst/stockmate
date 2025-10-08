@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class AnalystEstimates(BaseModel):
+class FMPAnalystEstimates(BaseModel):
     symbol: str
     date: str
 
