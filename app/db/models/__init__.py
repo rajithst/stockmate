@@ -1,4 +1,4 @@
-from app.db.engine import Base # Ensure Base is imported before models
+from app.db.engine import Base # Ensure Base is imported before schemas
 from .company import Company
 from .balance_sheet import CompanyBalanceSheet
 from .cashflow import CompanyCashFlowStatement

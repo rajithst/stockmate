@@ -1,4 +1,4 @@
-from sqlalchemy import String, Float
+from sqlalchemy import String, Float, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -17,7 +17,7 @@ class Company(Base):
     exchange: Mapped[str] = mapped_column(String(250), nullable=False)
     industry: Mapped[str] = mapped_column(String(250), nullable=True)
     website: Mapped[str] = mapped_column(String(250), nullable=True)
-    description: Mapped[str] = mapped_column(String(1000), nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
     sector: Mapped[str] = mapped_column(String(250), nullable=True)
     country: Mapped[str] = mapped_column(String(250), nullable=True)
     phone: Mapped[str] = mapped_column(String(50), nullable=True)
