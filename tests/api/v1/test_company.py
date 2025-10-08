@@ -5,7 +5,8 @@ from fastapi.testclient import TestClient
 
 from app.api.v1.company import get_company_service
 from app.main import app
-from app.models.company import CompanyProfileRead
+from data.company_test_data import get_company_read
+
 
 @pytest.fixture
 def mock_company_service():
@@ -22,13 +23,10 @@ class TestCompanyProfileAPI:
 
     def test_get_company_profile_success(self, client: TestClient, mock_company_service: MagicMock):
         """Fetch an existing company profile."""
-        mock_company = CompanyProfileRead(
-            symbol="AAPL",
-            company_name="Apple Inc.",
-        )
+        mock_company = get_company_read(id=1, symbol="AAPL", company_name="Apple Inc.")
         mock_company_service.get_company_profile.return_value = mock_company
 
-        response = client.get("/api/v1/company/profile/AAPL")
+        response = client.get("/api/v1/company/AAPL")
 
         assert response.status_code == 200
         data = response.json()
@@ -39,7 +37,7 @@ class TestCompanyProfileAPI:
         """Fetch a non-existent company profile."""
         mock_company_service.get_company_profile.return_value = None
 
-        response = client.get("/api/v1/company/profile/INVALID")
+        response = client.get("/api/v1/company/INVALID")
 
         assert response.status_code == 404
         assert response.json()["detail"] == "Company not found"

@@ -1,40 +1,34 @@
-from app.db.schemas.company import Company
+from app.db.models.company import Company
+from app.schemas.company import CompanyRead
+from data.mock_data import mock_company_data
 
 
-def create_company(db_session, **overrides):
+def create_company(db_session, **overrides) -> Company:
     """
-    Insert a Company record into the test DB.
+    Create and persist a Company instance with default mock data,
+    allowing overrides for specific fields.
 
     Args:
-        db_session: SQLAlchemy session.
-        overrides: Fields to override default values.
-
+        db_session: SQLAlchemy session object for database operations.
+        **overrides: Fields to override in the default mock data.
     Returns:
-        Company instance added to the DB.
+        The created Company instance.
     """
-    defaults = dict(
-        symbol="AAPL",
-        company_name="Apple Inc.",
-        price=180.50,
-        market_cap=2800000000000,
-        currency="USD",
-        exchange_full_name="NASDAQ Global Select",
-        exchange="NASDAQ",
-        industry="Technology",
-        website="https://www.apple.com",
-        description="Apple designs and sells electronics and software.",
-        sector="Consumer Electronics",
-        country="United States",
-        phone="1-800-275-2273",
-        address="One Apple Park Way",
-        city="Cupertino",
-        state="California",
-        zip="95014",
-        image="https://logo.clearbit.com/apple.com",
-        ipo_date="1980-12-12",
-    )
 
-    company = Company(**{**defaults, **overrides})
+    company = Company(**{**mock_company_data, **overrides})
     db_session.add(company)
     db_session.commit()
     return company
+
+
+def get_company_read(**overrides) -> CompanyRead:
+    """
+    Create a CompanyRead schema instance with default mock data,
+    allowing overrides for specific fields.
+
+    Args:
+        **overrides: Fields to override in the default mock data.
+    Returns:
+        The created CompanyRead instance.
+    """
+    return CompanyRead(**{**mock_company_data, **overrides})
