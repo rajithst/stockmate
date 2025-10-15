@@ -1,6 +1,7 @@
 from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
+from pydantic import field_validator, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
@@ -18,6 +19,13 @@ class Config(BaseSettings):
     fmp_api_key: str = ""
     openai_api_key: str = ""
 
+    @field_validator("db_user", "db_password", "db_name", "fmp_api_key")
+    @classmethod
+    def validate_required_fields(cls, v: str, info) -> str:
+        if not v or v.strip() == "":
+            raise ValueError(f"{info.field_name} is required and cannot be empty")
+        return v
+
     @property
     def db_url(self) -> str:
         safe_password = quote_plus(self.db_password)
@@ -26,9 +34,11 @@ class Config(BaseSettings):
             f"@{self.db_host}:{self.db_port}/{self.db_name}"
         )
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-config = Config()
+
+try:
+    config = Config()
+except ValidationError as e:
+    print(f"Configuration error: {e}")
+    raise

@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 7e7a55fe0e80
+Revision ID: ec34bf49043e
 Revises: 
-Create Date: 2025-10-08 23:15:19.376501
+Create Date: 2025-10-16 00:13:03.001825
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '7e7a55fe0e80'
+revision: str = 'ec34bf49043e'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -42,6 +42,8 @@ def upgrade() -> None:
     sa.Column('zip', sa.String(length=20), nullable=True),
     sa.Column('image', sa.String(length=250), nullable=True),
     sa.Column('ipo_date', sa.String(length=50), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_company_symbol'), 'company', ['symbol'], unique=False)
@@ -108,6 +110,8 @@ def upgrade() -> None:
     sa.Column('total_investments', sa.Integer(), nullable=False),
     sa.Column('total_debt', sa.Integer(), nullable=False),
     sa.Column('net_debt', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -163,6 +167,8 @@ def upgrade() -> None:
     sa.Column('free_cash_flow', sa.Integer(), nullable=False),
     sa.Column('income_taxes_paid', sa.Integer(), nullable=False),
     sa.Column('interest_paid', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -180,6 +186,8 @@ def upgrade() -> None:
     sa.Column('adj_dividend', sa.Float(), nullable=True),
     sa.Column('dividend_yield', sa.Float(), nullable=True),
     sa.Column('frequency', sa.String(length=20), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -252,6 +260,8 @@ def upgrade() -> None:
     sa.Column('debt_to_market_cap', sa.Float(), nullable=True),
     sa.Column('effective_tax_rate', sa.Float(), nullable=True),
     sa.Column('enterprise_value_multiple', sa.Float(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -272,6 +282,8 @@ def upgrade() -> None:
     sa.Column('market_cap', sa.Float(), nullable=True),
     sa.Column('total_liabilities', sa.Float(), nullable=True),
     sa.Column('revenue', sa.Float(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -289,6 +301,8 @@ def upgrade() -> None:
     sa.Column('image', sa.String(length=1000), nullable=True),
     sa.Column('site', sa.String(length=255), nullable=True),
     sa.Column('url', sa.String(length=1000), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -309,6 +323,8 @@ def upgrade() -> None:
     sa.Column('grading_company', sa.String(length=255), nullable=True),
     sa.Column('action', sa.String(length=50), nullable=True),
     sa.Column('price_when_posted', sa.Float(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -325,6 +341,8 @@ def upgrade() -> None:
     sa.Column('sell', sa.Integer(), nullable=False),
     sa.Column('strong_sell', sa.Integer(), nullable=False),
     sa.Column('consensus', sa.String(length=50), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -339,6 +357,8 @@ def upgrade() -> None:
     sa.Column('previous_grade', sa.String(length=10), nullable=True),
     sa.Column('new_grade', sa.String(length=10), nullable=True),
     sa.Column('action', sa.String(length=50), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -387,6 +407,8 @@ def upgrade() -> None:
     sa.Column('eps_diluted', sa.Float(), nullable=False),
     sa.Column('weighted_average_shs_out', sa.Integer(), nullable=False),
     sa.Column('weighted_average_shs_out_dil', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -443,6 +465,8 @@ def upgrade() -> None:
     sa.Column('free_cash_flow_to_firm', sa.Float(), nullable=True),
     sa.Column('tangible_asset_value', sa.Integer(), nullable=True),
     sa.Column('net_current_asset_value', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -463,6 +487,8 @@ def upgrade() -> None:
     sa.Column('news_publisher', sa.String(length=255), nullable=True),
     sa.Column('news_base_url', sa.String(length=500), nullable=True),
     sa.Column('analyst_company', sa.String(length=255), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -480,6 +506,8 @@ def upgrade() -> None:
     sa.Column('debt_to_equity_score', sa.Integer(), nullable=True),
     sa.Column('price_to_earnings_score', sa.Integer(), nullable=True),
     sa.Column('price_to_book_score', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -493,6 +521,8 @@ def upgrade() -> None:
     sa.Column('company_name', sa.String(length=255), nullable=False),
     sa.Column('price', sa.Float(), nullable=False),
     sa.Column('market_cap', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -505,6 +535,8 @@ def upgrade() -> None:
     sa.Column('date', sa.String(length=20), nullable=False),
     sa.Column('numerator', sa.Integer(), nullable=False),
     sa.Column('denominator', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
