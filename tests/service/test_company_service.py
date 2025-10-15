@@ -1,4 +1,4 @@
-from app.services.company_service import CompanyService
+from app.services.company_page_service import CompanyPageService
 from data.company_test_data import create_company
 
 
@@ -8,7 +8,7 @@ class TestCompanyService:
     def test_get_company_profile_found(self, db_session):
         # Arrange
         create_company(db_session, symbol="AAPL", company_name="Apple Inc.")
-        service = CompanyService(session=db_session)
+        service = CompanyPageService(session=db_session)
 
         # Act
         result = service.get_company_profile("AAPL")
@@ -20,7 +20,7 @@ class TestCompanyService:
 
     def test_get_company_profile_not_found(self, db_session):
         # Arrange
-        service = CompanyService(session=db_session)
+        service = CompanyPageService(session=db_session)
 
         # Act
         result = service.get_company_profile("UNKNOWN")
