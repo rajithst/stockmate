@@ -11,7 +11,7 @@ class CompanyGrading(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     company_id: Mapped[int] = mapped_column(
-        ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=False
+        ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=False
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
@@ -34,7 +34,7 @@ class CompanyGradingSummary(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     company_id: Mapped[int] = mapped_column(
-        ForeignKey("company.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("companies.id", ondelete="CASCADE"), nullable=False
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 

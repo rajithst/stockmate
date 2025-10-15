@@ -11,7 +11,7 @@ class CompanyGeneralNews(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     company_id: Mapped[int] = mapped_column(
-        ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=True
+        ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=True
     )
     symbol: Mapped[str] = mapped_column(String(12), nullable=True, index=True)
 
@@ -36,7 +36,7 @@ class CompanyPriceTargetNews(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     company_id: Mapped[int] = mapped_column(
-        ForeignKey("company.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("companies.id", ondelete="CASCADE"), nullable=False
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
     published_date: Mapped[datetime] = mapped_column(nullable=False)
@@ -65,7 +65,7 @@ class CompanyGradingNews(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     company_id: Mapped[int] = mapped_column(
-        ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=False
+        ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=False
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
     published_date: Mapped[datetime] = mapped_column(nullable=False)

@@ -11,7 +11,7 @@ class CompanyStockSplit(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     company_id: Mapped[int] = mapped_column(
-        ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=False
+        ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=False
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
     date: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -32,7 +32,7 @@ class CompanyStockPeer(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     company_id: Mapped[int] = mapped_column(
-        ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=False
+        ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=False
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
     company_name: Mapped[str] = mapped_column(String(255))

@@ -10,7 +10,7 @@ class CompanyCashFlowStatement(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     company_id: Mapped[int] = mapped_column(
-        ForeignKey("company.id", ondelete="CASCADE"), index=True
+        ForeignKey("companies.id", ondelete="CASCADE"), index=True
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
