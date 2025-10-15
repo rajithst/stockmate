@@ -1,7 +1,16 @@
+from typing import Optional, List
+
 from pydantic import BaseModel, HttpUrl, ConfigDict
 
+from app.schemas.grading import CompanyGradingRead
+from app.schemas.news import (
+    CompanyPriceTargetNewsRead,
+    CompanyGradingNewsRead,
+    CompanyGeneralNewsRead,
+)
 
-class CompanyIn(BaseModel):
+
+class Company(BaseModel):
     symbol: str
     company_name: str
     price: float
@@ -22,7 +31,24 @@ class CompanyIn(BaseModel):
     image: HttpUrl
     ipo_date: str
 
-class CompanyRead(CompanyIn):
+
+class CompanyRead(Company):
     id: int
+    created_at: Optional[str]
+    updated_at: Optional[str]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyWrite(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyPageResponse(BaseModel):
+    company: CompanyRead
+    grading_summary: Optional[CompanyGradingRead]
+    price_target_news: List[CompanyPriceTargetNewsRead] = []
+    general_news: List[CompanyGeneralNewsRead] = []
+    grading_news: List[CompanyGradingNewsRead] = []
 
     model_config = ConfigDict(from_attributes=True)
