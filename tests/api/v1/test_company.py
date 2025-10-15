@@ -21,7 +21,9 @@ def mock_company_service():
 class TestCompanyProfileAPI:
     """Test suite for /profile/{symbol} endpoint."""
 
-    def test_get_company_profile_success(self, client: TestClient, mock_company_service: MagicMock):
+    def test_get_company_profile_success(
+        self, client: TestClient, mock_company_service: MagicMock
+    ):
         """Fetch an existing company profile."""
         mock_company = get_company_read(id=1, symbol="AAPL", company_name="Apple Inc.")
         mock_company_service.get_company_profile.return_value = mock_company
@@ -33,7 +35,9 @@ class TestCompanyProfileAPI:
         assert data["symbol"] == "AAPL"
         assert data["company_name"] == "Apple Inc."
 
-    def test_get_company_profile_not_found(self, client: TestClient, mock_company_service: MagicMock):
+    def test_get_company_profile_not_found(
+        self, client: TestClient, mock_company_service: MagicMock
+    ):
         """Fetch a non-existent company profile."""
         mock_company_service.get_company_profile.return_value = None
 

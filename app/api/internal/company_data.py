@@ -8,6 +8,7 @@ from app.services.internal.company_sync_service import CompanySyncService
 
 router = APIRouter(prefix="/company")
 
+
 def get_company_sync_service(
     client: FMPClientProtocol = Depends(get_fmp_client),
     session: Session = Depends(get_db_session),
@@ -16,7 +17,9 @@ def get_company_sync_service(
 
 
 @router.get("/{symbol}/sync", response_model=CompanyRead)
-def sync_company_profile(symbol: str, service: CompanySyncService = Depends(get_company_sync_service)):
+def sync_company_profile(
+    symbol: str, service: CompanySyncService = Depends(get_company_sync_service)
+):
     company = service.upsert_company(symbol)
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
