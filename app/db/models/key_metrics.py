@@ -1,4 +1,6 @@
-from sqlalchemy import String, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import String, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -8,7 +10,9 @@ class CompanyKeyMetrics(Base):
     __tablename__ = "company_key_metrics"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), index=True)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("company.id", ondelete="CASCADE"), index=True
+    )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
     date: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -49,7 +53,9 @@ class CompanyKeyMetrics(Base):
     capex_to_revenue: Mapped[float] = mapped_column(nullable=True)
 
     # Operational efficiency
-    sales_general_and_administrative_to_revenue: Mapped[float] = mapped_column(nullable=True)
+    sales_general_and_administrative_to_revenue: Mapped[float] = mapped_column(
+        nullable=True
+    )
     research_and_development_to_revenue: Mapped[float] = mapped_column(nullable=True)
     stock_based_compensation_to_revenue: Mapped[float] = mapped_column(nullable=True)
     intangibles_to_total_assets: Mapped[float] = mapped_column(nullable=True)
@@ -65,6 +71,8 @@ class CompanyKeyMetrics(Base):
     free_cash_flow_to_firm: Mapped[float] = mapped_column(nullable=True)
     tangible_asset_value: Mapped[int] = mapped_column(nullable=True)
     net_current_asset_value: Mapped[int] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship to company
     company: Mapped["Company"] = relationship(back_populates="key_metrics")

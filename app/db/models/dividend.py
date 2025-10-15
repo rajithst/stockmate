@@ -1,4 +1,6 @@
-from sqlalchemy import String, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import String, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -8,7 +10,9 @@ class CompanyDividend(Base):
     __tablename__ = "company_dividends"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=False)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=False
+    )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
     date: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -20,6 +24,8 @@ class CompanyDividend(Base):
     adj_dividend: Mapped[float] = mapped_column(nullable=True)
     dividend_yield: Mapped[float] = mapped_column(nullable=True)
     frequency: Mapped[str] = mapped_column(String(20), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship
     company: Mapped["Company"] = relationship(back_populates="dividends")

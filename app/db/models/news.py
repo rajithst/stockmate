@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import String, ForeignKey, Text
+from sqlalchemy import String, ForeignKey, Text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -10,7 +10,9 @@ class CompanyGeneralNews(Base):
     __tablename__ = "company_general_news"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=True)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=True
+    )
     symbol: Mapped[str] = mapped_column(String(12), nullable=True, index=True)
 
     published_date: Mapped[datetime] = mapped_column(nullable=False)
@@ -20,6 +22,8 @@ class CompanyGeneralNews(Base):
     image: Mapped[str] = mapped_column(String(1000), nullable=True)
     site: Mapped[str] = mapped_column(String(255), nullable=True)
     url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     company: Mapped["Company"] = relationship(back_populates="general_news")
 
@@ -31,9 +35,10 @@ class CompanyPriceTargetNews(Base):
     __tablename__ = "company_price_target_news"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), nullable=False)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("company.id", ondelete="CASCADE"), nullable=False
+    )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
-
     published_date: Mapped[datetime] = mapped_column(nullable=False)
     news_url: Mapped[str] = mapped_column(String(1000), nullable=False)
     news_title: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -44,20 +49,25 @@ class CompanyPriceTargetNews(Base):
     news_publisher: Mapped[str] = mapped_column(String(255), nullable=True)
     news_base_url: Mapped[str] = mapped_column(String(500), nullable=True)
     analyst_company: Mapped[str] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     company: Mapped["Company"] = relationship(back_populates="price_target_news")
 
     def __repr__(self):
-        return f"<CompanyPriceTargetNews(symbol={self.symbol}, title={self.news_title})>"
+        return (
+            f"<CompanyPriceTargetNews(symbol={self.symbol}, title={self.news_title})>"
+        )
 
 
 class CompanyGradingNews(Base):
     __tablename__ = "company_grading_news"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=False)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("company.id", ondelete="CASCADE"), index=True, nullable=False
+    )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
-
     published_date: Mapped[datetime] = mapped_column(nullable=False)
     news_url: Mapped[str] = mapped_column(String(1000), nullable=False)
     news_title: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -68,6 +78,8 @@ class CompanyGradingNews(Base):
     grading_company: Mapped[str] = mapped_column(String(255), nullable=True)
     action: Mapped[str] = mapped_column(String(50), nullable=True)
     price_when_posted: Mapped[float] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     company: Mapped["Company"] = relationship(back_populates="grading_news")
 

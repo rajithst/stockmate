@@ -1,4 +1,6 @@
-from sqlalchemy import String, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import String, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -8,7 +10,9 @@ class CompanyFinancialRatios(Base):
     __tablename__ = "company_financial_ratios"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), index=True)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("company.id", ondelete="CASCADE"), index=True
+    )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
     date: Mapped[str] = mapped_column(String(20), nullable=True)
@@ -59,10 +63,14 @@ class CompanyFinancialRatios(Base):
     working_capital_turnover_ratio: Mapped[float] = mapped_column(nullable=True)
     operating_cash_flow_ratio: Mapped[float] = mapped_column(nullable=True)
     operating_cash_flow_sales_ratio: Mapped[float] = mapped_column(nullable=True)
-    free_cash_flow_operating_cash_flow_ratio: Mapped[float] = mapped_column(nullable=True)
+    free_cash_flow_operating_cash_flow_ratio: Mapped[float] = mapped_column(
+        nullable=True
+    )
     debt_service_coverage_ratio: Mapped[float] = mapped_column(nullable=True)
     interest_coverage_ratio: Mapped[float] = mapped_column(nullable=True)
-    short_term_operating_cash_flow_coverage_ratio: Mapped[float] = mapped_column(nullable=True)
+    short_term_operating_cash_flow_coverage_ratio: Mapped[float] = mapped_column(
+        nullable=True
+    )
     operating_cash_flow_coverage_ratio: Mapped[float] = mapped_column(nullable=True)
     capital_expenditure_coverage_ratio: Mapped[float] = mapped_column(nullable=True)
     dividend_paid_and_capex_coverage_ratio: Mapped[float] = mapped_column(nullable=True)
@@ -91,7 +99,8 @@ class CompanyFinancialRatios(Base):
     debt_to_market_cap: Mapped[float] = mapped_column(nullable=True)
     effective_tax_rate: Mapped[float] = mapped_column(nullable=True)
     enterprise_value_multiple: Mapped[float] = mapped_column(nullable=True)
-
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     # Relationship
     company: Mapped["Company"] = relationship(back_populates="financial_ratios")
 

@@ -27,10 +27,11 @@ SessionLocal = sessionmaker(
     bind=engine,
 )
 
+
 # ---------------------------------------------------------
 # 3️⃣  Declarative Base class
 # ---------------------------------------------------------
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy schemas."""
-    pass
 
+    pass

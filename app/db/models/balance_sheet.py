@@ -1,4 +1,6 @@
-from sqlalchemy import String, Integer, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import String, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -8,7 +10,9 @@ class CompanyBalanceSheet(Base):
     __tablename__ = "company_balance_sheets"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), index=True)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("company.id", ondelete="CASCADE"), index=True
+    )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
     # General report info
@@ -83,6 +87,8 @@ class CompanyBalanceSheet(Base):
     total_investments: Mapped[int] = mapped_column(Integer)
     total_debt: Mapped[int] = mapped_column(Integer)
     net_debt: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship to company profile
     company: Mapped["Company"] = relationship(back_populates="balance_sheets")

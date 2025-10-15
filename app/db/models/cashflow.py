@@ -1,12 +1,17 @@
-from sqlalchemy import String, Integer, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import String, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.engine import Base
+
 
 class CompanyCashFlowStatement(Base):
     __tablename__ = "company_cash_flow_statements"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), index=True)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("company.id", ondelete="CASCADE"), index=True
+    )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
     # General report info
@@ -64,6 +69,8 @@ class CompanyCashFlowStatement(Base):
     free_cash_flow: Mapped[int] = mapped_column(Integer)
     income_taxes_paid: Mapped[int] = mapped_column(Integer)
     interest_paid: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship to company profile
     company: Mapped["Company"] = relationship(back_populates="cash_flow_statements")

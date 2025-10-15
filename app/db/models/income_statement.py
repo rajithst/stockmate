@@ -1,4 +1,6 @@
-from sqlalchemy import String, Integer, Float, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import String, Integer, Float, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -8,7 +10,9 @@ class CompanyIncomeStatement(Base):
     __tablename__ = "company_income_statements"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), index=True)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("company.id", ondelete="CASCADE"), index=True
+    )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
     # General report info
@@ -66,6 +70,8 @@ class CompanyIncomeStatement(Base):
     eps_diluted: Mapped[float] = mapped_column(Float)
     weighted_average_shs_out: Mapped[int] = mapped_column(Integer)
     weighted_average_shs_out_dil: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship to company profile
     company: Mapped["Company"] = relationship(back_populates="income_statements")
