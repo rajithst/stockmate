@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+
 
 class FMPEarnings(BaseModel):
     symbol: str
@@ -9,5 +10,4 @@ class FMPEarnings(BaseModel):
     revenue_estimated: int = Field(..., alias="revenueEstimated")
     last_updated: str = Field(..., alias="lastUpdated")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

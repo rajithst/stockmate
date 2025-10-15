@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class FMPDividend(BaseModel):
@@ -12,5 +12,4 @@ class FMPDividend(BaseModel):
     dividend_yield: float = Field(..., alias="yield")
     frequency: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

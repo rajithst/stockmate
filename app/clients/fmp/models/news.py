@@ -1,7 +1,7 @@
 from datetime import datetime
-
-from pydantic import BaseModel, HttpUrl, Field
 from typing import Optional
+
+from pydantic import BaseModel, HttpUrl, Field, ConfigDict
 
 
 class FMPGeneralNews(BaseModel):
@@ -14,8 +14,8 @@ class FMPGeneralNews(BaseModel):
     text: str
     url: HttpUrl
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
+
 
 class FMPPriceTargetNews(BaseModel):
     symbol: str
@@ -30,8 +30,7 @@ class FMPPriceTargetNews(BaseModel):
     news_base_url: str = Field(..., alias="newsBaseURL")
     analyst_company: str = Field(..., alias="analystCompany")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class FMPStockGradingNews(BaseModel):
@@ -47,5 +46,4 @@ class FMPStockGradingNews(BaseModel):
     action: str
     price_when_posted: float = Field(..., alias="priceWhenPosted")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

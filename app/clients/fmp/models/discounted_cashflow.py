@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field
 from datetime import date
+
+from pydantic import BaseModel, Field, ConfigDict
+
 
 class FMPDFCValuation(BaseModel):
     symbol: str
@@ -7,8 +9,7 @@ class FMPDFCValuation(BaseModel):
     dcf: float
     stock_price: float = Field(..., alias="Stock Price")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class FMPCustomDFCValuation(BaseModel):
@@ -31,7 +32,9 @@ class FMPCustomDFCValuation(BaseModel):
     payable: float
     payable_percentage: float = Field(..., alias="payablePercentage")
     capital_expenditure: float = Field(..., alias="capitalExpenditure")
-    capital_expenditure_percentage: float = Field(..., alias="capitalExpenditurePercentage")
+    capital_expenditure_percentage: float = Field(
+        ..., alias="capitalExpenditurePercentage"
+    )
     price: float
     beta: float
     diluted_shares_outstanding: int = Field(..., alias="dilutedSharesOutstanding")
@@ -60,5 +63,4 @@ class FMPCustomDFCValuation(BaseModel):
     equity_value_per_share: float = Field(..., alias="equityValuePerShare")
     free_cash_flow_t1: float = Field(..., alias="freeCashFlowT1")
 
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)

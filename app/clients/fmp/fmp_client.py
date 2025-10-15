@@ -2,20 +2,40 @@ from typing import Optional, Dict, Any
 
 import fmpsdk
 import requests
-from fmpsdk import dividend_calendar, key_metrics
 
 from app.clients.fmp.models.analyst_estimates import FMPAnalystEstimates
 from app.clients.fmp.models.company import FMPCompanyProfile
 from app.clients.fmp.models.discounted_cashflow import FMPDFCValuation
 from app.clients.fmp.models.dividend import FMPDividend
 from app.clients.fmp.models.earnings import FMPEarnings
-from app.clients.fmp.models.financial_ratios import FMPKeyMetrics, FMPFinancialRatios, FMPFinancialScores
-from app.clients.fmp.models.financial_statements import FMPCompanyIncomeStatement, FMPCompanyBalanceSheet
-from app.clients.fmp.models.news import FMPGeneralNews, FMPPriceTargetNews, FMPStockGradingNews
-from app.clients.fmp.models.stock import FMPStockSplit, FMPStockPeer, FMPStockScreenResult, FMPStockRating, FMPStockPriceTarget, \
-    FMPStockGrading, FMPStockGradingSummary
+from app.clients.fmp.models.financial_ratios import (
+    FMPKeyMetrics,
+    FMPFinancialRatios,
+    FMPFinancialScores,
+)
+from app.clients.fmp.models.financial_statements import (
+    FMPCompanyIncomeStatement,
+    FMPCompanyBalanceSheet,
+)
+from app.clients.fmp.models.news import (
+    FMPGeneralNews,
+    FMPPriceTargetNews,
+    FMPStockGradingNews,
+)
+from app.clients.fmp.models.stock import (
+    FMPStockSplit,
+    FMPStockPeer,
+    FMPStockScreenResult,
+    FMPStockRating,
+    FMPStockPriceTarget,
+    FMPStockGrading,
+    FMPStockGradingSummary,
+)
+from app.util.logs import setup_logger
 
 BASE_URL = "https://financialmodelingprep.com/stable"
+
+logger = setup_logger(__name__)
 
 class FMPClient:
     def __init__(self, token):
@@ -25,38 +45,38 @@ class FMPClient:
 
     def get_stock_screeners(self, params: dict) -> list[FMPStockScreenResult]:
         """Fetches stock screener results based on provided parameters.
-            Args:
-                params (Dict[str, any]): A dictionary of screener parameters.
-            Returns:
-                list: A list of stock screener results.
+        Args:
+            params (Dict[str, any]): A dictionary of screener parameters.
+        Returns:
+            list: A list of stock screener results.
         """
         screener_params = {
-            'market_cap_more_than': params.get('market_cap_more_than'),
-            'market_cap_lower_than': params.get('market_cap_lower_than'),
-            'beta_more_than': params.get('beta_more_than'),
-            'beta_lower_than': params.get('beta_lower_than'),
-            'volume_more_than': params.get('volume_more_than'),
-            'volume_lower_than': params.get('volume_lower_than'),
-            'price_more_than': params.get('price_more_than'),
-            'price_lower_than': params.get('price_lower_than'),
-            'dividend_more_than': params.get('dividend_more_than'),
-            'dividend_lower_than': params.get('dividend_lower_than'),
-            'is_actively_trading': params.get('is_actively_trading'),
-            'exchange': params.get('exchange'),
-            'sector': params.get('sector'),
-            'industry': params.get('industry'),
-            'country': params.get('country'),
-            'limit': params.get('limit', 10),
+            "market_cap_more_than": params.get("market_cap_more_than"),
+            "market_cap_lower_than": params.get("market_cap_lower_than"),
+            "beta_more_than": params.get("beta_more_than"),
+            "beta_lower_than": params.get("beta_lower_than"),
+            "volume_more_than": params.get("volume_more_than"),
+            "volume_lower_than": params.get("volume_lower_than"),
+            "price_more_than": params.get("price_more_than"),
+            "price_lower_than": params.get("price_lower_than"),
+            "dividend_more_than": params.get("dividend_more_than"),
+            "dividend_lower_than": params.get("dividend_lower_than"),
+            "is_actively_trading": params.get("is_actively_trading"),
+            "exchange": params.get("exchange"),
+            "sector": params.get("sector"),
+            "industry": params.get("industry"),
+            "country": params.get("country"),
+            "limit": params.get("limit", 10),
         }
         stocks = fmpsdk.stock_screener(**screener_params, apikey=self.token)
         return [FMPStockScreenResult(**stock) for stock in stocks] if stocks else []
 
     def get_company_profile(self, symbol: str) -> Optional[FMPCompanyProfile]:
         """Fetches the company profile for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the profile for.
-            Returns:
-                Optional[FMPCompanyProfile]: The company profile if found, else None.
+        Args:
+            symbol (str): The stock symbol to fetch the profile for.
+        Returns:
+            Optional[FMPCompanyProfile]: The company profile if found, else None.
         """
         profile = self.__get_by_url(endpoint="profile", params={"symbol": symbol})
         if profile and isinstance(profile, list):
@@ -65,10 +85,10 @@ class FMPClient:
 
     def get_stock_peer_companies(self, symbol: str) -> list[FMPStockPeer]:
         """Fetches peer companies for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the peer companies for.
-            Returns:
-                list: A list of peer company profiles.
+        Args:
+            symbol (str): The stock symbol to fetch the peer companies for.
+        Returns:
+            list: A list of peer company profiles.
         """
         peers = fmpsdk.company_valuation.stock_peers(symbol=symbol, apikey=self.token)
         return [FMPStockPeer(**peer) for peer in peers] if peers else []
@@ -77,15 +97,23 @@ class FMPClient:
 
     def get_dividends(self, symbol: str) -> list[FMPDividend]:
         """Fetches the dividend history for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the dividends for.
-            Returns:
-                list: A list of dividend records.
+        Args:
+            symbol (str): The stock symbol to fetch the dividends for.
+        Returns:
+            list: A list of dividend records.
         """
-        historical_dividends = fmpsdk.historical_stock_dividend(symbol=symbol, apikey=self.token)
-        return [FMPDividend(**dividend) for dividend in historical_dividends] if historical_dividends else []
+        historical_dividends = fmpsdk.historical_stock_dividend(
+            symbol=symbol, apikey=self.token
+        )
+        return (
+            [FMPDividend(**dividend) for dividend in historical_dividends]
+            if historical_dividends
+            else []
+        )
 
-    def get_market_dividend_calendar(self, from_date: Optional[str] = None, to_date: Optional[str] = None) -> list[FMPDividend]:
+    def get_market_dividend_calendar(
+        self, from_date: Optional[str] = None, to_date: Optional[str] = None
+    ) -> list[FMPDividend]:
         """Fetches the market dividend calendar within a specified date range.
         maximum range is 90 days.
         Args:
@@ -94,119 +122,162 @@ class FMPClient:
         Returns:
             list: A list of dividend records within the specified date range.
         """
-        calendar = fmpsdk.dividend_calendar(from_date=from_date, to_date=to_date, apikey=self.token)
-        return [FMPDividend(**dividend) for dividend in calendar] if dividend_calendar else []
+        calendar = fmpsdk.dividend_calendar(
+            from_date=from_date, to_date=to_date, apikey=self.token
+        )
+        return [FMPDividend(**dividend) for dividend in calendar] if calendar else []
 
     # financial statements
-    def get_income_statement(self, symbol: str, period: str = 'annual', limit: int = 5) -> list[FMPCompanyIncomeStatement]:
+    def get_income_statement(
+        self, symbol: str, period: str = "annual", limit: int = 5
+    ) -> list[FMPCompanyIncomeStatement]:
         """Fetches the income statement for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the income statement for.
-                period (str): The period for the income statement ('quarter' or 'annual').
-                limit (int): The maximum number of records to fetch.
-            Returns:
-                list: A list of income statement records.
+        Args:
+            symbol (str): The stock symbol to fetch the income statement for.
+            period (str): The period for the income statement ('quarter' or 'annual').
+            limit (int): The maximum number of records to fetch.
+        Returns:
+            list: A list of income statement records.
         """
-        if period not in ['quarter', 'annual']:
+        if period not in ["quarter", "annual"]:
             raise ValueError("Period must be either 'quarter' or 'annual'.")
         if not symbol:
             raise ValueError("Symbol is required.")
 
-        income_statements = fmpsdk.income_statement(symbol=symbol, period=period, limit=limit, apikey=self.token)
-        return [FMPCompanyIncomeStatement(**stmt) for stmt in income_statements] if income_statements else []
+        income_statements = fmpsdk.income_statement(
+            symbol=symbol, period=period, limit=limit, apikey=self.token
+        )
+        return (
+            [FMPCompanyIncomeStatement(**stmt) for stmt in income_statements]
+            if income_statements
+            else []
+        )
 
-    def get_balance_sheet(self, symbol: str, period: str = 'annual', limit: int = 5) -> list[FMPCompanyBalanceSheet]:
+    def get_balance_sheet(
+        self, symbol: str, period: str = "annual", limit: int = 5
+    ) -> list[FMPCompanyBalanceSheet]:
         """Fetches the balance sheet for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the balance sheet for.
-                period (str): The period for the balance sheet ('quarter' or 'annual').
-                limit (int): The maximum number of records to fetch.
-            Returns:
-                list: A list of balance sheet records.
+        Args:
+            symbol (str): The stock symbol to fetch the balance sheet for.
+            period (str): The period for the balance sheet ('quarter' or 'annual').
+            limit (int): The maximum number of records to fetch.
+        Returns:
+            list: A list of balance sheet records.
         """
-        if period not in ['quarter', 'annual']:
+        if period not in ["quarter", "annual"]:
             raise ValueError("Period must be either 'quarter' or 'annual'.")
         if not symbol:
             raise ValueError("Symbol is required.")
-        balance_sheets = fmpsdk.balance_sheet_statement(symbol=symbol, period=period, limit=limit, apikey=self.token)
-        return [FMPCompanyBalanceSheet(**stmt) for stmt in balance_sheets] if balance_sheets else []
+        balance_sheets = fmpsdk.balance_sheet_statement(
+            symbol=symbol, period=period, limit=limit, apikey=self.token
+        )
+        return (
+            [FMPCompanyBalanceSheet(**stmt) for stmt in balance_sheets]
+            if balance_sheets
+            else []
+        )
 
-    def get_cash_flow(self, symbol: str, period: str = 'annual', limit: int = 5) -> list[FMPCompanyBalanceSheet]:
+    def get_cash_flow(
+        self, symbol: str, period: str = "annual", limit: int = 5
+    ) -> list[FMPCompanyBalanceSheet]:
         """Fetches the cash flow statement for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the cash flow statement for.
-                period (str): The period for the cash flow statement ('quarter' or 'annual').
-                limit (int): The maximum number of records to fetch.
-            Returns:
-                list: A list of cash flow statement records.
+        Args:
+            symbol (str): The stock symbol to fetch the cash flow statement for.
+            period (str): The period for the cash flow statement ('quarter' or 'annual').
+            limit (int): The maximum number of records to fetch.
+        Returns:
+            list: A list of cash flow statement records.
         """
-        if period not in ['quarter', 'annual']:
+        if period not in ["quarter", "annual"]:
             raise ValueError("Period must be either 'quarter' or 'annual'.")
         if not symbol:
             raise ValueError("Symbol is required.")
-        cash_flow_statements = fmpsdk.cash_flow_statement(symbol=symbol, period=period, limit=limit, apikey=self.token)
-        return [FMPCompanyBalanceSheet(**stmt) for stmt in cash_flow_statements] if cash_flow_statements else []
+        cash_flow_statements = fmpsdk.cash_flow_statement(
+            symbol=symbol, period=period, limit=limit, apikey=self.token
+        )
+        return (
+            [FMPCompanyBalanceSheet(**stmt) for stmt in cash_flow_statements]
+            if cash_flow_statements
+            else []
+        )
 
-    def get_key_metrics(self, symbol: str, period: str = 'annual', limit: int = 5) -> list[FMPKeyMetrics]:
+    def get_key_metrics(
+        self, symbol: str, period: str = "annual", limit: int = 5
+    ) -> list[FMPKeyMetrics]:
         """Fetches key metrics for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the key metrics for.
-                period (str): The period for the key metrics ('Q1','Q2','Q3','Q4','FY','annual','quarter').
-                limit (int): The maximum number of records to fetch.
-            Returns:
-                list: A list of key metrics records.
+        Args:
+            symbol (str): The stock symbol to fetch the key metrics for.
+            period (str): The period for the key metrics ('Q1','Q2','Q3','Q4','FY','annual','quarter').
+            limit (int): The maximum number of records to fetch.
+        Returns:
+            list: A list of key metrics records.
         """
-        if period not in ['Q1','Q2','Q3','Q4','FY','annual','quarter']:
+        if period not in ["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]:
             raise ValueError("Period must be either 'quarter' or 'annual'.")
         if not symbol:
             raise ValueError("Symbol is required.")
-        key_metrics_data = fmpsdk.key_metrics(symbol=symbol, period=period, limit=limit, apikey=self.token)
-        return [FMPKeyMetrics(**metric) for metric in key_metrics_data] if key_metrics else []
+        key_metrics = fmpsdk.key_metrics(
+            symbol=symbol, period=period, limit=limit, apikey=self.token
+        )
+        return (
+            [FMPKeyMetrics(**metric) for metric in key_metrics] if key_metrics else []
+        )
 
-    def get_financial_ratios(self, symbol: str, period: str = 'annual', limit: int = 5) -> list[FMPFinancialRatios]:
+    def get_financial_ratios(
+        self, symbol: str, period: str = "annual", limit: int = 5
+    ) -> list[FMPFinancialRatios]:
         """Fetches financial ratios for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the financial ratios for.
-                period (str): The period for the financial ratios ('Q1','Q2','Q3','Q4','FY','annual','quarter').
-                limit (int): The maximum number of records to fetch.
-            Returns:
-                list: A list of financial ratios records.
+        Args:
+            symbol (str): The stock symbol to fetch the financial ratios for.
+            period (str): The period for the financial ratios ('Q1','Q2','Q3','Q4','FY','annual','quarter').
+            limit (int): The maximum number of records to fetch.
+        Returns:
+            list: A list of financial ratios records.
         """
-        if period not in ['Q1','Q2','Q3','Q4','FY','annual','quarter']:
+        if period not in ["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]:
             raise ValueError("Period must be either 'quarter' or 'annual'.")
         if not symbol:
             raise ValueError("Symbol is required.")
-        ratios = fmpsdk.financial_ratios(symbol=symbol, period=period, limit=limit, apikey=self.token)
+        ratios = fmpsdk.financial_ratios(
+            symbol=symbol, period=period, limit=limit, apikey=self.token
+        )
         return [FMPFinancialRatios(**ratio) for ratio in ratios] if ratios else []
 
     def get_financial_scores(self, symbol: str) -> Optional[FMPFinancialScores]:
         """Fetches financial scores for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the financial scores for.
-            Returns:
-                Optional[FMPFinancialScores]: The financial scores if found, else None.
+        Args:
+            symbol (str): The stock symbol to fetch the financial scores for.
+        Returns:
+            Optional[FMPFinancialScores]: The financial scores if found, else None.
         """
         if not symbol:
             raise ValueError("Symbol is required.")
-        data = self.__get_by_url(endpoint='financial-scores', params={"symbol": symbol})
+        data = self.__get_by_url(endpoint="financial-scores", params={"symbol": symbol})
         if data:
             return FMPFinancialScores(**data[0])
         return None
 
-
     # stock splits
 
-    def get_stock_split(self, symbol: str)  -> list[FMPStockSplit]:
+    def get_stock_split(self, symbol: str) -> list[FMPStockSplit]:
         """Fetches the stock split history for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the stock splits for.
-            Returns:
-                list: A list of stock split records.
+        Args:
+            symbol (str): The stock symbol to fetch the stock splits for.
+        Returns:
+            list: A list of stock split records.
         """
-        historical_splits = fmpsdk.historical_stock_split(symbol=symbol, apikey=self.token)
-        return [FMPStockSplit(**split) for split in historical_splits] if historical_splits else []
+        historical_splits = fmpsdk.historical_stock_split(
+            symbol=symbol, apikey=self.token
+        )
+        return (
+            [FMPStockSplit(**split) for split in historical_splits]
+            if historical_splits
+            else []
+        )
 
-    def get_market_stock_split_calendar(self, from_date: Optional[str] = None, to_date: Optional[str] = None) -> list[FMPStockSplit]:
+    def get_market_stock_split_calendar(
+        self, from_date: Optional[str] = None, to_date: Optional[str] = None
+    ) -> list[FMPStockSplit]:
         """Fetches the market stock split calendar within a specified date range.
         maximum range is 90 days.
         Args:
@@ -215,11 +286,15 @@ class FMPClient:
         Returns:
             list: A list of stock split records within the specified date range.
         """
-        calendar = fmpsdk.stock_split_calendar(from_date=from_date, to_date=to_date, apikey=self.token)
+        calendar = fmpsdk.stock_split_calendar(
+            from_date=from_date, to_date=to_date, apikey=self.token
+        )
         return [FMPStockSplit(**split) for split in calendar] if calendar else []
 
     # earnings
-    def get_earnings_calendar(self, from_date: Optional[str] = None, to_date: Optional[str] = None) -> list[FMPEarnings]:
+    def get_earnings_calendar(
+        self, from_date: Optional[str] = None, to_date: Optional[str] = None
+    ) -> list[FMPEarnings]:
         """Fetches the earnings calendar within a specified date range.
         maximum range is 90 days.
         Args:
@@ -228,28 +303,42 @@ class FMPClient:
         Returns:
             list: A list of earnings records within the specified date range.
         """
-        earnings_calendar = fmpsdk.earning_calendar(from_date=from_date, to_date=to_date, apikey=self.token)
-        return [FMPEarnings(**earning) for earning in earnings_calendar] if earnings_calendar else []
+        earnings_calendar = fmpsdk.earning_calendar(
+            from_date=from_date, to_date=to_date, apikey=self.token
+        )
+        return (
+            [FMPEarnings(**earning) for earning in earnings_calendar]
+            if earnings_calendar
+            else []
+        )
 
     # analyst estimates
-    def get_analyst_estimates(self, symbol: str, period: str = 'quarter', limit: int = 10) -> list[FMPAnalystEstimates]:
+    def get_analyst_estimates(
+        self, symbol: str, period: str = "quarter", limit: int = 10
+    ) -> list[FMPAnalystEstimates]:
         """Fetches analyst estimates for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the estimates for.
-                period (str): The period for the estimates ('quarter' or 'annual').
-                limit (int): The maximum number of records to fetch.
-            Returns:
-                list: A list of analyst estimates.
+        Args:
+            symbol (str): The stock symbol to fetch the estimates for.
+            period (str): The period for the estimates ('quarter' or 'annual').
+            limit (int): The maximum number of records to fetch.
+        Returns:
+            list: A list of analyst estimates.
         """
-        estimates = fmpsdk.company_valuation.analyst_estimates(symbol=symbol, period=period, limit=limit, apikey=self.token)
-        return [FMPAnalystEstimates(**estimate) for estimate in estimates] if estimates else []
+        estimates = fmpsdk.company_valuation.analyst_estimates(
+            symbol=symbol, period=period, limit=limit, apikey=self.token
+        )
+        return (
+            [FMPAnalystEstimates(**estimate) for estimate in estimates]
+            if estimates
+            else []
+        )
 
     def get_ratings(self, symbol: str) -> Optional[FMPStockRating]:
         """Fetches stock ratings for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the ratings for.
-            Returns:
-                Optional[FMPStockRating]: The stock rating if found, else None.
+        Args:
+            symbol (str): The stock symbol to fetch the ratings for.
+        Returns:
+            Optional[FMPStockRating]: The stock rating if found, else None.
         """
         ratings = fmpsdk.rating(symbol=symbol, apikey=self.token)
         if ratings:
@@ -258,62 +347,74 @@ class FMPClient:
 
     def get_price_target(self, symbol: str) -> Optional[FMPStockPriceTarget]:
         """Fetches stock price target for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the price target for.
-            Returns:
-                Optional[FMPStockPriceTarget]: The stock price target if found, else None.
+        Args:
+            symbol (str): The stock symbol to fetch the price target for.
+        Returns:
+            Optional[FMPStockPriceTarget]: The stock price target if found, else None.
         """
-        price_target = self.__get_by_url(endpoint='price-target', params={"symbol": symbol})
+        price_target = self.__get_by_url(
+            endpoint="price-target", params={"symbol": symbol}
+        )
         if price_target:
             return FMPStockPriceTarget(**price_target[0])
         return None
 
-    def get_price_target_news(self, symbol: str, limit: int = 10) -> list[FMPPriceTargetNews]:
+    def get_price_target_news(
+        self, symbol: str, limit: int = 10
+    ) -> list[FMPPriceTargetNews]:
         """Fetches news related to stock price targets for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the price target news for.
-                limit (int): The maximum number of news records to fetch.
-            Returns:
-                list: A list of price target news records.
+        Args:
+            symbol (str): The stock symbol to fetch the price target news for.
+            limit (int): The maximum number of news records to fetch.
+        Returns:
+            list: A list of price target news records.
         """
-        price_target_news = self.__get_by_url(endpoint='price-target-news', params={"symbol": symbol, "limit": limit})
+        price_target_news = self.__get_by_url(
+            endpoint="price-target-news", params={"symbol": symbol, "limit": limit}
+        )
         if price_target_news:
             return [FMPPriceTargetNews(**news) for news in price_target_news]
         return []
 
     def get_stock_grade(self, symbol: str) -> list[FMPStockGrading]:
         """Fetches stock grading history for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the grading history for.
-            Returns:
-                list: A list of stock grading records.
+        Args:
+            symbol (str): The stock symbol to fetch the grading history for.
+        Returns:
+            list: A list of stock grading records.
         """
-        grades = self.__get_by_url(endpoint='grades', params={"symbol": symbol})
+        grades = self.__get_by_url(endpoint="grades", params={"symbol": symbol})
         if grades:
             return [FMPStockGrading(**grade) for grade in grades]
         return []
 
     def get_stock_grade_summary(self, symbol: str) -> Optional[FMPStockGradingSummary]:
         """Fetches stock grading summary for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the grading summary for.
-            Returns:
-                Optional[FMPStockGradingSummary]: The stock grading summary if found, else None.
+        Args:
+            symbol (str): The stock symbol to fetch the grading summary for.
+        Returns:
+            Optional[FMPStockGradingSummary]: The stock grading summary if found, else None.
         """
-        summary = self.__get_by_url(endpoint='grades-summary', params={"symbol": symbol})
+        summary = self.__get_by_url(
+            endpoint="grades-summary", params={"symbol": symbol}
+        )
         if summary:
             return summary and FMPStockGradingSummary(**summary[0])
         return None
 
-    def get_stock_grade_news(self, symbol: str, limit: int = 100) -> list[FMPStockGradingNews]:
+    def get_stock_grade_news(
+        self, symbol: str, limit: int = 100
+    ) -> list[FMPStockGradingNews]:
         """Fetches news related to stock grading changes for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the grading news for.
-                limit (int): The maximum number of news records to fetch.
-            Returns:
-                list: A list of stock grading news records.
+        Args:
+            symbol (str): The stock symbol to fetch the grading news for.
+            limit (int): The maximum number of news records to fetch.
+        Returns:
+            list: A list of stock grading news records.
         """
-        news = self.__get_by_url(endpoint='grades-news', params={"symbol": symbol, "limit": limit})
+        news = self.__get_by_url(
+            endpoint="grades-news", params={"symbol": symbol, "limit": limit}
+        )
         if news:
             return [FMPStockGradingNews(**grade) for grade in news]
         return []
@@ -321,67 +422,86 @@ class FMPClient:
     # news
     def get_latest_general_news(self, page: int = 0) -> list[FMPGeneralNews]:
         """Fetches the latest general news articles with pagination.
-            Args:
-                page (int): The page number to fetch.
-            Returns:
-                list: A list of general news articles.
+        Args:
+            page (int): The page number to fetch.
+        Returns:
+            list: A list of general news articles.
         """
         if page < 1:
             raise ValueError("Page number must be greater than 0.")
         general_news = fmpsdk.general_news(page=page, apikey=self.token)
         return [FMPGeneralNews(**news) for news in general_news] if general_news else []
 
-    def get_stock_news(self, symbols: list[str], from_date: Optional[str] = None, to_date: Optional[str] = None, page: int = 0, limit: int = 20) -> list[FMPGeneralNews]:
+    def get_stock_news(
+        self,
+        symbols: list[str],
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+        page: int = 0,
+        limit: int = 20,
+    ) -> list[FMPGeneralNews]:
         """Fetches stock-specific news articles within a specified date range and pagination.
-            Args:
-                symbols (list[str]): A list of stock symbols to fetch news for.
-                from_date (Optional[str]): The start date for the news in 'YYYY-MM-DD' format.
-                to_date (Optional[str]): The end date for the news in 'YYYY-MM-DD' format.
-                page (int): The page number to fetch.
-                limit (int): The number of articles per page (maximum 100).
-            Returns:
-                list: A list of stock-specific news articles.
+        Args:
+            symbols (list[str]): A list of stock symbols to fetch news for.
+            from_date (Optional[str]): The start date for the news in 'YYYY-MM-DD' format.
+            to_date (Optional[str]): The end date for the news in 'YYYY-MM-DD' format.
+            page (int): The page number to fetch.
+            limit (int): The number of articles per page (maximum 100).
+        Returns:
+            list: A list of stock-specific news articles.
         """
         if page < 1:
             raise ValueError("Page number must be greater than 0.")
         limit = min(limit, 100)  # maximum limit is 100
-        stock_news = fmpsdk.stock_news(tickers=symbols, from_date=from_date, to_date=to_date, page=page, limit=limit, apikey=self.token)
+        stock_news = fmpsdk.stock_news(
+            tickers=symbols,
+            from_date=from_date,
+            to_date=to_date,
+            page=page,
+            limit=limit,
+            apikey=self.token,
+        )
         return [FMPGeneralNews(**news) for news in stock_news] if stock_news else []
-
 
     # discounted cash flow
     def get_discounted_cash_flow(self, symbol: str) -> Optional[FMPDFCValuation]:
         """Fetches the discounted cash flow valuation for a given stock symbol.
-            Args:
-                symbol (str): The stock symbol to fetch the DCF valuation for.
-            Returns:
-                Optional[FMPDFCValuation]: The DCF valuation if found, else None.
+        Args:
+            symbol (str): The stock symbol to fetch the DCF valuation for.
+        Returns:
+            Optional[FMPDFCValuation]: The DCF valuation if found, else None.
         """
         dfc = fmpsdk.discounted_cash_flow(symbol=symbol, apikey=self.token)
         if dfc and isinstance(dfc, list):
             return FMPDFCValuation(**dfc[0])
         return None
 
-    def get_custom_discounted_cash_flow(self, symbol: str, params: Dict[str, Any]) -> Optional[FMPDFCValuation]:
+    def get_custom_discounted_cash_flow(
+        self, symbol: str, params: Dict[str, Any]
+    ) -> Optional[FMPDFCValuation]:
         """Fetches the discounted cash flow valuation for a given stock symbol with custom parameters.
-            Args:
-                symbol (str): The stock symbol to fetch the DCF valuation for.
-                params (Dict[str, Any]): A dictionary of custom parameters for the DCF calculation.
-            Returns:
-                Optional[FMPDFCValuation]: The DCF valuation if found, else None.
+        Args:
+            symbol (str): The stock symbol to fetch the DCF valuation for.
+            params (Dict[str, Any]): A dictionary of custom parameters for the DCF calculation.
+        Returns:
+            Optional[FMPDFCValuation]: The DCF valuation if found, else None.
         """
-        dfc = self.__get_by_url(endpoint='custom-discounted-cash-flow', params={"symbol": symbol, **params})
+        dfc = self.__get_by_url(
+            endpoint="custom-discounted-cash-flow", params={"symbol": symbol, **params}
+        )
         if dfc and isinstance(dfc, list):
             return FMPDFCValuation(**dfc[0])
         return None
 
-    def __get_by_url(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Optional[Dict]:
+    def __get_by_url(
+        self, endpoint: str, params: Optional[Dict[str, Any]] = None
+    ) -> Optional[Dict]:
         """Helper method to perform GET requests to the FMP API.
-            Args:
-                endpoint (str): The API endpoint to call.
-                params (Optional[Dict[str, Any]]): Additional query parameters.
-            Returns:
-                Optional[Dict]: The JSON response from the API if successful, else None.
+        Args:
+            endpoint (str): The API endpoint to call.
+            params (Optional[Dict[str, Any]]): Additional query parameters.
+        Returns:
+            Optional[Dict]: The JSON response from the API if successful, else None.
         """
         if params is None:
             params = {}

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class FMPAnalystEstimates(BaseModel):
@@ -32,5 +32,4 @@ class FMPAnalystEstimates(BaseModel):
     num_analysts_revenue: int = Field(..., alias="numAnalystsRevenue")
     num_analysts_eps: int = Field(..., alias="numAnalystsEps")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

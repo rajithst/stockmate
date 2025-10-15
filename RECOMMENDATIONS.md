@@ -371,10 +371,12 @@ def setup_logger(name: str, level: Optional[int] = None) -> logging.Logger:
 ```
 
 **Update FMP Client** (`app/clients/fmp/fmp_client.py`):
+
 ```python
-from app.util.logging import setup_logger
+from app.util.logs import setup_logger
 
 logger = setup_logger(__name__)
+
 
 class FMPClient:
     def __get_by_url(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Optional[Dict]:
@@ -401,10 +403,12 @@ class FMPClient:
 ```
 
 **Update API Endpoints** (`app/api/v1/company.py`):
+
 ```python
-from app.util.logging import setup_logger
+from app.util.logs import setup_logger
 
 logger = setup_logger(__name__)
+
 
 @router.get("/{symbol}", response_model=CompanyRead)
 def get_company_profile(symbol: str, service: CompanyService = Depends(get_company_service)):

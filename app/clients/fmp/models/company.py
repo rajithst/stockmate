@@ -1,4 +1,5 @@
-from pydantic import BaseModel, HttpUrl, Field
+from pydantic import BaseModel, HttpUrl, Field, ConfigDict
+
 
 class FMPCompanyProfile(BaseModel):
     symbol: str
@@ -22,5 +23,4 @@ class FMPCompanyProfile(BaseModel):
     ipo_date: str = Field(..., alias="ipoDate")
     default_image: bool = Field(..., alias="defaultImage")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
