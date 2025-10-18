@@ -1,8 +1,8 @@
-from typing import List, Type, Any
+from typing import List
 
 from sqlalchemy.orm import Session
 
-from app.db.models import CompanyGeneralNews, CompanyGradingNews
+from app.db.models import CompanyGeneralNews
 from app.schemas.news import CompanyGeneralNewsWrite
 
 

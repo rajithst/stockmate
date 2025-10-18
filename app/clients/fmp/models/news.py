@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, HttpUrl, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class FMPGeneralNews(BaseModel):

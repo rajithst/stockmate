@@ -1,10 +1,29 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Float, Text
+from sqlalchemy import DateTime, Float, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import DateTime
 
 from app.db.engine import Base
+
+if TYPE_CHECKING:
+    from app.db.models.balance_sheet import CompanyBalanceSheet
+    from app.db.models.cashflow import CompanyCashFlowStatement
+    from app.db.models.dcf import DiscountedCashFlow
+    from app.db.models.grading import CompanyGrading, CompanyGradingSummary
+    from app.db.models.income_statement import CompanyIncomeStatement
+    from app.db.models.key_metrics import (
+        CompanyFinancialRatios,
+        CompanyFinancialScores,
+        CompanyKeyMetrics,
+    )
+    from app.db.models.news import (
+        CompanyGeneralNews,
+        CompanyGradingNews,
+        CompanyPriceTargetNews,
+    )
+    from app.db.models.ratings import CompanyRating
+    from app.db.models.stock import CompanyDividend, CompanyStockPeer, CompanyStockSplit
 
 
 class Company(Base):
@@ -59,6 +78,12 @@ class Company(Base):
         uselist=False,  # 1:1 mapping
         cascade="all, delete-orphan",
     )
+    discounted_cash_flow: Mapped["DiscountedCashFlow"] = relationship(
+        back_populates="company",
+        uselist=False,  # 1:1 mapping
+        cascade="all, delete-orphan",
+    )
+
     financial_score: Mapped["CompanyFinancialScores"] = relationship(
         back_populates="company",
         uselist=False,  # 1:1 mapping

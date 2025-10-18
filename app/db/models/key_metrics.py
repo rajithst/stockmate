@@ -1,9 +1,13 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import String, ForeignKey, DateTime
+from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
+
+if TYPE_CHECKING:
+    from app.db.models.company import Company
 
 
 class CompanyKeyMetrics(Base):

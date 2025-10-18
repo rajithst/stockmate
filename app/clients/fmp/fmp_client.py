@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 import fmpsdk
 import requests
@@ -9,13 +9,13 @@ from app.clients.fmp.models.discounted_cashflow import FMPDFCValuation
 from app.clients.fmp.models.dividend import FMPDividend
 from app.clients.fmp.models.earnings import FMPEarnings
 from app.clients.fmp.models.financial_ratios import (
-    FMPKeyMetrics,
     FMPFinancialRatios,
     FMPFinancialScores,
+    FMPKeyMetrics,
 )
 from app.clients.fmp.models.financial_statements import (
-    FMPCompanyIncomeStatement,
     FMPCompanyBalanceSheet,
+    FMPCompanyIncomeStatement,
 )
 from app.clients.fmp.models.news import (
     FMPGeneralNews,
@@ -23,19 +23,20 @@ from app.clients.fmp.models.news import (
     FMPStockGradingNews,
 )
 from app.clients.fmp.models.stock import (
-    FMPStockSplit,
-    FMPStockPeer,
-    FMPStockScreenResult,
-    FMPStockRating,
-    FMPStockPriceTarget,
     FMPStockGrading,
     FMPStockGradingSummary,
+    FMPStockPeer,
+    FMPStockPriceTarget,
+    FMPStockRating,
+    FMPStockScreenResult,
+    FMPStockSplit,
 )
 from app.util.logs import setup_logger
 
 BASE_URL = "https://financialmodelingprep.com/stable"
 
 logger = setup_logger(__name__)
+
 
 class FMPClient:
     def __init__(self, token):

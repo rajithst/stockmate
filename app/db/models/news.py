@@ -1,9 +1,13 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import String, ForeignKey, Text, DateTime
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
+
+if TYPE_CHECKING:
+    from app.db.models.company import Company
 
 
 class CompanyGeneralNews(Base):
@@ -17,11 +21,11 @@ class CompanyGeneralNews(Base):
 
     published_date: Mapped[datetime] = mapped_column(nullable=False)
     publisher: Mapped[str] = mapped_column(String(255), nullable=False)
-    title: Mapped[str] = mapped_column(String(500), nullable=False)
+    news_title: Mapped[str] = mapped_column(String(500), nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     image: Mapped[str] = mapped_column(String(1000), nullable=True)
     site: Mapped[str] = mapped_column(String(255), nullable=True)
-    url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    news_url: Mapped[str] = mapped_column(String(1000), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 

@@ -1,32 +1,33 @@
-from typing import Protocol, Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional, Protocol
+
+from app.clients.fmp.models.analyst_estimates import FMPAnalystEstimates
 from app.clients.fmp.models.company import FMPCompanyProfile
-from app.clients.fmp.models.stock import (
-    FMPStockScreenResult,
-    FMPStockPeer,
-    FMPStockSplit,
-    FMPStockRating,
-    FMPStockPriceTarget,
-    FMPStockGrading,
-    FMPStockGradingSummary,
-)
+from app.clients.fmp.models.discounted_cashflow import FMPDFCValuation
 from app.clients.fmp.models.dividend import FMPDividend
 from app.clients.fmp.models.earnings import FMPEarnings
-from app.clients.fmp.models.analyst_estimates import FMPAnalystEstimates
 from app.clients.fmp.models.financial_ratios import (
-    FMPKeyMetrics,
     FMPFinancialRatios,
     FMPFinancialScores,
+    FMPKeyMetrics,
 )
 from app.clients.fmp.models.financial_statements import (
-    FMPCompanyIncomeStatement,
     FMPCompanyBalanceSheet,
+    FMPCompanyIncomeStatement,
 )
 from app.clients.fmp.models.news import (
     FMPGeneralNews,
     FMPPriceTargetNews,
     FMPStockGradingNews,
 )
-from app.clients.fmp.models.discounted_cashflow import FMPDFCValuation
+from app.clients.fmp.models.stock import (
+    FMPStockGrading,
+    FMPStockGradingSummary,
+    FMPStockPeer,
+    FMPStockPriceTarget,
+    FMPStockRating,
+    FMPStockScreenResult,
+    FMPStockSplit,
+)
 
 
 class FMPClientProtocol(Protocol):

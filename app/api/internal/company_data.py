@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
-from app.dependencies import get_fmp_client, get_db_session
+from app.dependencies import get_db_session, get_fmp_client
 from app.schemas.company import CompanyRead
 from app.services.internal.company_sync_service import CompanySyncService
 

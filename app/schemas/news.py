@@ -9,11 +9,11 @@ class CompanyGeneralNews(BaseModel):
     symbol: Optional[str]
     published_date: datetime
     publisher: str
-    title: str
+    news_title: str
+    news_url: str
     text: str
     image: Optional[str]
     site: Optional[str]
-    url: str
 
 
 class CompanyGeneralNewsRead(CompanyGeneralNews):
@@ -47,7 +47,7 @@ class CompanyPriceTargetNewsWrite(CompanyPriceTargetNews):
     model_config = ConfigDict(from_attributes=True)
 
 
-class CompanyPriceTargetNewsRead(BaseModel):
+class CompanyPriceTargetNewsRead(CompanyPriceTargetNews):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -74,7 +74,7 @@ class CompanyGradingNewsWrite(CompanyGradingNews):
     model_config = ConfigDict(from_attributes=True)
 
 
-class CompanyGradingNewsRead(BaseModel):
+class CompanyGradingNewsRead(CompanyGradingNews):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

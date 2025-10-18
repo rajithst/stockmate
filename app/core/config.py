@@ -1,7 +1,7 @@
 from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
-from pydantic import field_validator, ValidationError
+from pydantic import ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()

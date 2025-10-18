@@ -12,7 +12,9 @@ dependencies = [
     "pydantic-settings>=2.11.0",
     "pymysql>=1.1.2",
     "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
     "python-dotenv>=1.1.1",
+    "ruff>=0.14.1",
     "sqlalchemy>=2.0.43",
     "uvicorn>=0.37.0",
 ]
@@ -23,3 +25,28 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+addopts = "--cov=app --cov-report=term-missing"
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+omit = [
+    "tests/*",
+    "app/db/models/*",
+    ".venv/*",
+    "*/__init__.py",
+    "app/schemas/*",
+    "app/clients/fmp/models/*",
+]
+
+[tool.ruff]
+exclude = [
+    ".venv",
+    "venv",
+    "__pycache__",
+    "build",
+    "dist",
+    ".git",
+    "migrations",
+    "app/db/models/__init__.py",
+]

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, HttpUrl, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class FMPCompanyProfile(BaseModel):

@@ -1,12 +1,12 @@
-from typing import Optional, List
+from typing import List, Optional
 
-from pydantic import BaseModel, HttpUrl, ConfigDict
+from pydantic import BaseModel, ConfigDict, HttpUrl
 
 from app.schemas.grading import CompanyGradingRead
 from app.schemas.news import (
-    CompanyPriceTargetNewsRead,
-    CompanyGradingNewsRead,
     CompanyGeneralNewsRead,
+    CompanyGradingNewsRead,
+    CompanyPriceTargetNewsRead,
 )
 
 
@@ -40,7 +40,7 @@ class CompanyRead(Company):
     model_config = ConfigDict(from_attributes=True)
 
 
-class CompanyWrite(BaseModel):
+class CompanyWrite(Company):
     model_config = ConfigDict(from_attributes=True)
 
 

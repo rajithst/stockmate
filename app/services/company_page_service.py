@@ -1,4 +1,3 @@
-from fmpsdk import general_news
 from sqlalchemy.orm import Session
 
 from app.repositories.company_page_repo import CompanyPageRepository
@@ -6,9 +5,9 @@ from app.repositories.news_repo import CompanyNewsRepository
 from app.schemas.company import CompanyPageResponse, CompanyRead
 from app.schemas.grading import CompanyGradingRead
 from app.schemas.news import (
-    CompanyPriceTargetNewsRead,
-    CompanyGradingNewsRead,
     CompanyGeneralNewsRead,
+    CompanyGradingNewsRead,
+    CompanyPriceTargetNewsRead,
 )
 
 
