@@ -3,7 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
 from app.schemas.dcf import DiscountedCashFlowRead
-from app.schemas.grading import CompanyGradingRead
+from app.schemas.grading import CompanyGradingSummaryRead
 from app.schemas.news import (
     CompanyGeneralNewsRead,
     CompanyGradingNewsRead,
@@ -53,7 +53,7 @@ class CompanyWrite(Company):
 
 class CompanyPageResponse(BaseModel):
     company: CompanyRead
-    grading_summary: Optional[CompanyGradingRead]
+    grading_summary: Optional[CompanyGradingSummaryRead]
     rating_summary: Optional[CompanyRatingSummaryRead]
     dcf: Optional[DiscountedCashFlowRead]
     price_target: Optional[CompanyPriceTargetRead]

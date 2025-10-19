@@ -4,14 +4,17 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.schemas.company import CompanyPageResponse, CompanyRead
-from app.schemas.grading import CompanyGradingRead
+from app.schemas.grading import CompanyGradingRead, CompanyGradingSummaryRead
 from app.schemas.news import (
     CompanyGeneralNewsRead,
     CompanyGradingNewsRead,
     CompanyPriceTargetNewsRead,
 )
-from app.services.company_service import CompanyPageService
+from app.services.company_service import CompanyService
 from tests.common.mock_company_data import MockCompanyDataBuilder
+from tests.common.mock_company_grading_data import MockCompanyGradingSummaryBuilder
+from tests.common.mock_company_news_data import MockCompanyNewsDataBuilder
+from tests.common.mock_company_page_data import MockCompanyPageDataBuilder
 
 
 class TestCompanyPageService:
@@ -24,14 +27,14 @@ class TestCompanyPageService:
 
     @pytest.fixture
     def service(self, mock_db_session):
-        """Create CompanyPageService instance with mock session."""
-        return CompanyPageService(session=mock_db_session)
+        """Create CompanyService instance with mock session."""
+        return CompanyService(session=mock_db_session)
 
     @pytest.fixture
     def mock_page_repo(self):
-        """Fixture for mocked CompanyPageRepository."""
+        """Fixture for mocked CompanyRepository."""
         with patch(
-            "app.services.company_page_service.CompanyPageRepository"
+            "app.services.company_service.CompanyRepository"
         ) as mock_repo_class:
             mock_repo = MagicMock()
             mock_repo_class.return_value = mock_repo
@@ -41,7 +44,7 @@ class TestCompanyPageService:
     def mock_news_repo(self):
         """Fixture for mocked CompanyNewsRepository."""
         with patch(
-            "app.services.company_page_service.CompanyNewsRepository"
+            "app.services.company_service.CompanyNewsRepository"
         ) as mock_repo_class:
             mock_repo = MagicMock()
             mock_repo_class.return_value = mock_repo
@@ -50,42 +53,17 @@ class TestCompanyPageService:
     def test_get_company_page_success(self, mock_page_repo, mock_news_repo, service):
         """Test successful retrieval of company page data."""
         # Arrange
-        mock_company_data = MockCompanyDataBuilder.company_read(
-            symbol="AAPL", name="Apple Inc."
+        mock_company_page_data = MockCompanyPageDataBuilder.company_page_response(
+            company=MockCompanyDataBuilder.company_read(
+                symbol="AAPL", name="Apple Inc."
+            ),
+            grading_summary=MockCompanyGradingSummaryBuilder.company_grading_summary_read(
+                symbol="AAPL", consensus="Strong Buy"
+            ),
+            general_news=[MockCompanyNewsDataBuilder.general_news_read(symbol="AAPL")],
+            price_target_news=[MockCompanyNewsDataBuilder.price_target_news_read(symbol="AAPL")],
+            grading_news=[MockCompanyNewsDataBuilder.grading_news_read(symbol="AAPL")],
         )
-        mock_grading_data = MockCompanyDataBuilder.company_grading_read(
-            symbol="AAPL", grade="A", score=95.0
-        )
-        mock_news_data = {
-            "general": [
-                MockCompanyDataBuilder.general_news_read(
-                    id=1, symbol="AAPL", news_title="Apple launches new product"
-                )
-            ],
-            "price_target": [
-                MockCompanyDataBuilder.price_target_news_read(
-                    id=1, symbol="AAPL", news_title="Apple price target raised"
-                )
-            ],
-            "grading": [
-                MockCompanyDataBuilder.grading_news_read(
-                    id=1, symbol="AAPL", news_title="Apple stock upgraded"
-                )
-            ],
-        }
-        mock_page_repo.get_company_profile_snapshot.return_value = (
-            mock_company_data,
-            mock_grading_data,
-        )
-        mock_news_repo.get_general_news_by_symbol.return_value = mock_news_data[
-            "general"
-        ]
-        mock_news_repo.get_price_target_news_by_symbol.return_value = mock_news_data[
-            "price_target"
-        ]
-        mock_news_repo.get_grading_news_by_symbol.return_value = mock_news_data[
-            "grading"
-        ]
 
         # Act
         result = service.get_company_page("AAPL")
@@ -93,7 +71,7 @@ class TestCompanyPageService:
         # Assert
         assert isinstance(result, CompanyPageResponse)
         assert isinstance(result.company, CompanyRead)
-        assert isinstance(result.grading_summary, CompanyGradingRead)
+        assert isinstance(result.grading_summary, CompanyGradingSummaryRead)
         assert len(result.general_news) == 1
         assert len(result.price_target_news) == 1
         assert len(result.grading_news) == 1
@@ -176,9 +154,9 @@ class TestCompanyPageService:
         mock_news_repo.get_grading_news_by_symbol.assert_called_once_with("AAPL")
 
     def test_service_initialization(self, mock_db_session):
-        """Test CompanyPageService initialization."""
+        """Test CompanyService initialization."""
         # Act
-        service = CompanyPageService(session=mock_db_session)
+        service = CompanyService(session=mock_db_session)
 
         # Assert
         assert service._db == mock_db_session

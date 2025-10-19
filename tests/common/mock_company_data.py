@@ -1,13 +1,7 @@
 from unittest.mock import Mock, PropertyMock
 
 from app.db.models.company import Company
-from app.schemas.company import CompanyPageResponse, CompanyRead, CompanyWrite
-from app.schemas.grading import CompanyGradingRead
-from app.schemas.news import (
-    CompanyGeneralNewsRead,
-    CompanyGradingNewsRead,
-    CompanyPriceTargetNewsRead,
-)
+from app.schemas.company import CompanyRead, CompanyWrite
 
 
 class MockCompanyDataBuilder:
@@ -33,25 +27,6 @@ class MockCompanyDataBuilder:
         "zip": "12345",
         "image": "https://test.com/logo.png",
         "ipo_date": "2020-01-01",
-    }
-
-    relationships = {
-        "dividends": [],
-        "stock_splits": [],
-        "income_statements": [],
-        "balance_sheets": [],
-        "cash_flow_statements": [],
-        "ratings": [],
-        "gradings": [],
-        "grading_summary": None,
-        "discounted_cash_flow": None,
-        "financial_score": None,
-        "general_news": [],
-        "price_target_news": [],
-        "grading_news": [],
-        "key_metrics": [],
-        "financial_ratios": [],
-        "stock_peers": [],
     }
 
     # company db model
@@ -104,95 +79,6 @@ class MockCompanyDataBuilder:
             }
         )
         return CompanyRead(**(default_data | overrides))
-
-    @staticmethod
-    def company_grading_read(**overrides) -> CompanyGradingRead:
-        """Build CompanyGradingRead test data with optional overrides."""
-        default_data = {
-            "id": 1,
-            "company_id": 1,
-            "symbol": "TEST",
-            "grade": "A",
-            "score": 85.5,
-            "recommendation": "BUY",
-            "date": "2023-10-01",
-        }
-        return CompanyGradingRead(**(default_data | overrides))
-
-    @staticmethod
-    def company_page_response(**overrides) -> CompanyPageResponse:
-        """Build complete CompanyPageResponse test data."""
-        defaults = {
-            "company": MockCompanyDataBuilder.company_read(),
-            "grading_summary": MockCompanyDataBuilder.company_grading_read(),
-            "general_news": [],
-            "price_target_news": [],
-            "grading_news": [],
-        }
-        return CompanyPageResponse(**(defaults | overrides))
-
-    @staticmethod
-    def general_news_read(**overrides) -> CompanyGeneralNewsRead:
-        """Build CompanyGeneralNewsRead test data."""
-        default_data = {
-            "id": 1,
-            "company_id": 1,
-            "symbol": "TEST",
-            "news_title": "Test News Title",
-            "text": "Test news content...",
-            "published_date": "2023-10-01",
-            "news_url": "https://test.com/news/1",
-            "publisher": "Test Publisher",
-            "image": "https://test.com/image.jpg",
-            "site": "test.com",
-            "created_at": "2023-10-01T00:00:00Z",
-            "updated_at": "2023-10-01T00:00:00Z",
-        }
-        return CompanyGeneralNewsRead(**(default_data | overrides))
-
-    @staticmethod
-    def price_target_news_read(**overrides) -> CompanyPriceTargetNewsRead:
-        """Build CompanyPriceTargetNewsRead test data."""
-        default_data = {
-            "id": 1,
-            "symbol": "TEST",
-            "company_id": 1,
-            "published_date": "2023-10-01",
-            "news_url": "https://test.com/price-target-news/1",
-            "news_title": "Price Target Update",
-            "analyst_name": "John Doe",
-            "price_target": 150.0,
-            "adj_price_target": 145.0,
-            "price_when_posted": 140.0,
-            "news_publisher": "Test Publisher",
-            "news_base_url": "https://test.com",
-            "analyst_company": "Test Analyst Co.",
-            "created_at": "2023-10-01T00:00:00Z",
-            "updated_at": "2023-10-01T00:00:00Z",
-        }
-        return CompanyPriceTargetNewsRead(**(default_data | overrides))
-
-    @staticmethod
-    def grading_news_read(**overrides) -> CompanyGradingNewsRead:
-        """Build CompanyGradingNewsRead test data."""
-        default_data = {
-            "id": 1,
-            "company_id": 1,
-            "symbol": "TEST",
-            "published_date": "2023-10-01",
-            "news_url": "https://test.com/grading-news/1",
-            "news_title": "Stock Upgraded",
-            "news_base_url": "https://test.com",
-            "news_publisher": "Test Publisher",
-            "new_grade": "A",
-            "previous_grade": "B",
-            "grading_company": "Test Grading Co.",
-            "price_when_posted": 120.0,
-            "action": "upgrade",
-            "created_at": "2023-10-01T00:00:00Z",
-            "updated_at": "2023-10-01T00:00:00Z",
-        }
-        return CompanyGradingNewsRead(**(default_data | overrides))
 
     # save test data in test db for integration tests
     @staticmethod

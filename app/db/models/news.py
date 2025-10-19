@@ -26,6 +26,7 @@ class CompanyGeneralNews(Base):
     image: Mapped[str] = mapped_column(String(1000), nullable=True)
     site: Mapped[str] = mapped_column(String(255), nullable=True)
     news_url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    sentiment: Mapped[str] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
@@ -58,6 +59,7 @@ class CompanyPriceTargetNews(Base):
     news_publisher: Mapped[str] = mapped_column(String(255), nullable=True)
     news_base_url: Mapped[str] = mapped_column(String(500), nullable=True)
     analyst_company: Mapped[str] = mapped_column(String(255), nullable=True)
+    sentiment: Mapped[str] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 

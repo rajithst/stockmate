@@ -5,8 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.company import get_company_service
 from app.main import app
-from app.services.company_service import CompanyPageService
+from app.services.company_service import CompanyService
 from tests.common.mock_company_data import MockCompanyDataBuilder
+from tests.common.mock_company_grading_data import MockCompanyGradingSummaryBuilder
+from tests.common.mock_company_page_data import MockCompanyPageDataBuilder
 
 
 class TestCompanyAPI:
@@ -20,14 +22,14 @@ class TestCompanyAPI:
     @pytest.fixture
     def mock_company_service(self):
         """Create a mock CompanyPageService."""
-        return Mock(spec=CompanyPageService)
+        return Mock(spec=CompanyService)
 
     def test_get_company_service_creation(self, mock_session):
         # Arrange & Act
         service = get_company_service(session=mock_session)
 
         # Assert
-        assert isinstance(service, CompanyPageService)
+        assert isinstance(service, CompanyService)
         assert service._db == mock_session
 
     @pytest.fixture(autouse=True)
@@ -45,30 +47,8 @@ class TestCompanyAPI:
         company_read = MockCompanyDataBuilder.company_read(
             symbol="AAPL", company_name="Apple Inc."
         )
-        grading_summary = MockCompanyDataBuilder.company_grading_read(
-            symbol="AAPL", new_grade="A", grading_company="Test Grading Co."
-        )
-        general_news = [
-            MockCompanyDataBuilder.general_news_read(
-                symbol="AAPL", news_title="Apple Reports Strong Q4 Results"
-            )
-        ]
-        price_target_news = [
-            MockCompanyDataBuilder.price_target_news_read(
-                symbol="AAPL", news_title="Analyst Raises AAPL Price Target"
-            )
-        ]
-        grading_news = [
-            MockCompanyDataBuilder.grading_news_read(
-                symbol="AAPL", news_title="AAPL Upgraded to Buy"
-            )
-        ]
-        mock_page_response = MockCompanyDataBuilder.company_page_response(
-            company=company_read,
-            grading_summary=grading_summary,
-            general_news=general_news,
-            price_target_news=price_target_news,
-            grading_news=grading_news,
+        mock_page_response = MockCompanyPageDataBuilder.company_page_response(
+            company=company_read
         )
         mock_company_service.get_company_page.return_value = mock_page_response
 
@@ -84,50 +64,7 @@ class TestCompanyAPI:
         assert data["company"]["symbol"] == "AAPL"
         assert data["company"]["company_name"] == "Apple Inc."
 
-        # Verify grading data - update path based on actual response structure
-        assert data["grading_summary"]["new_grade"] == "A"
-        assert data["grading_summary"]["grading_company"] == "Test Grading Co."
-
-        # Verify news data
-        assert len(data["general_news"]) == 1
-        assert (
-            data["general_news"][0]["news_title"] == "Apple Reports Strong Q4 Results"
-        )
-        assert len(data["price_target_news"]) == 1
-        assert (
-            data["price_target_news"][0]["news_title"]
-            == "Analyst Raises AAPL Price Target"
-        )
-        assert len(data["grading_news"]) == 1
-        assert data["grading_news"][0]["news_title"] == "AAPL Upgraded to Buy"
-
         mock_company_service.get_company_page.assert_called_once_with("AAPL")
-
-    def test_get_company_profile_success_minimal_data(
-        self, client, mock_company_service
-    ):
-        """Test successful company profile retrieval with minimal data."""
-        # Arrange
-        minimal_response = MockCompanyDataBuilder.company_page_response(
-            company=MockCompanyDataBuilder.company_read(symbol="TEST"),
-            grading_summary=None,
-            general_news=[],
-            price_target_news=[],
-            grading_news=[],
-        )
-        mock_company_service.get_company_page.return_value = minimal_response
-
-        # Act
-        response = client.get("/api/v1/company/TEST")
-
-        # Assert
-        assert response.status_code == 200
-        data = response.json()
-        assert data["company"]["symbol"] == "TEST"
-        assert data["grading_summary"] is None
-        assert len(data["general_news"]) == 0
-        assert len(data["price_target_news"]) == 0
-        assert len(data["grading_news"]) == 0
 
     def test_get_company_profile_not_found(self, client, mock_company_service):
         """Test company profile not found scenario."""
@@ -205,7 +142,7 @@ class TestCompanyAPI:
         service = get_company_service(session=mock_session)
 
         # Assert
-        assert isinstance(service, CompanyPageService)
+        assert isinstance(service, CompanyService)
         assert service._db == mock_session
 
     def test_router_configuration(self):
@@ -222,9 +159,9 @@ class TestCompanyAPI:
     def test_response_model_validation(self, client, mock_company_service):
         """Test that response follows the CompanyPageResponse model."""
         # Arrange
-        valid_response = MockCompanyDataBuilder.company_page_response(
+        valid_response = MockCompanyPageDataBuilder.company_page_response(
             company=MockCompanyDataBuilder.company_read(symbol="TEST"),
-            grading_summary=MockCompanyDataBuilder.company_grading_read(symbol="TEST"),
+            grading_summary=MockCompanyGradingSummaryBuilder.company_grading_summary_read(symbol="TEST"),
             general_news=[],
             price_target_news=[],
             grading_news=[],

@@ -24,3 +24,26 @@ class CompanyGradingRead(CompanyGrading):
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyGradingSummary(BaseModel):
+    company_id: int
+    symbol: str
+    buy: int
+    hold: int
+    sell: int
+    strong_buy: int
+    strong_sell: int
+    consensus: str
+
+
+class CompanyGradingSummaryRead(CompanyGradingSummary):
+    id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyGradingSummaryWrite(CompanyGradingSummary):
+    model_config = ConfigDict(from_attributes=True)

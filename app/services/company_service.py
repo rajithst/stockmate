@@ -4,7 +4,7 @@ from app.repositories.company_repo import CompanyRepository
 from app.repositories.news_repo import CompanyNewsRepository
 from app.schemas.company import CompanyPageResponse, CompanyRead
 from app.schemas.dcf import DiscountedCashFlowRead
-from app.schemas.grading import CompanyGradingRead
+from app.schemas.grading import CompanyGradingSummaryRead
 from app.schemas.news import (
     CompanyGeneralNewsRead,
     CompanyGradingNewsRead,
@@ -29,7 +29,7 @@ class CompanyService:
         if not response:
             return None
         company_read = CompanyRead.model_validate(response)
-        grading_summary_read = CompanyGradingRead.model_validate(
+        grading_summary_read = CompanyGradingSummaryRead.model_validate(
             response.grading_summary
         )
         dcf_read = DiscountedCashFlowRead.model_validate(response.discounted_cash_flow)
