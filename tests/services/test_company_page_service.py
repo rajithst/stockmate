@@ -227,4 +227,3 @@ class TestCompanyPageService:
         assert "validation" in str(exc_info.value).lower()
         mock_page_repo.get_company_profile_snapshot.assert_called_once_with("TEST")
         mock_news_repo.get_general_news_by_symbol.assert_not_called()
-

@@ -14,8 +14,9 @@ class TestMapModel:
 
     class MockSQLAlchemyModel(Base):
         """Mock SQLAlchemy model for testing."""
+
         __tablename__ = "mock_table"
-        
+
         id = Column(Integer, primary_key=True)
         name = Column(String(50))
         price = Column(Float)
@@ -34,6 +35,7 @@ class TestMapModel:
 
     def test_map_model_basic_mapping(self, target_model):
         """Test basic field mapping functionality."""
+
         # Arrange
         class SourceModel(BaseModel):
             name: str = "New Name"
@@ -51,6 +53,7 @@ class TestMapModel:
 
     def test_map_model_only_existing_attributes(self, target_model):
         """Test that only existing attributes on target are updated."""
+
         # Arrange
         class SourceWithExtraFields(BaseModel):
             name: str = "Updated Name"
@@ -71,6 +74,7 @@ class TestMapModel:
 
     def test_map_model_with_none_values(self, target_model):
         """Test mapping with None values."""
+
         # Arrange
         class SourceWithNone(BaseModel):
             name: str | None = None
@@ -88,6 +92,7 @@ class TestMapModel:
 
     def test_map_model_partial_update(self, target_model):
         """Test updating only some fields."""
+
         # Arrange
         class PartialSource(BaseModel):
             name: str = "Only Name Updated"
@@ -104,6 +109,7 @@ class TestMapModel:
 
     def test_map_model_type_conversion(self, target_model):
         """Test mapping with type conversion."""
+
         # Arrange
         class SourceWithDifferentTypes(BaseModel):
             price: str = "299.99"  # String instead of float
@@ -120,6 +126,7 @@ class TestMapModel:
 
     def test_map_model_invalid_target(self):
         """Test mapping with invalid target model."""
+
         # Arrange
         class NotASQLAlchemyModel:
             def __init__(self):
@@ -134,5 +141,5 @@ class TestMapModel:
         # Act & Assert
         with pytest.raises(TypeError) as exc_info:
             map_model(target, source)
-        
+
         assert str(exc_info.value) == "Target must be a SQLAlchemy model instance"

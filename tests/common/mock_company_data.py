@@ -90,8 +90,7 @@ class MockCompanyDataBuilder:
     def company_write(**overrides) -> CompanyWrite:
         """Build CompanyWrite test data with optional overrides."""
         default_data = MockCompanyDataBuilder.mock_data.copy()
-        default_data.update(overrides)
-        return CompanyWrite(**default_data)
+        return CompanyWrite(**(default_data | overrides))
 
     @staticmethod
     def company_read(**overrides) -> CompanyRead:
@@ -104,8 +103,7 @@ class MockCompanyDataBuilder:
                 "updated_at": "2023-10-01T00:00:00Z",
             }
         )
-        default_data.update(overrides)
-        return CompanyRead(**default_data)
+        return CompanyRead(**(default_data | overrides))
 
     @staticmethod
     def company_grading_read(**overrides) -> CompanyGradingRead:
@@ -119,8 +117,7 @@ class MockCompanyDataBuilder:
             "recommendation": "BUY",
             "date": "2023-10-01",
         }
-        default_data.update(overrides)
-        return CompanyGradingRead(**default_data)
+        return CompanyGradingRead(**(default_data | overrides))
 
     @staticmethod
     def company_page_response(**overrides) -> CompanyPageResponse:
@@ -132,8 +129,7 @@ class MockCompanyDataBuilder:
             "price_target_news": [],
             "grading_news": [],
         }
-        defaults.update(overrides)
-        return CompanyPageResponse(**defaults)
+        return CompanyPageResponse(**(defaults | overrides))
 
     @staticmethod
     def general_news_read(**overrides) -> CompanyGeneralNewsRead:
@@ -152,8 +148,7 @@ class MockCompanyDataBuilder:
             "created_at": "2023-10-01T00:00:00Z",
             "updated_at": "2023-10-01T00:00:00Z",
         }
-        default_data.update(overrides)
-        return CompanyGeneralNewsRead(**default_data)
+        return CompanyGeneralNewsRead(**(default_data | overrides))
 
     @staticmethod
     def price_target_news_read(**overrides) -> CompanyPriceTargetNewsRead:
@@ -175,8 +170,7 @@ class MockCompanyDataBuilder:
             "created_at": "2023-10-01T00:00:00Z",
             "updated_at": "2023-10-01T00:00:00Z",
         }
-        default_data.update(overrides)
-        return CompanyPriceTargetNewsRead(**default_data)
+        return CompanyPriceTargetNewsRead(**(default_data | overrides))
 
     @staticmethod
     def grading_news_read(**overrides) -> CompanyGradingNewsRead:
@@ -198,14 +192,13 @@ class MockCompanyDataBuilder:
             "created_at": "2023-10-01T00:00:00Z",
             "updated_at": "2023-10-01T00:00:00Z",
         }
-        default_data.update(overrides)
-        return CompanyGradingNewsRead(**default_data)
+        return CompanyGradingNewsRead(**(default_data | overrides))
 
     # save test data in test db for integration tests
     @staticmethod
     def save_company(db_session, **overrides) -> Company:
         """Create and save a Company instance in the test database."""
-        
+
         default_data = MockCompanyDataBuilder.mock_data.copy()
         company = Company(**default_data | overrides)
         db_session.add(company)

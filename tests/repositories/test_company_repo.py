@@ -136,9 +136,7 @@ class TestCompanyRepository:
 
             # Assert
             assert result == mock_company
-            mock_map_model.assert_called_once_with(
-                mock_company, company_write, exclude_unset=True
-            )
+            mock_map_model.assert_called_once_with(mock_company, company_write)
             mock_db_session.add.assert_not_called()  # Should not add existing company
             mock_db_session.commit.assert_called_once()
             mock_db_session.refresh.assert_called_once_with(mock_company)

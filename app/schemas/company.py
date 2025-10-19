@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, HttpUrl
+from pydantic import BaseModel, ConfigDict
 
 from app.schemas.grading import CompanyGradingRead
 from app.schemas.news import (
@@ -19,7 +19,7 @@ class Company(BaseModel):
     exchange_full_name: str
     exchange: str
     industry: str
-    website: HttpUrl
+    website: str
     description: str
     sector: str
     country: str
@@ -28,7 +28,7 @@ class Company(BaseModel):
     city: str
     state: str
     zip: str
-    image: HttpUrl
+    image: str
     ipo_date: str
 
 

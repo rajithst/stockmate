@@ -22,7 +22,7 @@ class CompanyRepository:
         existing = self._db.query(Company).filter_by(symbol=company_data.symbol).first()
 
         if existing:
-            company = map_model(existing, company_data, exclude_unset=True)
+            company = map_model(existing, company_data)
         else:
             company = Company(**company_data.model_dump(exclude_unset=True))
             self._db.add(company)
