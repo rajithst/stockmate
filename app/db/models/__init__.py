@@ -10,6 +10,8 @@ from .grading import CompanyGrading, CompanyGradingSummary
 from .income_statement import CompanyIncomeStatement
 from .key_metrics import CompanyKeyMetrics
 from .news import CompanyGeneralNews, CompanyGradingNews, CompanyPriceTargetNews
-from .ratings import CompanyRating
+from .ratings import CompanyRatingSummary
 from .stock import CompanyStockPeer, CompanyStockSplit
 from .dcf import DiscountedCashFlow
+from .price_target import CompanyPriceTarget, CompanyPriceTargetSummary
+from .quote import StockPriceChange, StockPrice

@@ -1,12 +1,15 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
-
 from sqlalchemy import DateTime, Float, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
 
 if TYPE_CHECKING:
+    from app.db.models.financial_score import CompanyFinancialScores
+    from app.db.models.price_target import CompanyPriceTarget, CompanyPriceTargetSummary
+    from app.db.models.quote import StockPrice, StockPriceChange
+    from app.db.models.ratings import CompanyRatingSummary
     from app.db.models.balance_sheet import CompanyBalanceSheet
     from app.db.models.cashflow import CompanyCashFlowStatement
     from app.db.models.dcf import DiscountedCashFlow
@@ -14,7 +17,6 @@ if TYPE_CHECKING:
     from app.db.models.income_statement import CompanyIncomeStatement
     from app.db.models.key_metrics import (
         CompanyFinancialRatios,
-        CompanyFinancialScores,
         CompanyKeyMetrics,
     )
     from app.db.models.news import (
@@ -22,7 +24,6 @@ if TYPE_CHECKING:
         CompanyGradingNews,
         CompanyPriceTargetNews,
     )
-    from app.db.models.ratings import CompanyRating
     from app.db.models.stock import CompanyDividend, CompanyStockPeer, CompanyStockSplit
 
 
@@ -53,59 +54,86 @@ class Company(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     # Relationships
     dividends: Mapped[list["CompanyDividend"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     stock_splits: Mapped[list["CompanyStockSplit"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     income_statements: Mapped[list["CompanyIncomeStatement"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     balance_sheets: Mapped[list["CompanyBalanceSheet"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     cash_flow_statements: Mapped[list["CompanyCashFlowStatement"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
-    )
-    ratings: Mapped[list["CompanyRating"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     gradings: Mapped[list["CompanyGrading"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     grading_summary: Mapped["CompanyGradingSummary"] = relationship(
         back_populates="company",
         uselist=False,  # 1:1 mapping
         cascade="all, delete-orphan",
+        lazy="select",
+    )
+    rating_summary: Mapped["CompanyRatingSummary"] = relationship(
+        back_populates="company",
+        uselist=False,  # 1:1 mapping
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
+    price_target_summary: Mapped["CompanyPriceTargetSummary"] = relationship(
+        back_populates="company",
+        uselist=False,  # 1:1 mapping
+        cascade="all, delete-orphan",
+        lazy="select",
     )
     discounted_cash_flow: Mapped["DiscountedCashFlow"] = relationship(
         back_populates="company",
         uselist=False,  # 1:1 mapping
         cascade="all, delete-orphan",
+        lazy="select",
     )
-
+    price_target: Mapped["CompanyPriceTarget"] = relationship(
+        back_populates="company",
+        uselist=False,  # 1:1 mapping
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
+    price_change: Mapped["StockPriceChange"] = relationship(
+        back_populates="company",
+        uselist=False,  # 1:1 mapping
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
     financial_score: Mapped["CompanyFinancialScores"] = relationship(
         back_populates="company",
         uselist=False,  # 1:1 mapping
         cascade="all, delete-orphan",
+        lazy="select",
     )
+
     general_news: Mapped[list["CompanyGeneralNews"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     price_target_news: Mapped[list["CompanyPriceTargetNews"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     grading_news: Mapped[list["CompanyGradingNews"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     key_metrics: Mapped[list["CompanyKeyMetrics"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     financial_ratios: Mapped[list["CompanyFinancialRatios"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     stock_peers: Mapped[list["CompanyStockPeer"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
+    )
+    stock_prices: Mapped[list["StockPrice"]] = relationship(
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
 
     def __repr__(self) -> str:

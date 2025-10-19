@@ -2,12 +2,19 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
+from app.schemas.dcf import DiscountedCashFlowRead
 from app.schemas.grading import CompanyGradingRead
 from app.schemas.news import (
     CompanyGeneralNewsRead,
     CompanyGradingNewsRead,
     CompanyPriceTargetNewsRead,
 )
+from app.schemas.price_target import (
+    CompanyPriceTargetRead,
+    CompanyPriceTargetSummaryRead,
+)
+from app.schemas.quote import StockPriceChangeRead
+from app.schemas.rating import CompanyRatingSummaryRead
 
 
 class Company(BaseModel):
@@ -47,6 +54,11 @@ class CompanyWrite(Company):
 class CompanyPageResponse(BaseModel):
     company: CompanyRead
     grading_summary: Optional[CompanyGradingRead]
+    rating_summary: Optional[CompanyRatingSummaryRead]
+    dcf: Optional[DiscountedCashFlowRead]
+    price_target: Optional[CompanyPriceTargetRead]
+    price_change: Optional[StockPriceChangeRead]
+    price_target_summary: Optional[CompanyPriceTargetSummaryRead]
     price_target_news: List[CompanyPriceTargetNewsRead] = []
     general_news: List[CompanyGeneralNewsRead] = []
     grading_news: List[CompanyGradingNewsRead] = []

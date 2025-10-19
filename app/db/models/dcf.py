@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Float, ForeignKey, String
+from sqlalchemy import DateTime, Float, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -20,9 +21,17 @@ class DiscountedCashFlow(Base):
     date: Mapped[str] = mapped_column(String(20), nullable=True)
     dcf: Mapped[Float] = mapped_column(Float, nullable=True)
     stock_price: Mapped[Float] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship to company profile
-    company: Mapped["Company"] = relationship(back_populates="discounted_cash_flow")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="discounted_cash_flow",
+        foreign_keys=[company_id],
+        lazy="joined",
+        uselist=False,
+    )
 
     def __repr__(self):
         return f"<DiscountedCashFlow(symbol={self.symbol}, date={self.date})>"

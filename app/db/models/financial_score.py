@@ -32,7 +32,13 @@ class CompanyFinancialScores(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     # Relationship to company
-    company: Mapped["Company"] = relationship(back_populates="financial_score")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="financial_score",
+        foreign_keys=[company_id],
+        lazy="joined",
+        uselist=False,
+    )
 
     def __repr__(self):
         return f"<CompanyFinancialScores(symbol={self.symbol})>"

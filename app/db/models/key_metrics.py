@@ -79,7 +79,12 @@ class CompanyKeyMetrics(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship to company
-    company: Mapped["Company"] = relationship(back_populates="key_metrics")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="key_metrics",
+        foreign_keys=[company_id],
+        lazy="joined",
+    )
 
     def __repr__(self):
         return f"<CompanyKeyMetrics(symbol={self.symbol}, date={self.date})>"

@@ -27,7 +27,12 @@ class CompanyGrading(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    company: Mapped["Company"] = relationship(back_populates="gradings")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="gradings",
+        foreign_keys=[company_id],
+        lazy="joined",
+    )
 
     def __repr__(self):
         return f"<CompanyGrading(symbol={self.symbol}, new_grade={self.new_grade}, date={self.date})>"
@@ -51,7 +56,13 @@ class CompanyGradingSummary(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    company: Mapped["Company"] = relationship(back_populates="grading_summary")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="grading_summary",
+        foreign_keys=[company_id],
+        lazy="joined",
+        uselist=False,
+    )
 
     def __repr__(self):
         return (

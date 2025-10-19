@@ -25,7 +25,12 @@ class CompanyStockSplit(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship
-    company: Mapped["Company"] = relationship(back_populates="stock_splits")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="stock_splits",
+        foreign_keys=[company_id],
+        lazy="joined",
+    )
 
     def __repr__(self):
         return f"<CompanyStockSplit(symbol={self.symbol}, date={self.date}, ratio={self.numerator}:{self.denominator})>"
@@ -45,7 +50,9 @@ class CompanyStockPeer(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    company: Mapped["Company"] = relationship(back_populates="stock_peers")
+    company: Mapped["Company"] = relationship(
+        back_populates="stock_peers", foreign_keys=[company_id], lazy="joined"
+    )
 
     def __repr__(self):
         return f"<CompanyStockPeer(symbol={self.symbol}, company_name={self.company_name}, price={self.price})>"

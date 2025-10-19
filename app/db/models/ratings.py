@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from app.db.models.company import Company
 
 
-class CompanyRating(Base):
-    __tablename__ = "company_ratings"
+class CompanyRatingSummary(Base):
+    __tablename__ = "company_rating_summaries"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     company_id: Mapped[int] = mapped_column(
@@ -29,7 +29,13 @@ class CompanyRating(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    company: Mapped["Company"] = relationship(back_populates="ratings")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="rating_summary",
+        foreign_keys=[company_id],
+        lazy="joined",
+        uselist=False,
+    )
 
     def __repr__(self):
-        return f"<CompanyRating(symbol={self.symbol}, rating={self.rating}, overall_score={self.overall_score})>"
+        return f"<CompanyRatingSummary(symbol={self.symbol}, rating={self.rating}, overall_score={self.overall_score})>"

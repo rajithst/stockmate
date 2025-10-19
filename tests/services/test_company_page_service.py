@@ -10,7 +10,7 @@ from app.schemas.news import (
     CompanyGradingNewsRead,
     CompanyPriceTargetNewsRead,
 )
-from app.services.company_page_service import CompanyPageService
+from app.services.company_service import CompanyPageService
 from tests.common.mock_company_data import MockCompanyDataBuilder
 
 

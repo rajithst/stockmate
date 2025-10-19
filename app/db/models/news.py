@@ -29,10 +29,15 @@ class CompanyGeneralNews(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    company: Mapped["Company"] = relationship(back_populates="general_news")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="general_news",
+        foreign_keys=[company_id],
+        lazy="joined",
+    )
 
     def __repr__(self):
-        return f"<CompanyGeneralNews(symbol={self.symbol}, title={self.title})>"
+        return f"<CompanyGeneralNews(symbol={self.symbol}, title={self.news_title})>"
 
 
 class CompanyPriceTargetNews(Base):
@@ -56,7 +61,12 @@ class CompanyPriceTargetNews(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    company: Mapped["Company"] = relationship(back_populates="price_target_news")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="price_target_news",
+        foreign_keys=[company_id],
+        lazy="joined",
+    )
 
     def __repr__(self):
         return (
@@ -85,7 +95,12 @@ class CompanyGradingNews(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    company: Mapped["Company"] = relationship(back_populates="grading_news")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="grading_news",
+        foreign_keys=[company_id],
+        lazy="joined",
+    )
 
     def __repr__(self):
         return f"<CompanyGradingNews(symbol={self.symbol}, title={self.news_title})>"

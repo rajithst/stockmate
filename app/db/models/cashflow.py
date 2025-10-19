@@ -78,7 +78,12 @@ class CompanyCashFlowStatement(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship to company profile
-    company: Mapped["Company"] = relationship(back_populates="cash_flow_statements")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="cash_flow_statements",
+        foreign_keys=[company_id],
+        lazy="joined",
+    )
 
     def __repr__(self):
         return f"<CompanyCashFlowStatement(symbol={self.symbol}, date={self.date})>"

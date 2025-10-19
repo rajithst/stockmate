@@ -95,7 +95,12 @@ class CompanyBalanceSheet(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # Relationship to company profile
-    company: Mapped["Company"] = relationship(back_populates="balance_sheets")
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="balance_sheets",
+        foreign_keys=[company_id],
+        lazy="joined",
+    )
 
     def __repr__(self):
         return f"<CompanyBalanceSheet(symbol={self.symbol}, date={self.date})>"

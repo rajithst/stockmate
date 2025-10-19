@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.company import get_company_service
 from app.main import app
-from app.services.company_page_service import CompanyPageService
+from app.services.company_service import CompanyPageService
 from tests.common.mock_company_data import MockCompanyDataBuilder
 
 
