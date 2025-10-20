@@ -49,4 +49,5 @@ exclude = [
     ".git",
     "migrations",
     "app/db/models/__init__.py",
+    "alembic",
 ]
