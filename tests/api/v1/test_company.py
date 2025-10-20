@@ -7,7 +7,7 @@ from app.api.v1.company import get_company_service
 from app.main import app
 from app.services.company_service import CompanyService
 from tests.common.mock_company_data import MockCompanyDataBuilder
-from tests.common.mock_company_grading_data import MockCompanyGradingSummaryBuilder
+from tests.common.mock_company_grading_data import MockCompanyGradingDataBuilder
 from tests.common.mock_company_page_data import MockCompanyPageDataBuilder
 
 
@@ -161,7 +161,9 @@ class TestCompanyAPI:
         # Arrange
         valid_response = MockCompanyPageDataBuilder.company_page_response(
             company=MockCompanyDataBuilder.company_read(symbol="TEST"),
-            grading_summary=MockCompanyGradingSummaryBuilder.company_grading_summary_read(symbol="TEST"),
+            grading_summary=MockCompanyGradingDataBuilder.company_grading_summary_read(
+                symbol="TEST"
+            ),
             general_news=[],
             price_target_news=[],
             grading_news=[],

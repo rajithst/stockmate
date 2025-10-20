@@ -14,6 +14,7 @@ class CompanyGeneralNews(BaseModel):
     text: str
     image: Optional[str]
     site: Optional[str]
+    sentiment: Optional[str]
 
 
 class CompanyGeneralNewsRead(CompanyGeneralNews):
@@ -41,6 +42,7 @@ class CompanyPriceTargetNews(BaseModel):
     news_publisher: Optional[str] = None
     news_base_url: Optional[str] = None
     analyst_company: Optional[str] = None
+    sentiment: Optional[str] = None
 
 
 class CompanyPriceTargetNewsWrite(CompanyPriceTargetNews):
@@ -68,6 +70,7 @@ class CompanyGradingNews(BaseModel):
     grading_company: Optional[str] = None
     action: Optional[str] = None
     price_when_posted: float
+    sentiment: Optional[str] = None
 
 
 class CompanyGradingNewsWrite(CompanyGradingNews):

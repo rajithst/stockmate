@@ -93,6 +93,7 @@ class CompanyGradingNews(Base):
     previous_grade: Mapped[str] = mapped_column(String(10), nullable=True)
     grading_company: Mapped[str] = mapped_column(String(255), nullable=True)
     action: Mapped[str] = mapped_column(String(50), nullable=True)
+    sentiment: Mapped[str] = mapped_column(String(50), nullable=True)
     price_when_posted: Mapped[float] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
