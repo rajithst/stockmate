@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
-class FinancialRatio(BaseModel):
+class CompanyFinancialRatio(BaseModel):
     company_id: int
     symbol: str
     date: Optional[str] = None
@@ -91,11 +91,11 @@ class FinancialRatio(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class FinancialRatioWrite(FinancialRatio):
+class CompanyFinancialRatioWrite(CompanyFinancialRatio):
     model_config = ConfigDict(from_attributes=True)
 
 
-class FinancialRatioRead(FinancialRatio):
+class CompanyFinancialRatioRead(CompanyFinancialRatio):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

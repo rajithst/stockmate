@@ -19,7 +19,7 @@ class CompanyFinancialScore(BaseModel):
     revenue: Optional[float] = None
 
 
-class CompanyFinancialScoresCreate(CompanyFinancialScore):
+class CompanyFinancialScoresWrite(CompanyFinancialScore):
     model_config = ConfigDict(from_attributes=True)
 
 

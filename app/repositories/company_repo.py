@@ -1,6 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.db.models import Company
 from app.schemas.company import CompanyWrite

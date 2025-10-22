@@ -25,9 +25,12 @@ class CompanyService:
     def get_company_page(self, symbol: str) -> CompanyPageResponse | None:
         """Retrieve a company's profile by its stock symbol."""
         page_repo = CompanyRepository(self._db)
+
         response = page_repo.get_company_snapshot_by_symbol(symbol)
         if not response:
             return None
+        news_repo = CompanyNewsRepository(self._db)
+
         company_read = CompanyRead.model_validate(response)
         grading_summary_read = CompanyGradingSummaryRead.model_validate(
             response.grading_summary
@@ -42,7 +45,6 @@ class CompanyService:
         )
         price_change_read = StockPriceChangeRead.model_validate(response.price_change)
 
-        news_repo = CompanyNewsRepository(self._db)
         general_news_read = [
             CompanyGeneralNewsRead.model_validate(news)
             for news in news_repo.get_general_news_by_symbol(symbol)
