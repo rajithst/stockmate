@@ -6,7 +6,7 @@ from app.db.models.key_metrics import CompanyKeyMetrics
 from app.schemas.financial_ratio import CompanyFinancialRatioWrite
 from app.schemas.financial_score import CompanyFinancialScoresWrite
 from app.schemas.key_metrics import CompanyKeyMetricsWrite
-from app.util import map_model
+from app.util.map_model import map_model
 
 
 class MetricsRepository:
@@ -72,7 +72,7 @@ class MetricsRepository:
             if existing:
                 record = map_model(existing, ratio)
             else:
-                record = CompanyKeyMetrics(**ratio.model_dump(exclude_unset=True))
+                record = CompanyFinancialRatios(**ratio.model_dump(exclude_unset=True))
                 self._db.add(record)
             records.append(record)
         self._db.commit()
@@ -81,22 +81,20 @@ class MetricsRepository:
         return records
 
     def upsert_financial_scores(
-        self, financial_scores: list[CompanyFinancialScoresWrite]
-    ) -> list[CompanyFinancialScores] | None:
-        records = []
-        for score in financial_scores:
-            existing = (
-                self._db.query(CompanyFinancialScores)
-                .filter_by(symbol=score.symbol)
-                .first()
+        self, financial_scores: CompanyFinancialScoresWrite
+    ) -> CompanyFinancialScores | None:
+        existing = (
+            self._db.query(CompanyFinancialScores)
+            .filter_by(symbol=financial_scores.symbol)
+            .first()
+        )
+        if existing:
+            record = map_model(existing, financial_scores)
+        else:
+            record = CompanyFinancialScores(
+                **financial_scores.model_dump(exclude_unset=True)
             )
-            if existing:
-                record = map_model(existing, score)
-            else:
-                record = CompanyFinancialScores(**score.model_dump(exclude_unset=True))
-                self._db.add(record)
-            records.append(record)
+            self._db.add(record)
         self._db.commit()
-        for record in records:
-            self._db.refresh(record)
-        return records
+        self._db.refresh(record)
+        return record

@@ -11,6 +11,7 @@ from app.schemas.key_metrics import CompanyKeyMetricsRead
 from app.services.internal.metrics_sync_service import MetricsSyncService
 
 router = APIRouter(prefix="/metrics", tags=["Internal Metrics"])
+period_options = ["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]
 
 
 def get_metrics_sync_service(
@@ -32,9 +33,7 @@ def get_metrics_sync_service(
 async def sync_company_key_metrics(
     symbol: str,
     limit: int = Query(default=40, ge=1, le=100),
-    period: str = Query(
-        default="quarter", enum=["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]
-    ),
+    period: str = Query(default="quarter", enum=period_options),
     service: MetricsSyncService = Depends(get_metrics_sync_service),
 ):
     """
@@ -57,9 +56,7 @@ async def sync_company_key_metrics(
 async def sync_company_financial_ratios(
     symbol: str,
     limit: int = Query(default=40, ge=1, le=100),
-    period: str = Query(
-        default="quarter", enum=["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]
-    ),
+    period: str = Query(default="quarter", enum=period_options),
     service: MetricsSyncService = Depends(get_metrics_sync_service),
 ):
     """

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import BigInteger, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -25,8 +25,8 @@ class CompanyKeyMetrics(Base):
     reported_currency: Mapped[str] = mapped_column(String(10), nullable=False)
 
     # Market metrics
-    market_cap: Mapped[int] = mapped_column(nullable=True)
-    enterprise_value: Mapped[int] = mapped_column(nullable=True)
+    market_cap: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    enterprise_value: Mapped[int] = mapped_column(BigInteger, nullable=True)
     ev_to_sales: Mapped[float] = mapped_column(nullable=True)
     ev_to_operating_cash_flow: Mapped[float] = mapped_column(nullable=True)
     ev_to_free_cash_flow: Mapped[float] = mapped_column(nullable=True)
@@ -40,8 +40,8 @@ class CompanyKeyMetrics(Base):
     interest_burden: Mapped[float] = mapped_column(nullable=True)
 
     # Capital metrics
-    working_capital: Mapped[int] = mapped_column(nullable=True)
-    invested_capital: Mapped[int] = mapped_column(nullable=True)
+    working_capital: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    invested_capital: Mapped[int] = mapped_column(BigInteger, nullable=True)
     return_on_assets: Mapped[float] = mapped_column(nullable=True)
     operating_return_on_assets: Mapped[float] = mapped_column(nullable=True)
     return_on_tangible_assets: Mapped[float] = mapped_column(nullable=True)
@@ -63,9 +63,9 @@ class CompanyKeyMetrics(Base):
     research_and_development_to_revenue: Mapped[float] = mapped_column(nullable=True)
     stock_based_compensation_to_revenue: Mapped[float] = mapped_column(nullable=True)
     intangibles_to_total_assets: Mapped[float] = mapped_column(nullable=True)
-    average_receivables: Mapped[int] = mapped_column(nullable=True)
-    average_payables: Mapped[int] = mapped_column(nullable=True)
-    average_inventory: Mapped[int] = mapped_column(nullable=True)
+    average_receivables: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    average_payables: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    average_inventory: Mapped[int] = mapped_column(BigInteger, nullable=True)
     days_of_sales_outstanding: Mapped[float] = mapped_column(nullable=True)
     days_of_payables_outstanding: Mapped[float] = mapped_column(nullable=True)
     days_of_inventory_outstanding: Mapped[float] = mapped_column(nullable=True)
@@ -73,8 +73,8 @@ class CompanyKeyMetrics(Base):
     cash_conversion_cycle: Mapped[float] = mapped_column(nullable=True)
     free_cash_flow_to_equity: Mapped[float] = mapped_column(nullable=True)
     free_cash_flow_to_firm: Mapped[float] = mapped_column(nullable=True)
-    tangible_asset_value: Mapped[int] = mapped_column(nullable=True)
-    net_current_asset_value: Mapped[int] = mapped_column(nullable=True)
+    tangible_asset_value: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    net_current_asset_value: Mapped[int] = mapped_column(BigInteger, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

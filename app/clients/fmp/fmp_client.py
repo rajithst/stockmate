@@ -33,10 +33,12 @@ from app.clients.fmp.models.stock import (
     FMPStockSplit,
 )
 from app.util.logs import setup_logger
+from app.core.config import config
 
 BASE_URL = "https://financialmodelingprep.com/stable"
-
+IS_DEV = config.debug
 logger = setup_logger(__name__)
+PERIODS = {"quarter", "annual", "Q1", "Q2", "Q3", "Q4", "FY"}
 
 
 class FMPClient:
@@ -183,9 +185,13 @@ class FMPClient:
         Returns:
             list: A list of cash flow statement records.
         """
+        if IS_DEV:
+            params = {"symbol": symbol}
+        else:
+            params = {"symbol": symbol, "period": period, "limit": limit}
         cash_flow_statements = self.__get_by_url(
             endpoint="cash-flow-statement",
-            params={"symbol": symbol, "period": period, "limit": limit},
+            params=params,
         )
         return (
             [FMPCompanyCashFlowStatement(**stmt) for stmt in cash_flow_statements]
@@ -204,13 +210,19 @@ class FMPClient:
         Returns:
             list: A list of key metrics records.
         """
-        if period not in ["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]:
+        if period not in PERIODS:
             raise ValueError("Period must be either 'quarter' or 'annual'.")
         if not symbol:
             raise ValueError("Symbol is required.")
-        key_metrics = fmpsdk.key_metrics(
-            symbol=symbol, period=period, limit=limit, apikey=self.token
+        if IS_DEV:
+            params = {"symbol": symbol}
+        else:
+            params = {"symbol": symbol, "period": period, "limit": limit}
+        key_metrics = self.__get_by_url(
+            endpoint="key-metrics",
+            params=params,
         )
+        print(key_metrics)
         return (
             [FMPKeyMetrics(**metric) for metric in key_metrics] if key_metrics else []
         )
@@ -226,12 +238,17 @@ class FMPClient:
         Returns:
             list: A list of financial ratios records.
         """
-        if period not in ["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]:
+        if period not in PERIODS:
             raise ValueError("Period must be either 'quarter' or 'annual'.")
         if not symbol:
             raise ValueError("Symbol is required.")
-        ratios = fmpsdk.financial_ratios(
-            symbol=symbol, period=period, limit=limit, apikey=self.token
+        if IS_DEV:
+            params = {"symbol": symbol}
+        else:
+            params = {"symbol": symbol, "period": period, "limit": limit}
+        ratios = self.__get_by_url(
+            endpoint="ratios",
+            params=params,
         )
         return [FMPFinancialRatios(**ratio) for ratio in ratios] if ratios else []
 
