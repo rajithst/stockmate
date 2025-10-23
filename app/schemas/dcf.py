@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -13,8 +14,8 @@ class DiscountedCashFlow(BaseModel):
 class DiscountedCashFlowRead(DiscountedCashFlow):
     id: int
     company_id: int
-    created_at: Optional[str]
-    updated_at: Optional[str]
+    created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

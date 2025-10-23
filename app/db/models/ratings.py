@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -26,8 +26,15 @@ class CompanyRatingSummary(Base):
     debt_to_equity_score: Mapped[int] = mapped_column(nullable=True)
     price_to_earnings_score: Mapped[int] = mapped_column(nullable=True)
     price_to_book_score: Mapped[int] = mapped_column(nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
 
     company: Mapped["Company"] = relationship(
         "Company",

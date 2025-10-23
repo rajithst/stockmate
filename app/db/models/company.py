@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import DateTime, Float, String, Text
+from sqlalchemy import DateTime, Float, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -50,8 +50,15 @@ class Company(Base):
     zip: Mapped[str] = mapped_column(String(20), nullable=True)
     image: Mapped[str] = mapped_column(String(250), nullable=True)
     ipo_date: Mapped[str] = mapped_column(String(50), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
     # Relationships
     dividends: Mapped[list["CompanyDividend"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="select"

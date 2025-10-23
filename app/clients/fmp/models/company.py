@@ -5,7 +5,7 @@ class FMPCompanyProfile(BaseModel):
     symbol: str
     company_name: str = Field(..., alias="companyName")
     price: float
-    market_cap: int = Field(..., alias="marketCap")
+    market_cap: float = Field(..., alias="marketCap")
     currency: str
     exchange_full_name: str = Field(..., alias="exchangeFullName")
     exchange: str

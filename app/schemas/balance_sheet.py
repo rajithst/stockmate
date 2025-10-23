@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -74,7 +73,7 @@ class CompanyBalanceSheetWrite(CompanyBalanceSheet):
 
 class CompanyBalanceSheetRead(CompanyBalanceSheet):
     id: int
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

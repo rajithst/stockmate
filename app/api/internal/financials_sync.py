@@ -8,19 +8,21 @@ from app.dependencies import get_db_session, get_fmp_client
 from app.schemas.balance_sheet import CompanyBalanceSheetRead
 from app.schemas.cashflow import CompanyCashFlowStatementRead
 from app.schemas.income_statement import CompanyIncomeStatementRead
-from app.services.internal.financial_sync_service import FinancialsSyncService
+from app.services.internal.financial_sync_service import FinancialSyncService
 
 router = APIRouter(prefix="/financials", tags=["Internal Financials"])
+
+period_options = ["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]
 
 
 def get_financials_sync_service(
     fmp_client: FMPClientProtocol = Depends(get_fmp_client),
     db_session: Session = Depends(get_db_session),
-) -> FinancialsSyncService:
+) -> FinancialSyncService:
     """
-    Provides FinancialsSyncService with required dependencies.
+    Provides FinancialSyncService with required dependencies.
     """
-    return FinancialsSyncService(market_api_client=fmp_client, session=db_session)
+    return FinancialSyncService(market_api_client=fmp_client, session=db_session)
 
 
 @router.get(
@@ -32,10 +34,8 @@ def get_financials_sync_service(
 async def sync_company_balance_sheets(
     symbol: str,
     limit: int = Query(default=40, ge=1, le=100),
-    period: str = Query(
-        default="quarter", enum=["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]
-    ),
-    service: FinancialsSyncService = Depends(get_financials_sync_service),
+    period: str = Query(default="quarter", enum=period_options),
+    service: FinancialSyncService = Depends(get_financials_sync_service),
 ):
     """
     Sync company's balance sheets from the external API and store in the database.
@@ -57,10 +57,8 @@ async def sync_company_balance_sheets(
 async def sync_company_income_statements(
     symbol: str,
     limit: int = Query(default=40, ge=1, le=100),
-    period: str = Query(
-        default="quarter", enum=["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]
-    ),
-    service: FinancialsSyncService = Depends(get_financials_sync_service),
+    period: str = Query(default="quarter", enum=period_options),
+    service: FinancialSyncService = Depends(get_financials_sync_service),
 ):
     """
     Sync company's income statements from the external API and store in the database.
@@ -82,10 +80,8 @@ async def sync_company_income_statements(
 async def sync_company_cash_flow_statements(
     symbol: str,
     limit: int = Query(default=40, ge=1, le=100),
-    period: str = Query(
-        default="quarter", enum=["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]
-    ),
-    service: FinancialsSyncService = Depends(get_financials_sync_service),
+    period: str = Query(default="quarter", enum=period_options),
+    service: FinancialSyncService = Depends(get_financials_sync_service),
 ):
     """
     Sync company's cash flow statements from the external API and store in the database.

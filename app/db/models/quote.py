@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Float, ForeignKey, String
+from sqlalchemy import DateTime, Float, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -30,10 +30,15 @@ class StockPriceChange(Base):
     three_year: Mapped[float] = mapped_column(Float, nullable=True)
     five_year: Mapped[float] = mapped_column(Float, nullable=True)
     ten_year: Mapped[float] = mapped_column(Float, nullable=True)
-
-    # Metadata
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
 
     # Relationship to company
     company: Mapped["Company"] = relationship(

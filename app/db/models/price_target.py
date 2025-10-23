@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from app.db.engine import Base
-from sqlalchemy import Float, DateTime, ForeignKey, String
+from sqlalchemy import Float, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from datetime import datetime
@@ -22,8 +22,15 @@ class CompanyPriceTarget(Base):
     target_low: Mapped[float] = mapped_column(Float, nullable=True)
     target_consensus: Mapped[float] = mapped_column(Float, nullable=True)
     target_median: Mapped[float] = mapped_column(Float, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
 
     company: Mapped["Company"] = relationship(
         "Company",
@@ -58,8 +65,15 @@ class CompanyPriceTargetSummary(Base):
     all_time_count: Mapped[int] = mapped_column(nullable=False)
     all_time_average_price_target: Mapped[float] = mapped_column(Float, nullable=False)
     publishers: Mapped[str] = mapped_column(String(500), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
 
     company: Mapped["Company"] = relationship(
         "Company",

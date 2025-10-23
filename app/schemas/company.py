@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.schemas.dcf import DiscountedCashFlowRead
 from app.schemas.grading import CompanyGradingSummaryRead
@@ -21,7 +22,7 @@ class Company(BaseModel):
     symbol: str
     company_name: str
     price: float
-    market_cap: int
+    market_cap: float
     currency: str
     exchange_full_name: str
     exchange: str
@@ -38,11 +39,19 @@ class Company(BaseModel):
     image: str
     ipo_date: str
 
+    @field_validator("website", "image", mode="before")
+    @classmethod
+    def convert_url_to_string(cls, v):
+        """Convert HttpUrl objects to strings."""
+        if v is None:
+            return v
+        return str(v)
+
 
 class CompanyRead(Company):
     id: int
-    created_at: Optional[str]
-    updated_at: Optional[str]
+    created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

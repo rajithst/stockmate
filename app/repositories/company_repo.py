@@ -10,6 +10,10 @@ class CompanyRepository:
     def __init__(self, db: Session):
         self._db = db
 
+    def get_company_by_symbol(self, symbol: str) -> Company | None:
+        """Retrieve a company by its stock symbol."""
+        return self._db.query(Company).filter(Company.symbol == symbol).first()
+
     def get_company_snapshot_by_symbol(self, symbol: str) -> Company | None:
         """Retrieve a company along with its related data by its stock symbol."""
         statement = (

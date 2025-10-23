@@ -32,18 +32,36 @@ class CompanyService:
         news_repo = CompanyNewsRepository(self._db)
 
         company_read = CompanyRead.model_validate(response)
-        grading_summary_read = CompanyGradingSummaryRead.model_validate(
-            response.grading_summary
+        grading_summary_read = (
+            CompanyGradingSummaryRead.model_validate(response.grading_summary)
+            if response.grading_summary
+            else None
         )
-        dcf_read = DiscountedCashFlowRead.model_validate(response.discounted_cash_flow)
-        rating_summary_read = CompanyRatingSummaryRead.model_validate(
-            response.rating_summary
+        dcf_read = (
+            DiscountedCashFlowRead.model_validate(response.discounted_cash_flow)
+            if response.discounted_cash_flow
+            else None
         )
-        price_target_read = CompanyPriceTargetRead.model_validate(response.price_target)
-        price_target_summary_read = CompanyPriceTargetSummaryRead.model_validate(
-            response.price_target_summary
+        rating_summary_read = (
+            CompanyRatingSummaryRead.model_validate(response.rating_summary)
+            if response.rating_summary
+            else None
         )
-        price_change_read = StockPriceChangeRead.model_validate(response.price_change)
+        price_target_read = (
+            CompanyPriceTargetRead.model_validate(response.price_target)
+            if response.price_target
+            else None
+        )
+        price_target_summary_read = (
+            CompanyPriceTargetSummaryRead.model_validate(response.price_target_summary)
+            if response.price_target_summary
+            else None
+        )
+        price_change_read = (
+            StockPriceChangeRead.model_validate(response.price_change)
+            if response.price_change
+            else None
+        )
 
         general_news_read = [
             CompanyGeneralNewsRead.model_validate(news)

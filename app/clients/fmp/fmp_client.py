@@ -15,6 +15,7 @@ from app.clients.fmp.models.financial_ratios import (
 )
 from app.clients.fmp.models.financial_statements import (
     FMPCompanyBalanceSheet,
+    FMPCompanyCashFlowStatement,
     FMPCompanyIncomeStatement,
 )
 from app.clients.fmp.models.news import (
@@ -129,7 +130,7 @@ class FMPClient:
         return [FMPDividend(**dividend) for dividend in calendar] if calendar else []
 
     # financial statements
-    def get_income_statement(
+    def get_income_statements(
         self, symbol: str, period: str = "annual", limit: int = 5
     ) -> list[FMPCompanyIncomeStatement]:
         """Fetches the income statement for a given stock symbol.
@@ -140,13 +141,9 @@ class FMPClient:
         Returns:
             list: A list of income statement records.
         """
-        if period not in ["quarter", "annual"]:
-            raise ValueError("Period must be either 'quarter' or 'annual'.")
-        if not symbol:
-            raise ValueError("Symbol is required.")
-
-        income_statements = fmpsdk.income_statement(
-            symbol=symbol, period=period, limit=limit, apikey=self.token
+        income_statements = self.__get_by_url(
+            endpoint="income-statement",
+            params={"symbol": symbol, "period": period, "limit": limit},
         )
         return (
             [FMPCompanyIncomeStatement(**stmt) for stmt in income_statements]
@@ -154,7 +151,7 @@ class FMPClient:
             else []
         )
 
-    def get_balance_sheet(
+    def get_balance_sheets(
         self, symbol: str, period: str = "annual", limit: int = 5
     ) -> list[FMPCompanyBalanceSheet]:
         """Fetches the balance sheet for a given stock symbol.
@@ -165,12 +162,9 @@ class FMPClient:
         Returns:
             list: A list of balance sheet records.
         """
-        if period not in ["quarter", "annual"]:
-            raise ValueError("Period must be either 'quarter' or 'annual'.")
-        if not symbol:
-            raise ValueError("Symbol is required.")
-        balance_sheets = fmpsdk.balance_sheet_statement(
-            symbol=symbol, period=period, limit=limit, apikey=self.token
+        balance_sheets = self.__get_by_url(
+            endpoint="balance-sheet-statement",
+            params={"symbol": symbol, "period": period, "limit": limit},
         )
         return (
             [FMPCompanyBalanceSheet(**stmt) for stmt in balance_sheets]
@@ -178,9 +172,9 @@ class FMPClient:
             else []
         )
 
-    def get_cash_flow(
+    def get_cash_flow_statements(
         self, symbol: str, period: str = "annual", limit: int = 5
-    ) -> list[FMPCompanyBalanceSheet]:
+    ) -> list[FMPCompanyCashFlowStatement]:
         """Fetches the cash flow statement for a given stock symbol.
         Args:
             symbol (str): The stock symbol to fetch the cash flow statement for.
@@ -189,15 +183,12 @@ class FMPClient:
         Returns:
             list: A list of cash flow statement records.
         """
-        if period not in ["quarter", "annual"]:
-            raise ValueError("Period must be either 'quarter' or 'annual'.")
-        if not symbol:
-            raise ValueError("Symbol is required.")
-        cash_flow_statements = fmpsdk.cash_flow_statement(
-            symbol=symbol, period=period, limit=limit, apikey=self.token
+        cash_flow_statements = self.__get_by_url(
+            endpoint="cash-flow-statement",
+            params={"symbol": symbol, "period": period, "limit": limit},
         )
         return (
-            [FMPCompanyBalanceSheet(**stmt) for stmt in cash_flow_statements]
+            [FMPCompanyCashFlowStatement(**stmt) for stmt in cash_flow_statements]
             if cash_flow_statements
             else []
         )

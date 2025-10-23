@@ -12,6 +12,7 @@ from app.clients.fmp.models.financial_ratios import (
 )
 from app.clients.fmp.models.financial_statements import (
     FMPCompanyBalanceSheet,
+    FMPCompanyCashFlowStatement,
     FMPCompanyIncomeStatement,
 )
 from app.clients.fmp.models.news import (
@@ -44,15 +45,15 @@ class FMPClientProtocol(Protocol):
         self, from_date: Optional[str], to_date: Optional[str]
     ) -> List[FMPDividend]: ...
 
-    def get_income_statement(
+    def get_income_statements(
         self, symbol: str, period: str, limit: int
     ) -> List[FMPCompanyIncomeStatement]: ...
-    def get_balance_sheet(
+    def get_balance_sheets(
         self, symbol: str, period: str, limit: int
     ) -> List[FMPCompanyBalanceSheet]: ...
-    def get_cash_flow(
+    def get_cash_flow_statements(
         self, symbol: str, period: str, limit: int
-    ) -> List[FMPCompanyBalanceSheet]: ...
+    ) -> List[FMPCompanyCashFlowStatement]: ...
 
     def get_key_metrics(
         self, symbol: str, period: str, limit: int

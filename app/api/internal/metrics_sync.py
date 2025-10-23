@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
 from app.dependencies import get_db_session, get_fmp_client
-from app.schemas.financial_ratio import FinancialRatioRead
+from app.schemas.financial_ratio import CompanyFinancialRatioRead
 from app.schemas.financial_score import CompanyFinancialScoresRead
 from app.schemas.key_metrics import CompanyKeyMetricsRead
 from app.services.internal.metrics_sync_service import MetricsSyncService
@@ -50,7 +50,7 @@ async def sync_company_key_metrics(
 
 @router.get(
     "/financial-ratios/{symbol}/sync",
-    response_model=List[FinancialRatioRead],
+    response_model=List[CompanyFinancialRatioRead],
     summary="Sync company financial ratios from external API",
     description="Fetches and upserts company's financial ratios from the external API into the database.",
 )

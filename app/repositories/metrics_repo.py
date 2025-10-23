@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.db.models.financial_ratio import CompanyFinancialRatio
+from app.db.models.financial_ratio import CompanyFinancialRatios
 from app.db.models.financial_score import CompanyFinancialScores
 from app.db.models.key_metrics import CompanyKeyMetrics
 from app.schemas.financial_ratio import CompanyFinancialRatioWrite
@@ -22,10 +22,10 @@ class MetricsRepository:
 
     def get_financial_ratios_by_symbol(
         self, symbol: str
-    ) -> list[CompanyFinancialRatio]:
+    ) -> list[CompanyFinancialRatios]:
         return (
-            self._db.query(CompanyFinancialRatio)
-            .filter(CompanyFinancialRatio.symbol == symbol)
+            self._db.query(CompanyFinancialRatios)
+            .filter(CompanyFinancialRatios.symbol == symbol)
             .all()
         )
 
@@ -61,11 +61,11 @@ class MetricsRepository:
 
     def upsert_financial_ratios(
         self, financial_ratios: list[CompanyFinancialRatioWrite]
-    ) -> list[CompanyFinancialRatio] | None:
+    ) -> list[CompanyFinancialRatios] | None:
         records = []
         for ratio in financial_ratios:
             existing = (
-                self._db.query(CompanyFinancialRatio)
+                self._db.query(CompanyFinancialRatios)
                 .filter_by(symbol=ratio.symbol, date=ratio.date)
                 .first()
             )

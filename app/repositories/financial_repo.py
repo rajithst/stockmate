@@ -61,7 +61,7 @@ class FinancialRepository:
             self._db.refresh(record)
         return records
 
-    def upsert_income_statement(
+    def upsert_income_statements(
         self, income_statements: list[CompanyIncomeStatementWrite]
     ) -> list[CompanyIncomeStatement] | None:
         records = []
@@ -84,7 +84,7 @@ class FinancialRepository:
             self._db.refresh(record)
         return records
 
-    def upsert_cash_flow_statement(
+    def upsert_cash_flow_statements(
         self, cash_flow_statements: list[CompanyCashFlowStatementWrite]
     ) -> list[CompanyCashFlowStatement] | None:
         records = []
