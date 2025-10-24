@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models.ratings import CompanyRatingSummary
 from app.schemas.rating import CompanyRatingSummaryRead, CompanyRatingSummaryWrite
-from app.util import map_model
+from app.util import model_mapper
 
 
 class CompanyRatingRepository:
@@ -25,7 +25,7 @@ class CompanyRatingRepository:
             .first()
         )
         if existing:
-            record = map_model(existing, ratings)
+            record = model_mapper(existing, ratings)
         else:
             record = CompanyRatingSummaryRead(**ratings.model_dump(exclude_unset=True))
             self._db.add(record)

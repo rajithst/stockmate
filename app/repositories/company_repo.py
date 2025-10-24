@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.db.models import Company
 from app.schemas.company import CompanyWrite
-from app.util.map_model import map_model
+from app.util.model_mapper import map_model
 
 
 class CompanyRepository:

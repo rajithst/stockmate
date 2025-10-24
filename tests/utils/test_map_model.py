@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy import Column, Float, Integer, String
 from sqlalchemy.orm import DeclarativeBase
 
-from app.util.map_model import map_model
+from app.util.model_mapper import map_model
 
 
 class TestMapModel:

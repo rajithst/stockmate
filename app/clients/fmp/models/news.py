@@ -4,6 +4,19 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
+class FMPStockNews(BaseModel):
+    symbol: str
+    published_date: datetime = Field(..., alias="publishedDate")
+    publisher: str
+    title: str
+    image: HttpUrl
+    site: str
+    text: str
+    url: HttpUrl
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class FMPGeneralNews(BaseModel):
     symbol: Optional[str] = None
     published_date: str = Field(..., alias="publishedDate")

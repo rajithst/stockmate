@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -21,7 +23,7 @@ def get_grading_sync_service(
 
 @router.get(
     "/{symbol}/sync",
-    response_model=CompanyGradingRead,
+    response_model=List[CompanyGradingRead],
     summary="Sync company grading from external API",
     description="Fetches and upserts a company's grading data from the external API into the database.",
 )
@@ -41,7 +43,7 @@ async def sync_company_grading(
     Raises:
         HTTPException: If grading data is not found for the symbol
     """
-    grading = service.upsert_grading(symbol)
+    grading = service.upsert_gradings(symbol)
     if not grading:
         raise HTTPException(
             status_code=404, detail=f"Grading data not found for symbol: {symbol}"

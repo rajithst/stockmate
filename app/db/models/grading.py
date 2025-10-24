@@ -21,8 +21,8 @@ class CompanyGrading(Base):
 
     date: Mapped[str] = mapped_column(String(20), nullable=False)
     grading_company: Mapped[str] = mapped_column(String(255), nullable=True)
-    previous_grade: Mapped[str] = mapped_column(String(10), nullable=True)
-    new_grade: Mapped[str] = mapped_column(String(10), nullable=True)
+    previous_grade: Mapped[str] = mapped_column(String(50), nullable=True)
+    new_grade: Mapped[str] = mapped_column(String(50), nullable=True)
     action: Mapped[str] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

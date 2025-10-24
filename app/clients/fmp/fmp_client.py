@@ -22,6 +22,7 @@ from app.clients.fmp.models.news import (
     FMPGeneralNews,
     FMPPriceTargetNews,
     FMPStockGradingNews,
+    FMPStockNews,
 )
 from app.clients.fmp.models.stock import (
     FMPStockGrading,
@@ -87,51 +88,6 @@ class FMPClient:
             return FMPCompanyProfile.model_validate(profile[0])
         return None
 
-    def get_stock_peer_companies(self, symbol: str) -> list[FMPStockPeer]:
-        """Fetches peer companies for a given stock symbol.
-        Args:
-            symbol (str): The stock symbol to fetch the peer companies for.
-        Returns:
-            list: A list of peer company profiles.
-        """
-        peers = fmpsdk.company_valuation.stock_peers(symbol=symbol, apikey=self.token)
-        return [FMPStockPeer(**peer) for peer in peers] if peers else []
-
-    # dividends
-
-    def get_dividends(self, symbol: str) -> list[FMPDividend]:
-        """Fetches the dividend history for a given stock symbol.
-        Args:
-            symbol (str): The stock symbol to fetch the dividends for.
-        Returns:
-            list: A list of dividend records.
-        """
-        historical_dividends = fmpsdk.historical_stock_dividend(
-            symbol=symbol, apikey=self.token
-        )
-        return (
-            [FMPDividend(**dividend) for dividend in historical_dividends]
-            if historical_dividends
-            else []
-        )
-
-    def get_market_dividend_calendar(
-        self, from_date: Optional[str] = None, to_date: Optional[str] = None
-    ) -> list[FMPDividend]:
-        """Fetches the market dividend calendar within a specified date range.
-        maximum range is 90 days.
-        Args:
-            from_date (Optional[str]): The start date for the calendar in 'YYYY-MM-DD' format.
-            to_date (Optional[str]): The end date for the calendar in 'YYYY-MM-DD' format.
-        Returns:
-            list: A list of dividend records within the specified date range.
-        """
-        calendar = fmpsdk.dividend_calendar(
-            from_date=from_date, to_date=to_date, apikey=self.token
-        )
-        return [FMPDividend(**dividend) for dividend in calendar] if calendar else []
-
-    # financial statements
     def get_income_statements(
         self, symbol: str, period: str = "annual", limit: int = 5
     ) -> list[FMPCompanyIncomeStatement]:
@@ -266,7 +222,160 @@ class FMPClient:
             return FMPFinancialScores(**data[0])
         return None
 
-    # stock splits
+    def get_company_gradings(self, symbol: str) -> list[FMPStockGrading]:
+        """Fetches stock grading history for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the grading history for.
+        Returns:
+            list: A list of stock grading records.
+        """
+        grades = self.__get_by_url(endpoint="grades", params={"symbol": symbol})
+        if grades:
+            return [FMPStockGrading(**grade) for grade in grades]
+        return []
+
+    def get_company_grading_summary(self, symbol: str) -> FMPStockGradingSummary | None:
+        """Fetches stock grading summary for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the grading summary for.
+        Returns:
+            Optional[FMPStockGradingSummary]: The stock grading summary if found, else None.
+        """
+        summary = self.__get_by_url(
+            endpoint="grades-consensus", params={"symbol": symbol}
+        )
+        return FMPStockGradingSummary(**summary[0]) if summary else None
+
+    def get_stock_peer_companies(self, symbol: str) -> list[FMPStockPeer]:
+        """Fetches peer companies for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the peer companies for.
+        Returns:
+            list: A list of peer company profiles.
+        """
+        peers = fmpsdk.company_valuation.stock_peers(symbol=symbol, apikey=self.token)
+        return [FMPStockPeer(**peer) for peer in peers] if peers else []
+
+    def get_price_target_news(
+        self, symbol: str, page: int = 1, limit: int = 10
+    ) -> list[FMPPriceTargetNews]:
+        """Fetches news related to stock price targets for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the price target news for.
+            page (int): The page number to fetch.
+            limit (int): The maximum number of news records to fetch.
+        Returns:
+            list: A list of price target news records.
+        """
+        price_target_news = self.__get_by_url(
+            endpoint="price-target-news",
+            params={"symbol": symbol, "limit": limit, "page": page},
+        )
+        if price_target_news:
+            return [FMPPriceTargetNews(**news) for news in price_target_news]
+        return []
+
+    def get_grading_news(
+        self, symbol: str, limit: int = 100
+    ) -> list[FMPStockGradingNews]:
+        """Fetches news related to stock grading changes for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the grading news for.
+            limit (int): The maximum number of news records to fetch.
+        Returns:
+            list: A list of stock grading news records.
+        """
+        news = self.__get_by_url(
+            endpoint="grades-news", params={"symbol": symbol, "limit": limit}
+        )
+        if news:
+            return [FMPStockGradingNews(**grade) for grade in news]
+        return []
+
+    # news
+    def get_latest_general_news(
+        self, from_date: str, to_date: str, limit: int = 100, page: int = 0
+    ) -> list[FMPGeneralNews]:
+        """Fetches the latest general news articles with pagination.
+        Args:
+            page (int): The page number to fetch.
+            limit (int): The maximum number of articles to fetch.
+        Returns:
+            list: A list of general news articles.
+        """
+        limit = min(limit, 100)  # maximum limit is 100
+        general_news = self.__get_by_url(
+            endpoint="news/general-latest",
+            params={"page": page, "limit": limit, "from": from_date, "to": to_date},
+        )
+        return [FMPGeneralNews(**news) for news in general_news] if general_news else []
+
+    def get_stock_news(
+        self,
+        symbol: str,
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+        page: int = 0,
+        limit: int = 20,
+    ) -> list[FMPStockNews]:
+        """Fetches stock-specific news articles for given stock symbols within a date range.
+        Args:
+            symbol (str): The stock symbol to fetch the news for.
+            from_date (Optional[str]): The start date for the news in 'YYYY-MM-DD' format.
+            to_date (Optional[str]): The end date for the news in 'YYYY-MM-DD' format.
+            page (int): The page number to fetch.
+            limit (int): The number of articles per page (maximum 100).
+        Returns:
+            list: A list of stock-specific news articles.
+        """
+        if page < 1:
+            raise ValueError("Page number must be greater than 0.")
+        limit = min(limit, 100)  # maximum limit is 100
+        stock_news = self.__get_by_url(
+            endpoint="news/stock",
+            params={
+                "symbols": symbol,
+                "from": from_date,
+                "to": to_date,
+                "page": page,
+                "limit": limit,
+            },
+        )
+        return [FMPStockNews(**news) for news in stock_news] if stock_news else []
+
+    ### ENDLINE METHODS ###
+
+    def get_dividends(self, symbol: str) -> list[FMPDividend]:
+        """Fetches the dividend history for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the dividends for.
+        Returns:
+            list: A list of dividend records.
+        """
+        historical_dividends = fmpsdk.historical_stock_dividend(
+            symbol=symbol, apikey=self.token
+        )
+        return (
+            [FMPDividend(**dividend) for dividend in historical_dividends]
+            if historical_dividends
+            else []
+        )
+
+    def get_market_dividend_calendar(
+        self, from_date: Optional[str] = None, to_date: Optional[str] = None
+    ) -> list[FMPDividend]:
+        """Fetches the market dividend calendar within a specified date range.
+        maximum range is 90 days.
+        Args:
+            from_date (Optional[str]): The start date for the calendar in 'YYYY-MM-DD' format.
+            to_date (Optional[str]): The end date for the calendar in 'YYYY-MM-DD' format.
+        Returns:
+            list: A list of dividend records within the specified date range.
+        """
+        calendar = fmpsdk.dividend_calendar(
+            from_date=from_date, to_date=to_date, apikey=self.token
+        )
+        return [FMPDividend(**dividend) for dividend in calendar] if calendar else []
 
     def get_stock_split(self, symbol: str) -> list[FMPStockSplit]:
         """Fetches the stock split history for a given stock symbol.
@@ -367,110 +476,6 @@ class FMPClient:
         if price_target:
             return FMPStockPriceTarget(**price_target[0])
         return None
-
-    def get_price_target_news(
-        self, symbol: str, limit: int = 10
-    ) -> list[FMPPriceTargetNews]:
-        """Fetches news related to stock price targets for a given stock symbol.
-        Args:
-            symbol (str): The stock symbol to fetch the price target news for.
-            limit (int): The maximum number of news records to fetch.
-        Returns:
-            list: A list of price target news records.
-        """
-        price_target_news = self.__get_by_url(
-            endpoint="price-target-news", params={"symbol": symbol, "limit": limit}
-        )
-        if price_target_news:
-            return [FMPPriceTargetNews(**news) for news in price_target_news]
-        return []
-
-    def get_stock_grade(self, symbol: str) -> list[FMPStockGrading]:
-        """Fetches stock grading history for a given stock symbol.
-        Args:
-            symbol (str): The stock symbol to fetch the grading history for.
-        Returns:
-            list: A list of stock grading records.
-        """
-        grades = self.__get_by_url(endpoint="grades", params={"symbol": symbol})
-        if grades:
-            return [FMPStockGrading(**grade) for grade in grades]
-        return []
-
-    def get_stock_grade_summary(self, symbol: str) -> Optional[FMPStockGradingSummary]:
-        """Fetches stock grading summary for a given stock symbol.
-        Args:
-            symbol (str): The stock symbol to fetch the grading summary for.
-        Returns:
-            Optional[FMPStockGradingSummary]: The stock grading summary if found, else None.
-        """
-        summary = self.__get_by_url(
-            endpoint="grades-summary", params={"symbol": symbol}
-        )
-        if summary:
-            return summary and FMPStockGradingSummary(**summary[0])
-        return None
-
-    def get_stock_grade_news(
-        self, symbol: str, limit: int = 100
-    ) -> list[FMPStockGradingNews]:
-        """Fetches news related to stock grading changes for a given stock symbol.
-        Args:
-            symbol (str): The stock symbol to fetch the grading news for.
-            limit (int): The maximum number of news records to fetch.
-        Returns:
-            list: A list of stock grading news records.
-        """
-        news = self.__get_by_url(
-            endpoint="grades-news", params={"symbol": symbol, "limit": limit}
-        )
-        if news:
-            return [FMPStockGradingNews(**grade) for grade in news]
-        return []
-
-    # news
-    def get_latest_general_news(self, page: int = 0) -> list[FMPGeneralNews]:
-        """Fetches the latest general news articles with pagination.
-        Args:
-            page (int): The page number to fetch.
-        Returns:
-            list: A list of general news articles.
-        """
-        if page < 1:
-            raise ValueError("Page number must be greater than 0.")
-        general_news = fmpsdk.general_news(page=page, apikey=self.token)
-        return [FMPGeneralNews(**news) for news in general_news] if general_news else []
-
-    def get_stock_news(
-        self,
-        symbols: list[str],
-        from_date: Optional[str] = None,
-        to_date: Optional[str] = None,
-        page: int = 0,
-        limit: int = 20,
-    ) -> list[FMPGeneralNews]:
-        """Fetches stock-specific news articles within a specified date range and pagination.
-        Args:
-            symbols (list[str]): A list of stock symbols to fetch news for.
-            from_date (Optional[str]): The start date for the news in 'YYYY-MM-DD' format.
-            to_date (Optional[str]): The end date for the news in 'YYYY-MM-DD' format.
-            page (int): The page number to fetch.
-            limit (int): The number of articles per page (maximum 100).
-        Returns:
-            list: A list of stock-specific news articles.
-        """
-        if page < 1:
-            raise ValueError("Page number must be greater than 0.")
-        limit = min(limit, 100)  # maximum limit is 100
-        stock_news = fmpsdk.stock_news(
-            tickers=symbols,
-            from_date=from_date,
-            to_date=to_date,
-            page=page,
-            limit=limit,
-            apikey=self.token,
-        )
-        return [FMPGeneralNews(**news) for news in stock_news] if stock_news else []
 
     # discounted cash flow
     def get_discounted_cash_flow(self, symbol: str) -> Optional[FMPDFCValuation]:

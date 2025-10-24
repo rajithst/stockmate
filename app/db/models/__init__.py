@@ -9,7 +9,7 @@ from .financial_score import CompanyFinancialScores
 from .grading import CompanyGrading, CompanyGradingSummary
 from .income_statement import CompanyIncomeStatement
 from .key_metrics import CompanyKeyMetrics
-from .news import CompanyGeneralNews, CompanyGradingNews, CompanyPriceTargetNews
+from .news import CompanyGeneralNews, CompanyGradingNews, CompanyPriceTargetNews, CompanyStockNews
 from .ratings import CompanyRatingSummary
 from .stock import CompanyStockPeer, CompanyStockSplit
 from .dcf import DiscountedCashFlow

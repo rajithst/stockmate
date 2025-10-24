@@ -6,7 +6,7 @@ from app.db.models.income_statement import CompanyIncomeStatement
 from app.schemas.balance_sheet import CompanyBalanceSheetWrite
 from app.schemas.cashflow import CompanyCashFlowStatementWrite
 from app.schemas.income_statement import CompanyIncomeStatementWrite
-from app.util.map_model import map_model
+from app.util.model_mapper import map_model
 
 
 class FinancialRepository:

@@ -10,6 +10,44 @@ if TYPE_CHECKING:
     from app.db.models.company import Company
 
 
+class CompanyStockNews(Base):
+    __tablename__ = "company_stock_news"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+    symbol: Mapped[str] = mapped_column(String(12), nullable=True, index=True)
+
+    published_date: Mapped[datetime] = mapped_column(nullable=False)
+    publisher: Mapped[str] = mapped_column(String(255), nullable=False)
+    news_title: Mapped[str] = mapped_column(String(500), nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    image: Mapped[str] = mapped_column(String(1000), nullable=True)
+    site: Mapped[str] = mapped_column(String(255), nullable=True)
+    news_url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    sentiment: Mapped[str] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    company: Mapped["Company"] = relationship(
+        "Company",
+        back_populates="stock_news",
+        foreign_keys=[company_id],
+        lazy="joined",
+    )
+
+    def __repr__(self):
+        return f"<CompanyStockNews(symbol={self.symbol}, title={self.news_title})>"
+
+
 class CompanyGeneralNews(Base):
     __tablename__ = "company_general_news"
 

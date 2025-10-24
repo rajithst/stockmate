@@ -25,23 +25,46 @@ def get_news_sync_service(
 
 
 @router.get(
-    "/general/{symbol}/sync",
+    "/stock/{symbol}/sync",
+    response_model=List[CompanyGeneralNewsRead],
+    summary="Sync company general news from external API",
+    description="Fetches and upserts company's general news from the external API into the database.",
+)
+async def sync_stock_news(
+    symbol: str,
+    limit: int = Query(default=100, ge=1, le=1000),
+    service: NewsSyncService = Depends(get_news_sync_service),
+):
+    """
+    Sync company stock news from the external API and store in the database.
+    """
+    news = service.upsert_stock_news(symbol, limit)
+    if not news:
+        raise HTTPException(
+            status_code=404, detail=f" stock news not found for symbol: {symbol}"
+        )
+    return news
+
+
+@router.get(
+    "/general/sync",
     response_model=List[CompanyGeneralNewsRead],
     summary="Sync company general news from external API",
     description="Fetches and upserts company's general news from the external API into the database.",
 )
 async def sync_company_general_news(
-    symbol: str,
+    from_date: str,
+    to_date: str,
     limit: int = Query(default=100, ge=1, le=1000),
     service: NewsSyncService = Depends(get_news_sync_service),
 ):
     """
     Sync company's general news from the external API and store in the database.
     """
-    news = service.upsert_general_news(symbol, limit)
+    news = service.upsert_general_news(from_date, to_date, limit)
     if not news:
         raise HTTPException(
-            status_code=404, detail=f"General news not found for symbol: {symbol}"
+            status_code=404, detail="General news not found for the given date range"
         )
     return news
 

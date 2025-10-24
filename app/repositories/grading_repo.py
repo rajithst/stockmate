@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models.grading import CompanyGrading, CompanyGradingSummary
 from app.schemas.grading import CompanyGradingSummaryWrite, CompanyGradingWrite
-from app.util.map_model import map_model
+from app.util.model_mapper import map_model
 
 
 class GradingRepository:
@@ -14,7 +14,7 @@ class GradingRepository:
     ) -> list[CompanyGrading]:
         return (
             self._db.query(CompanyGrading)
-            .filter(CompanyGrading.company_symbol == symbol)
+            .filter(CompanyGrading.symbol == symbol)
             .order_by(CompanyGrading.date.desc())
             .limit(limit)
             .all()
@@ -27,7 +27,7 @@ class GradingRepository:
         for grading in grading_data:
             existing = (
                 self._db.query(CompanyGrading)
-                .filter_by(company_symbol=symbol, date=grading.date)
+                .filter_by(symbol=symbol, date=grading.date)
                 .first()
             )
             if existing:
@@ -53,7 +53,7 @@ class GradingSummaryRepository:
     ) -> CompanyGradingSummary:
         existing = (
             self._db.query(CompanyGradingSummary)
-            .filter_by(company_symbol=summary_data.symbol)
+            .filter_by(symbol=summary_data.symbol)
             .first()
         )
 

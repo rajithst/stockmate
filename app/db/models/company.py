@@ -23,6 +23,7 @@ if TYPE_CHECKING:
         CompanyGeneralNews,
         CompanyGradingNews,
         CompanyPriceTargetNews,
+        CompanyStockNews,
     )
     from app.db.models.stock import CompanyDividend, CompanyStockPeer, CompanyStockSplit
 
@@ -128,6 +129,9 @@ class Company(Base):
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     grading_news: Mapped[list["CompanyGradingNews"]] = relationship(
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
+    )
+    stock_news: Mapped[list["CompanyStockNews"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     key_metrics: Mapped[list["CompanyKeyMetrics"]] = relationship(

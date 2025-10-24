@@ -4,7 +4,7 @@ from app.db.models.dividend import CompanyDividend
 from app.db.models.stock import CompanyStockPeer, CompanyStockSplit
 from app.schemas.dividend import CompanyDividendWrite
 from app.schemas.stock import CompanyStockPeerWrite, CompanyStockSplitWrite
-from app.util.map_model import map_model
+from app.util.model_mapper import map_model
 
 
 class StockInfoRepository:

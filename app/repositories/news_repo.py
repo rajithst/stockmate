@@ -6,12 +6,15 @@ from app.db.models.news import (
     CompanyGeneralNews,
     CompanyGradingNews,
     CompanyPriceTargetNews,
+    CompanyStockNews,
 )
 from app.schemas.news import (
     CompanyGeneralNewsWrite,
     CompanyGradingNewsWrite,
     CompanyPriceTargetNewsWrite,
+    CompanyStockNewsWrite,
 )
+from app.util.model_mapper import map_model
 
 
 class CompanyNewsRepository:
@@ -62,13 +65,15 @@ class CompanyNewsRepository:
         for news in news_data:
             existing = (
                 self._db.query(CompanyGeneralNews)
-                .filter_by(symbol=news.symbol, title=news.title)
+                .filter_by(
+                    publisher=news.publisher,
+                    title=news.title,
+                    published_date=news.published_date,
+                )
                 .first()
             )
             if existing:
-                for key, value in news.model_dump(exclude_unset=True).items():
-                    setattr(existing, key, value)
-                news_record = existing
+                news_record = map_model(existing, news)
             else:
                 news_record = CompanyGeneralNews(**news.model_dump(exclude_unset=True))
                 self._db.add(news_record)
@@ -90,9 +95,7 @@ class CompanyNewsRepository:
                 .first()
             )
             if existing:
-                for key, value in news.model_dump(exclude_unset=True).items():
-                    setattr(existing, key, value)
-                news_record = existing
+                news_record = map_model(existing, news)
             else:
                 news_record = CompanyPriceTargetNews(
                     **news.model_dump(exclude_unset=True)
@@ -116,9 +119,29 @@ class CompanyNewsRepository:
                 .first()
             )
             if existing:
-                for key, value in news.model_dump(exclude_unset=True).items():
-                    setattr(existing, key, value)
-                news_record = existing
+                news_record = map_model(existing, news)
+            else:
+                news_record = CompanyGradingNews(**news.model_dump(exclude_unset=True))
+                self._db.add(news_record)
+            news_records.append(news_record)
+        self._db.commit()
+        for record in news_records:
+            self._db.refresh(record)
+        return news_records
+
+    def upsert_stock_news(
+        self, news_data: List[CompanyStockNewsWrite]
+    ) -> List[CompanyStockNews]:
+        """Insert or update stock news articles."""
+        news_records = []
+        for news in news_data:
+            existing = (
+                self._db.query(CompanyStockNews)
+                .filter_by(symbol=news.symbol, title=news.title)
+                .first()
+            )
+            if existing:
+                news_record = map_model(existing, news)
             else:
                 news_record = CompanyGradingNews(**news.model_dump(exclude_unset=True))
                 self._db.add(news_record)

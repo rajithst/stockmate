@@ -6,7 +6,7 @@ from app.db.models.key_metrics import CompanyKeyMetrics
 from app.schemas.financial_ratio import CompanyFinancialRatioWrite
 from app.schemas.financial_score import CompanyFinancialScoresWrite
 from app.schemas.key_metrics import CompanyKeyMetricsWrite
-from app.util.map_model import map_model
+from app.util.model_mapper import map_model
 
 
 class MetricsRepository:

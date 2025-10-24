@@ -4,6 +4,31 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
+class CompanyStockNews(BaseModel):
+    company_id: Optional[int]
+    symbol: Optional[str]
+    published_date: datetime
+    publisher: str
+    news_title: str
+    news_url: str
+    text: str
+    image: Optional[str]
+    site: Optional[str]
+    sentiment: Optional[str]
+
+
+class CompanyStockNewsRead(CompanyStockNews):
+    id: int
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyStockNewsWrite(CompanyStockNews):
+    model_config = ConfigDict(from_attributes=True)
+
+
 class CompanyGeneralNews(BaseModel):
     company_id: Optional[int]
     symbol: Optional[str]

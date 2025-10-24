@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models.price_target import CompanyPriceTarget, CompanyPriceTargetSummary
 from app.schemas.price_target import CompanyPriceTargetWrite
-from app.util import map_model
+from app.util import model_mapper
 
 
 class CompanyPriceTargetRepository:
@@ -36,7 +36,7 @@ class CompanyPriceTargetRepository:
                 .first()
             )
             if existing:
-                record = map_model(existing, price_target)
+                record = model_mapper(existing, price_target)
             else:
                 record = CompanyPriceTarget(
                     **price_target.model_dump(exclude_unset=True)
@@ -58,7 +58,7 @@ class CompanyPriceTargetRepository:
         )
 
         if existing:
-            summary = map_model(existing, summary_data)
+            summary = model_mapper(existing, summary_data)
         else:
             summary = CompanyPriceTargetSummary(
                 **summary_data.model_dump(exclude_unset=True)
