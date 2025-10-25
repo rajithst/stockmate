@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from app.db.models.company import Company
 
 
-class CompanyFinancialScores(Base):
+class CompanyFinancialScore(Base):
     __tablename__ = "company_financial_scores"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

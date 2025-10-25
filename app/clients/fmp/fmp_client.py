@@ -1,13 +1,13 @@
 from typing import Any, Dict, Optional
+import time
+from dataclasses import dataclass
 
-import fmpsdk
 import requests
 
 from app.clients.fmp.models.analyst_estimates import FMPAnalystEstimates
 from app.clients.fmp.models.company import FMPCompanyProfile
 from app.clients.fmp.models.discounted_cashflow import FMPDFCValuation
-from app.clients.fmp.models.dividend import FMPDividend
-from app.clients.fmp.models.earnings import FMPEarnings
+from app.clients.fmp.models.dividend import FMPDividend, FMPDividendCalendar
 from app.clients.fmp.models.financial_ratios import (
     FMPFinancialRatios,
     FMPFinancialScores,
@@ -29,12 +29,13 @@ from app.clients.fmp.models.stock import (
     FMPStockGradingSummary,
     FMPStockPeer,
     FMPStockPriceTarget,
+    FMPStockPriceTargetSummary,
     FMPStockRating,
     FMPStockScreenResult,
     FMPStockSplit,
 )
-from app.util.logs import setup_logger
 from app.core.config import config
+from app.util.logs import setup_logger
 
 BASE_URL = "https://financialmodelingprep.com/stable"
 IS_DEV = config.debug
@@ -42,11 +43,56 @@ logger = setup_logger(__name__)
 PERIODS = {"quarter", "annual", "Q1", "Q2", "Q3", "Q4", "FY"}
 
 
+# Custom Exception Classes
+class FMPError(Exception):
+    """Base exception for FMP client errors"""
+
+    pass
+
+
+class FMPRateLimitError(FMPError):
+    """Raised when API rate limit is exceeded"""
+
+    pass
+
+
+class FMPTimeoutError(FMPError):
+    """Raised when request times out"""
+
+    pass
+
+
+class FMPHTTPError(FMPError):
+    """Raised for HTTP errors"""
+
+    pass
+
+
+class FMPConnectionError(FMPError):
+    """Raised for connection errors"""
+
+    pass
+
+
+@dataclass
+class FMPConfig:
+    """Configuration for FMP client"""
+
+    api_key: str
+    base_url: str = "https://financialmodelingprep.com/stable"
+    timeout: int = 10
+    max_retries: int = 3
+    backoff_factor: float = 1.0
+    rate_limit_delay: float = 0.1
+
+
 class FMPClient:
-    def __init__(self, token):
+    def __init__(self, token, config: Optional[FMPConfig] = None):
         self.token = token
-        self.BASE_URL = BASE_URL
-        self.timeout = 10  # seconds
+        self.config = config or FMPConfig(api_key=token)
+        self.BASE_URL = self.config.base_url
+        self.timeout = self.config.timeout
+        self._last_request_time = 0
 
     def get_stock_screeners(self, params: dict) -> list[FMPStockScreenResult]:
         """Fetches stock screener results based on provided parameters.
@@ -73,8 +119,11 @@ class FMPClient:
             "country": params.get("country"),
             "limit": params.get("limit", 10),
         }
-        stocks = fmpsdk.stock_screener(**screener_params, apikey=self.token)
-        return [FMPStockScreenResult(**stock) for stock in stocks] if stocks else []
+        stocks = self.__get_by_url(
+            endpoint="company-screener",
+            params={**screener_params},
+        )
+        return self._handle_list_response(stocks, FMPStockScreenResult)
 
     def get_company_profile(self, symbol: str) -> Optional[FMPCompanyProfile]:
         """Fetches the company profile for a given stock symbol.
@@ -84,9 +133,7 @@ class FMPClient:
             Optional[FMPCompanyProfile]: The company profile if found, else None.
         """
         profile = self.__get_by_url(endpoint="profile", params={"symbol": symbol})
-        if profile and isinstance(profile, list):
-            return FMPCompanyProfile.model_validate(profile[0])
-        return None
+        return self._handle_single_response(profile, FMPCompanyProfile)
 
     def get_income_statements(
         self, symbol: str, period: str = "annual", limit: int = 5
@@ -103,11 +150,7 @@ class FMPClient:
             endpoint="income-statement",
             params={"symbol": symbol, "period": period, "limit": limit},
         )
-        return (
-            [FMPCompanyIncomeStatement(**stmt) for stmt in income_statements]
-            if income_statements
-            else []
-        )
+        return self._handle_list_response(income_statements, FMPCompanyIncomeStatement)
 
     def get_balance_sheets(
         self, symbol: str, period: str = "annual", limit: int = 5
@@ -124,11 +167,7 @@ class FMPClient:
             endpoint="balance-sheet-statement",
             params={"symbol": symbol, "period": period, "limit": limit},
         )
-        return (
-            [FMPCompanyBalanceSheet(**stmt) for stmt in balance_sheets]
-            if balance_sheets
-            else []
-        )
+        return self._handle_list_response(balance_sheets, FMPCompanyBalanceSheet)
 
     def get_cash_flow_statements(
         self, symbol: str, period: str = "annual", limit: int = 5
@@ -149,10 +188,8 @@ class FMPClient:
             endpoint="cash-flow-statement",
             params=params,
         )
-        return (
-            [FMPCompanyCashFlowStatement(**stmt) for stmt in cash_flow_statements]
-            if cash_flow_statements
-            else []
+        return self._handle_list_response(
+            cash_flow_statements, FMPCompanyCashFlowStatement
         )
 
     def get_key_metrics(
@@ -166,10 +203,9 @@ class FMPClient:
         Returns:
             list: A list of key metrics records.
         """
-        if period not in PERIODS:
-            raise ValueError("Period must be either 'quarter' or 'annual'.")
-        if not symbol:
-            raise ValueError("Symbol is required.")
+        self._validate_symbol(symbol)
+        self._validate_period(period)
+        self._validate_limit(limit)
         if IS_DEV:
             params = {"symbol": symbol}
         else:
@@ -178,10 +214,7 @@ class FMPClient:
             endpoint="key-metrics",
             params=params,
         )
-        print(key_metrics)
-        return (
-            [FMPKeyMetrics(**metric) for metric in key_metrics] if key_metrics else []
-        )
+        return self._handle_list_response(key_metrics, FMPKeyMetrics)
 
     def get_financial_ratios(
         self, symbol: str, period: str = "annual", limit: int = 5
@@ -194,10 +227,9 @@ class FMPClient:
         Returns:
             list: A list of financial ratios records.
         """
-        if period not in PERIODS:
-            raise ValueError("Period must be either 'quarter' or 'annual'.")
-        if not symbol:
-            raise ValueError("Symbol is required.")
+        self._validate_symbol(symbol)
+        self._validate_period(period)
+        self._validate_limit(limit)
         if IS_DEV:
             params = {"symbol": symbol}
         else:
@@ -206,7 +238,7 @@ class FMPClient:
             endpoint="ratios",
             params=params,
         )
-        return [FMPFinancialRatios(**ratio) for ratio in ratios] if ratios else []
+        return self._handle_list_response(ratios, FMPFinancialRatios)
 
     def get_financial_scores(self, symbol: str) -> Optional[FMPFinancialScores]:
         """Fetches financial scores for a given stock symbol.
@@ -215,12 +247,9 @@ class FMPClient:
         Returns:
             Optional[FMPFinancialScores]: The financial scores if found, else None.
         """
-        if not symbol:
-            raise ValueError("Symbol is required.")
+        self._validate_symbol(symbol)
         data = self.__get_by_url(endpoint="financial-scores", params={"symbol": symbol})
-        if data:
-            return FMPFinancialScores(**data[0])
-        return None
+        return self._handle_single_response(data, FMPFinancialScores)
 
     def get_company_gradings(self, symbol: str) -> list[FMPStockGrading]:
         """Fetches stock grading history for a given stock symbol.
@@ -230,9 +259,7 @@ class FMPClient:
             list: A list of stock grading records.
         """
         grades = self.__get_by_url(endpoint="grades", params={"symbol": symbol})
-        if grades:
-            return [FMPStockGrading(**grade) for grade in grades]
-        return []
+        return self._handle_list_response(grades, FMPStockGrading)
 
     def get_company_grading_summary(self, symbol: str) -> FMPStockGradingSummary | None:
         """Fetches stock grading summary for a given stock symbol.
@@ -244,7 +271,7 @@ class FMPClient:
         summary = self.__get_by_url(
             endpoint="grades-consensus", params={"symbol": symbol}
         )
-        return FMPStockGradingSummary(**summary[0]) if summary else None
+        return self._handle_single_response(summary, FMPStockGradingSummary)
 
     def get_stock_peer_companies(self, symbol: str) -> list[FMPStockPeer]:
         """Fetches peer companies for a given stock symbol.
@@ -253,8 +280,8 @@ class FMPClient:
         Returns:
             list: A list of peer company profiles.
         """
-        peers = fmpsdk.company_valuation.stock_peers(symbol=symbol, apikey=self.token)
-        return [FMPStockPeer(**peer) for peer in peers] if peers else []
+        peers = self.__get_by_url(endpoint="stock-peers", params={"symbol": symbol})
+        return self._handle_list_response(peers, FMPStockPeer)
 
     def get_price_target_news(
         self, symbol: str, page: int = 1, limit: int = 10
@@ -271,9 +298,7 @@ class FMPClient:
             endpoint="price-target-news",
             params={"symbol": symbol, "limit": limit, "page": page},
         )
-        if price_target_news:
-            return [FMPPriceTargetNews(**news) for news in price_target_news]
-        return []
+        return self._handle_list_response(price_target_news, FMPPriceTargetNews)
 
     def get_grading_news(
         self, symbol: str, limit: int = 100
@@ -288,9 +313,7 @@ class FMPClient:
         news = self.__get_by_url(
             endpoint="grades-news", params={"symbol": symbol, "limit": limit}
         )
-        if news:
-            return [FMPStockGradingNews(**grade) for grade in news]
-        return []
+        return self._handle_list_response(news, FMPStockGradingNews)
 
     # news
     def get_latest_general_news(
@@ -308,7 +331,7 @@ class FMPClient:
             endpoint="news/general-latest",
             params={"page": page, "limit": limit, "from": from_date, "to": to_date},
         )
-        return [FMPGeneralNews(**news) for news in general_news] if general_news else []
+        return self._handle_list_response(general_news, FMPGeneralNews)
 
     def get_stock_news(
         self,
@@ -341,30 +364,63 @@ class FMPClient:
                 "limit": limit,
             },
         )
-        return [FMPStockNews(**news) for news in stock_news] if stock_news else []
+        return self._handle_list_response(stock_news, FMPStockNews)
 
-    ### ENDLINE METHODS ###
+    def get_price_target(self, symbol: str) -> FMPStockPriceTarget | None:
+        """Fetches stock price target for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the price target for.
+        Returns:
+            Optional[FMPStockPriceTarget]: The stock price target if found, else None.
+        """
+        price_target = self.__get_by_url(
+            endpoint="price-target-consensus", params={"symbol": symbol}
+        )
+        return self._handle_single_response(price_target, FMPStockPriceTarget)
 
-    def get_dividends(self, symbol: str) -> list[FMPDividend]:
+    def get_price_target_summary(
+        self, symbol: str
+    ) -> FMPStockPriceTargetSummary | None:
+        """Fetches stock price target summary for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the price target summary for.
+        Returns:
+            Optional[FMPStockPriceTargetSummary]: The stock price target summary if found, else None
+        """
+        price_target = self.__get_by_url(
+            endpoint="price-target-summary", params={"symbol": symbol}
+        )
+        return self._handle_single_response(price_target, FMPStockPriceTargetSummary)
+
+    def get_company_rating(self, symbol: str) -> FMPStockRating | None:
+        """Fetches stock rating for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the rating for.
+        Returns:
+            Optional[FMPStockRating]: The stock rating if found, else None.
+        """
+        rating = self.__get_by_url(
+            endpoint="ratings-snapshot", params={"symbol": symbol}
+        )
+        return self._handle_single_response(rating, FMPStockRating)
+
+    def get_dividends(self, symbol: str, limit: int = 100) -> list[FMPDividend]:
         """Fetches the dividend history for a given stock symbol.
         Args:
             symbol (str): The stock symbol to fetch the dividends for.
         Returns:
             list: A list of dividend records.
         """
-        historical_dividends = fmpsdk.historical_stock_dividend(
-            symbol=symbol, apikey=self.token
+        historical_dividends = self.__get_by_url(
+            endpoint="dividends",
+            params={"symbol": symbol, "limit": limit},
         )
-        return (
-            [FMPDividend(**dividend) for dividend in historical_dividends]
-            if historical_dividends
-            else []
-        )
+        return self._handle_list_response(historical_dividends, FMPDividend)
 
-    def get_market_dividend_calendar(
+    def get_dividend_calendar(
         self, from_date: Optional[str] = None, to_date: Optional[str] = None
-    ) -> list[FMPDividend]:
-        """Fetches the market dividend calendar within a specified date range.
+    ) -> list[FMPDividendCalendar]:
+        """Fetches the dividend calendar within a specified date range.
         maximum range is 90 days.
         Args:
             from_date (Optional[str]): The start date for the calendar in 'YYYY-MM-DD' format.
@@ -372,65 +428,25 @@ class FMPClient:
         Returns:
             list: A list of dividend records within the specified date range.
         """
-        calendar = fmpsdk.dividend_calendar(
-            from_date=from_date, to_date=to_date, apikey=self.token
+        calendar = self.__get_by_url(
+            endpoint="dividends-calendar",
+            params={"from": from_date, "to": to_date},
         )
-        return [FMPDividend(**dividend) for dividend in calendar] if calendar else []
+        return self._handle_list_response(calendar, FMPDividendCalendar)
 
-    def get_stock_split(self, symbol: str) -> list[FMPStockSplit]:
+    def get_stock_splits(self, symbol: str) -> list[FMPStockSplit]:
         """Fetches the stock split history for a given stock symbol.
         Args:
             symbol (str): The stock symbol to fetch the stock splits for.
         Returns:
             list: A list of stock split records.
         """
-        historical_splits = fmpsdk.historical_stock_split(
-            symbol=symbol, apikey=self.token
+        historical_splits = self.__get_by_url(
+            endpoint="splits",
+            params={"symbol": symbol},
         )
-        return (
-            [FMPStockSplit(**split) for split in historical_splits]
-            if historical_splits
-            else []
-        )
+        return self._handle_list_response(historical_splits, FMPStockSplit)
 
-    def get_market_stock_split_calendar(
-        self, from_date: Optional[str] = None, to_date: Optional[str] = None
-    ) -> list[FMPStockSplit]:
-        """Fetches the market stock split calendar within a specified date range.
-        maximum range is 90 days.
-        Args:
-            from_date (Optional[str]): The start date for the calendar in 'YYYY-MM-DD' format.
-            to_date (Optional[str]): The end date for the calendar in 'YYYY-MM-DD' format.
-        Returns:
-            list: A list of stock split records within the specified date range.
-        """
-        calendar = fmpsdk.stock_split_calendar(
-            from_date=from_date, to_date=to_date, apikey=self.token
-        )
-        return [FMPStockSplit(**split) for split in calendar] if calendar else []
-
-    # earnings
-    def get_earnings_calendar(
-        self, from_date: Optional[str] = None, to_date: Optional[str] = None
-    ) -> list[FMPEarnings]:
-        """Fetches the earnings calendar within a specified date range.
-        maximum range is 90 days.
-        Args:
-            from_date (Optional[str]): The start date for the calendar in 'YYYY-MM-DD' format.
-            to_date (Optional[str]): The end date for the calendar in 'YYYY-MM-DD' format.
-        Returns:
-            list: A list of earnings records within the specified date range.
-        """
-        earnings_calendar = fmpsdk.earning_calendar(
-            from_date=from_date, to_date=to_date, apikey=self.token
-        )
-        return (
-            [FMPEarnings(**earning) for earning in earnings_calendar]
-            if earnings_calendar
-            else []
-        )
-
-    # analyst estimates
     def get_analyst_estimates(
         self, symbol: str, period: str = "quarter", limit: int = 10
     ) -> list[FMPAnalystEstimates]:
@@ -442,53 +458,37 @@ class FMPClient:
         Returns:
             list: A list of analyst estimates.
         """
-        estimates = fmpsdk.company_valuation.analyst_estimates(
-            symbol=symbol, period=period, limit=limit, apikey=self.token
+        estimates = self.__get_by_url(
+            endpoint="analyst-estimates",
+            params={"symbol": symbol, "period": period, "limit": limit},
         )
-        return (
-            [FMPAnalystEstimates(**estimate) for estimate in estimates]
-            if estimates
-            else []
-        )
+        return self._handle_list_response(estimates, FMPAnalystEstimates)
 
-    def get_ratings(self, symbol: str) -> Optional[FMPStockRating]:
-        """Fetches stock ratings for a given stock symbol.
-        Args:
-            symbol (str): The stock symbol to fetch the ratings for.
-        Returns:
-            Optional[FMPStockRating]: The stock rating if found, else None.
-        """
-        ratings = fmpsdk.rating(symbol=symbol, apikey=self.token)
-        if ratings:
-            return FMPStockRating(**ratings[0])
-        return None
-
-    def get_price_target(self, symbol: str) -> Optional[FMPStockPriceTarget]:
-        """Fetches stock price target for a given stock symbol.
-        Args:
-            symbol (str): The stock symbol to fetch the price target for.
-        Returns:
-            Optional[FMPStockPriceTarget]: The stock price target if found, else None.
-        """
-        price_target = self.__get_by_url(
-            endpoint="price-target", params={"symbol": symbol}
-        )
-        if price_target:
-            return FMPStockPriceTarget(**price_target[0])
-        return None
-
-    # discounted cash flow
-    def get_discounted_cash_flow(self, symbol: str) -> Optional[FMPDFCValuation]:
+    def get_discounted_cash_flow(self, symbol: str) -> FMPDFCValuation | None:
         """Fetches the discounted cash flow valuation for a given stock symbol.
         Args:
             symbol (str): The stock symbol to fetch the DCF valuation for.
         Returns:
             Optional[FMPDFCValuation]: The DCF valuation if found, else None.
         """
-        dfc = fmpsdk.discounted_cash_flow(symbol=symbol, apikey=self.token)
-        if dfc and isinstance(dfc, list):
-            return FMPDFCValuation(**dfc[0])
-        return None
+        dfc = self.__get_by_url(
+            endpoint="discounted-cash-flow", params={"symbol": symbol}
+        )
+        return self._handle_single_response(dfc, FMPDFCValuation)
+
+    def get_levered_discounted_cash_flow(
+        self, symbol: str
+    ) -> Optional[FMPDFCValuation]:
+        """Fetches the levered discounted cash flow valuation for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the levered DCF valuation for.
+        Returns:
+            Optional[FMPDFCValuation]: The levered DCF valuation if found, else None.
+        """
+        dfc = self.__get_by_url(
+            endpoint="levered-discounted-cash-flow", params={"symbol": symbol}
+        )
+        return self._handle_single_response(dfc, FMPDFCValuation)
 
     def get_custom_discounted_cash_flow(
         self, symbol: str, params: Dict[str, Any]
@@ -503,9 +503,57 @@ class FMPClient:
         dfc = self.__get_by_url(
             endpoint="custom-discounted-cash-flow", params={"symbol": symbol, **params}
         )
-        if dfc and isinstance(dfc, list):
-            return FMPDFCValuation(**dfc[0])
+        return self._handle_single_response(dfc, FMPDFCValuation)
+
+    def _validate_symbol(self, symbol: str) -> None:
+        """Validate stock symbol parameter"""
+        if not symbol or not symbol.strip():
+            raise ValueError("Symbol cannot be empty")
+
+    def _validate_period(self, period: str) -> None:
+        """Validate period parameter"""
+        if period not in PERIODS:
+            raise ValueError(f"Period must be one of: {', '.join(PERIODS)}")
+
+    def _validate_limit(self, limit: int) -> None:
+        """Validate limit parameter"""
+        if limit < 1 or limit > 100:
+            raise ValueError("Limit must be between 1 and 100")
+
+    def _handle_list_response(self, data: Any, model_class) -> list:
+        """Standardized handling of list responses"""
+        if not data:
+            return []
+        if not isinstance(data, list):
+            logger.warning(f"Expected list response, got {type(data)}")
+            return []
+        try:
+            return [model_class(**item) for item in data]
+        except Exception as e:
+            logger.error(f"Error parsing response data: {e}")
+            return []
+
+    def _handle_single_response(self, data: Any, model_class) -> Optional[Any]:
+        """Standardized handling of single item responses"""
+        if not data:
+            return None
+        try:
+            if isinstance(data, list) and len(data) > 0:
+                return model_class(**data[0])
+            elif isinstance(data, dict):
+                return model_class(**data)
+        except Exception as e:
+            logger.error(f"Error parsing response data: {e}")
         return None
+
+    def _apply_rate_limiting(self) -> None:
+        """Apply rate limiting to prevent API throttling"""
+        current_time = time.time()
+        time_since_last_request = current_time - self._last_request_time
+        if time_since_last_request < self.config.rate_limit_delay:
+            sleep_time = self.config.rate_limit_delay - time_since_last_request
+            time.sleep(sleep_time)
+        self._last_request_time = time.time()
 
     def __get_by_url(
         self, endpoint: str, params: Optional[Dict[str, Any]] = None
@@ -523,10 +571,59 @@ class FMPClient:
 
         internal_url = f"{self.BASE_URL}/{endpoint}"
 
-        try:
-            response = requests.get(internal_url, params=params, timeout=self.timeout)
-            response.raise_for_status()
-            return response.json()
-        except requests.RequestException as e:
-            print(f"[FMPClient] Error calling {endpoint}: {e}")
-            return None
+        # Apply rate limiting
+        self._apply_rate_limiting()
+
+        for attempt in range(self.config.max_retries):
+            try:
+                response = requests.get(
+                    internal_url, params=params, timeout=self.timeout
+                )
+                response.raise_for_status()
+
+                data = response.json()
+
+                # Validate response structure
+                if not data:
+                    logger.warning(f"Empty response from {endpoint}")
+                    return None
+
+                # Check for API-specific error messages
+                if isinstance(data, dict) and "Error Message" in data:
+                    logger.error(f"API error from {endpoint}: {data['Error Message']}")
+                    raise FMPError(data["Error Message"])
+
+                return data
+
+            except requests.exceptions.Timeout:
+                logger.warning(f"Timeout calling {endpoint} (attempt {attempt + 1})")
+                if attempt == self.config.max_retries - 1:
+                    raise FMPTimeoutError(f"Request timeout for {endpoint}")
+
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 429:
+                    # Rate limit exceeded
+                    if attempt == self.config.max_retries - 1:
+                        raise FMPRateLimitError("API rate limit exceeded")
+                    wait_time = self.config.backoff_factor * (2**attempt)
+                    logger.warning(f"Rate limit exceeded. Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    logger.error(
+                        f"HTTP error {e.response.status_code} calling {endpoint}: {e}"
+                    )
+                    raise FMPHTTPError(f"HTTP {e.response.status_code}: {e}")
+
+            except ValueError as e:  # JSON decode error
+                logger.error(f"Invalid JSON response from {endpoint}: {e}")
+                raise FMPError(f"Invalid JSON response: {e}")
+
+            except requests.RequestException as e:
+                logger.error(
+                    f"Request failed for {endpoint} (attempt {attempt + 1}): {e}"
+                )
+                if attempt == self.config.max_retries - 1:
+                    raise FMPConnectionError(f"Failed to connect to {endpoint}: {e}")
+
+        return None

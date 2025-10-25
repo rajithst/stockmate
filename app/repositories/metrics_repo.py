@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from app.db.models.financial_ratio import CompanyFinancialRatios
-from app.db.models.financial_score import CompanyFinancialScores
+from app.db.models.financial_ratio import CompanyFinancialRatio
+from app.db.models.financial_score import CompanyFinancialScore
 from app.db.models.key_metrics import CompanyKeyMetrics
 from app.schemas.financial_ratio import CompanyFinancialRatioWrite
 from app.schemas.financial_score import CompanyFinancialScoresWrite
@@ -22,19 +22,19 @@ class MetricsRepository:
 
     def get_financial_ratios_by_symbol(
         self, symbol: str
-    ) -> list[CompanyFinancialRatios]:
+    ) -> list[CompanyFinancialRatio]:
         return (
-            self._db.query(CompanyFinancialRatios)
-            .filter(CompanyFinancialRatios.symbol == symbol)
+            self._db.query(CompanyFinancialRatio)
+            .filter(CompanyFinancialRatio.symbol == symbol)
             .all()
         )
 
     def get_financial_scores_by_symbol(
         self, symbol: str
-    ) -> list[CompanyFinancialScores]:
+    ) -> list[CompanyFinancialScore]:
         return (
-            self._db.query(CompanyFinancialScores)
-            .filter(CompanyFinancialScores.symbol == symbol)
+            self._db.query(CompanyFinancialScore)
+            .filter(CompanyFinancialScore.symbol == symbol)
             .all()
         )
 
@@ -61,18 +61,18 @@ class MetricsRepository:
 
     def upsert_financial_ratios(
         self, financial_ratios: list[CompanyFinancialRatioWrite]
-    ) -> list[CompanyFinancialRatios] | None:
+    ) -> list[CompanyFinancialRatio] | None:
         records = []
         for ratio in financial_ratios:
             existing = (
-                self._db.query(CompanyFinancialRatios)
+                self._db.query(CompanyFinancialRatio)
                 .filter_by(symbol=ratio.symbol, date=ratio.date)
                 .first()
             )
             if existing:
                 record = map_model(existing, ratio)
             else:
-                record = CompanyFinancialRatios(**ratio.model_dump(exclude_unset=True))
+                record = CompanyFinancialRatio(**ratio.model_dump(exclude_unset=True))
                 self._db.add(record)
             records.append(record)
         self._db.commit()
@@ -82,16 +82,16 @@ class MetricsRepository:
 
     def upsert_financial_scores(
         self, financial_scores: CompanyFinancialScoresWrite
-    ) -> CompanyFinancialScores | None:
+    ) -> CompanyFinancialScore | None:
         existing = (
-            self._db.query(CompanyFinancialScores)
+            self._db.query(CompanyFinancialScore)
             .filter_by(symbol=financial_scores.symbol)
             .first()
         )
         if existing:
             record = map_model(existing, financial_scores)
         else:
-            record = CompanyFinancialScores(
+            record = CompanyFinancialScore(
                 **financial_scores.model_dump(exclude_unset=True)
             )
             self._db.add(record)

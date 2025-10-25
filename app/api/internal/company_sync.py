@@ -6,7 +6,7 @@ from app.dependencies import get_db_session, get_fmp_client
 from app.schemas.company import CompanyRead
 from app.services.internal.company_sync_service import CompanySyncService
 
-router = APIRouter(prefix="/company", tags=["Internal Company"])
+router = APIRouter(prefix="", tags=["company_data"])
 
 
 def get_company_sync_service(

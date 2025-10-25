@@ -10,7 +10,7 @@ from app.schemas.financial_score import CompanyFinancialScoresRead
 from app.schemas.key_metrics import CompanyKeyMetricsRead
 from app.services.internal.metrics_sync_service import MetricsSyncService
 
-router = APIRouter(prefix="/metrics", tags=["Internal Metrics"])
+router = APIRouter(prefix="", tags=["metrics_data"])
 period_options = ["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]
 
 

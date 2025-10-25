@@ -1,8 +1,11 @@
 from sqlalchemy.orm import Session
 
 from app.db.models.price_target import CompanyPriceTarget, CompanyPriceTargetSummary
-from app.schemas.price_target import CompanyPriceTargetWrite
-from app.util import model_mapper
+from app.schemas.price_target import (
+    CompanyPriceTargetSummaryWrite,
+    CompanyPriceTargetWrite,
+)
+from app.util.model_mapper import map_model
 
 
 class CompanyPriceTargetRepository:
@@ -25,31 +28,25 @@ class CompanyPriceTargetRepository:
             .first()
         )
 
-    def upsert_price_targets(
-        self, price_targets: list[CompanyPriceTargetWrite]
-    ) -> list[CompanyPriceTarget] | None:
-        records = []
-        for price_target in price_targets:
-            existing = (
-                self._db.query(CompanyPriceTarget)
-                .filter_by(symbol=price_target.symbol, date=price_target.date)
-                .first()
-            )
-            if existing:
-                record = model_mapper(existing, price_target)
-            else:
-                record = CompanyPriceTarget(
-                    **price_target.model_dump(exclude_unset=True)
-                )
-                self._db.add(record)
-            records.append(record)
+    def upsert_price_target(
+        self, price_targets: CompanyPriceTargetWrite
+    ) -> CompanyPriceTarget | None:
+        existing = (
+            self._db.query(CompanyPriceTarget)
+            .filter_by(symbol=price_targets.symbol)
+            .first()
+        )
+        if existing:
+            record = map_model(existing, price_targets)
+        else:
+            record = CompanyPriceTarget(**price_targets.model_dump(exclude_unset=True))
+            self._db.add(record)
         self._db.commit()
-        for record in records:
-            self._db.refresh(record)
-        return records
+        self._db.refresh(record)
+        return record
 
     def upsert_price_target_summary(
-        self, summary_data: CompanyPriceTargetWrite
+        self, summary_data: CompanyPriceTargetSummaryWrite
     ) -> CompanyPriceTargetSummary:
         existing = (
             self._db.query(CompanyPriceTargetSummary)
@@ -58,7 +55,7 @@ class CompanyPriceTargetRepository:
         )
 
         if existing:
-            summary = model_mapper(existing, summary_data)
+            summary = map_model(existing, summary_data)
         else:
             summary = CompanyPriceTargetSummary(
                 **summary_data.model_dump(exclude_unset=True)

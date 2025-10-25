@@ -11,7 +11,7 @@ from app.schemas.news import (
 )
 from app.services.internal.news_sync_service import NewsSyncService
 
-router = APIRouter(prefix="/news", tags=["Internal News"])
+router = APIRouter(prefix="", tags=["news_data"])
 
 
 def get_news_sync_service(

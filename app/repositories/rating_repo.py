@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
 from app.db.models.ratings import CompanyRatingSummary
-from app.schemas.rating import CompanyRatingSummaryRead, CompanyRatingSummaryWrite
-from app.util import model_mapper
+from app.schemas.rating import CompanyRatingSummaryWrite
+from app.util.model_mapper import map_model
 
 
 class CompanyRatingRepository:
@@ -11,23 +11,21 @@ class CompanyRatingRepository:
 
     def get_rating_summary_by_symbol(self, symbol: str) -> list[CompanyRatingSummary]:
         return (
-            self._db.query(CompanyRatingSummaryRead)
-            .filter(CompanyRatingSummaryRead.symbol == symbol)
+            self._db.query(CompanyRatingSummary)
+            .filter(CompanyRatingSummary.symbol == symbol)
             .all()
         )
 
     def upsert_rating_summary(
-        self, ratings: CompanyRatingSummaryWrite
+        self, rating: CompanyRatingSummaryWrite
     ) -> CompanyRatingSummary:
         existing = (
-            self._db.query(CompanyRatingSummaryRead)
-            .filter_by(symbol=ratings.symbol)
-            .first()
+            self._db.query(CompanyRatingSummary).filter_by(symbol=rating.symbol).first()
         )
         if existing:
-            record = model_mapper(existing, ratings)
+            record = map_model(existing, rating)
         else:
-            record = CompanyRatingSummaryRead(**ratings.model_dump(exclude_unset=True))
+            record = CompanyRatingSummary(**rating.model_dump(exclude_unset=True))
             self._db.add(record)
         self._db.commit()
         self._db.refresh(record)

@@ -1,6 +1,7 @@
+import json
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class FMPStockSplit(BaseModel):
@@ -92,22 +93,71 @@ class FMPStockGradingSummary(BaseModel):
 
 class FMPStockPriceTarget(BaseModel):
     symbol: str
+    target_high: Optional[float] = Field(None, alias="targetHigh")
+    target_low: Optional[float] = Field(None, alias="targetLow")
+    target_consensus: Optional[float] = Field(None, alias="targetConsensus")
+    target_median: Optional[float] = Field(None, alias="targetMedian")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class FMPStockPriceTargetSummary(BaseModel):
+    symbol: str
     last_month_count: Optional[int] = Field(None, alias="lastMonthCount")
-    last_month_avg_price_target: Optional[float] = Field(
+    last_month_average_price_target: Optional[float] = Field(
         None, alias="lastMonthAvgPriceTarget"
     )
     last_quarter_count: Optional[int] = Field(None, alias="lastQuarterCount")
-    last_quarter_avg_price_target: Optional[float] = Field(
+    last_quarter_average_price_target: Optional[float] = Field(
         None, alias="lastQuarterAvgPriceTarget"
     )
     last_year_count: Optional[int] = Field(None, alias="lastYearCount")
-    last_year_avg_price_target: Optional[float] = Field(
+    last_year_average_price_target: Optional[float] = Field(
         None, alias="lastYearAvgPriceTarget"
     )
     all_time_count: Optional[int] = Field(None, alias="allTimeCount")
-    all_time_avg_price_target: Optional[float] = Field(
+    all_time_average_price_target: Optional[float] = Field(
         None, alias="allTimeAvgPriceTarget"
     )
-    publishers: Optional[List[str]] = None  # will convert from JSON string manually
+    publishers: Optional[List[str]] = None
+
+    @field_validator("publishers", mode="before")
+    @classmethod
+    def parse_publishers(cls, v):
+        """
+        Parse publishers field which can come as:
+        - JSON string: "[\"TheFly\",\"StreetInsider\"]"
+        - List: ["TheFly", "StreetInsider"]
+        - None/null
+        """
+        if v is None:
+            return None
+
+        # If it's already a list, return as-is
+        if isinstance(v, list):
+            return v
+
+        # If it's a string, try to parse as JSON
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                # Ensure the parsed result is a list
+                if isinstance(parsed, list):
+                    return parsed
+                else:
+                    # If JSON parsing gives us something else, wrap in list
+                    return [str(parsed)]
+            except (json.JSONDecodeError, TypeError):
+                # If JSON parsing fails, try to split by comma or return as single item
+                if "," in v:
+                    # Remove brackets and quotes, then split
+                    cleaned = v.strip('[]"')
+                    return [item.strip().strip('"') for item in cleaned.split(",")]
+                else:
+                    # Return as single item list
+                    return [v.strip('[]"')]
+
+        # For any other type, convert to string and wrap in list
+        return [str(v)]
 
     model_config = ConfigDict(populate_by_name=True)

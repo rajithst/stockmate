@@ -8,7 +8,7 @@ from app.dependencies import get_db_session, get_fmp_client
 from app.schemas.grading import CompanyGradingRead, CompanyGradingSummaryRead
 from app.services.internal.grading_sync_service import GradingSyncService
 
-router = APIRouter(prefix="/grading", tags=["Internal Grading"])
+router = APIRouter(prefix="", tags=["grading_data"])
 
 
 def get_grading_sync_service(

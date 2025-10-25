@@ -54,8 +54,15 @@ class CompanyStockPeer(Base):
     company_name: Mapped[str] = mapped_column(String(255))
     price: Mapped[float]
     market_cap: Mapped[int]
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
 
     company: Mapped["Company"] = relationship(
         back_populates="stock_peers", foreign_keys=[company_id], lazy="joined"

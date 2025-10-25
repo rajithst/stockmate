@@ -9,7 +9,7 @@ from app.schemas.price_target import (
 )
 from app.services.internal.price_target_sync_service import PriceTargetSyncService
 
-router = APIRouter(prefix="/price-target", tags=["Internal Price Target"])
+router = APIRouter(prefix="", tags=["price_target_data"])
 
 
 def get_price_target_sync_service(

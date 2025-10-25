@@ -1,8 +1,8 @@
-"""Auto-generate schema changes
+"""initial migration
 
-Revision ID: 1b2bc2a92fbe
+Revision ID: a1f6686414e3
 Revises: 
-Create Date: 2025-10-24 00:36:04.979094
+Create Date: 2025-10-25 19:16:56.288611
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '1b2bc2a92fbe'
+revision: str = 'a1f6686414e3'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -47,6 +47,23 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_companies_symbol'), 'companies', ['symbol'], unique=False)
+    op.create_table('dividend_calendars',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('symbol', sa.String(length=12), nullable=False),
+    sa.Column('date', sa.String(length=20), nullable=False),
+    sa.Column('record_date', sa.String(length=20), nullable=True),
+    sa.Column('payment_date', sa.String(length=20), nullable=True),
+    sa.Column('declaration_date', sa.String(length=20), nullable=True),
+    sa.Column('adj_dividend', sa.Float(), nullable=True),
+    sa.Column('dividend', sa.Float(), nullable=True),
+    sa.Column('dividend_yield', sa.Float(), nullable=True),
+    sa.Column('frequency', sa.String(length=20), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_dividend_calendars_id'), 'dividend_calendars', ['id'], unique=False)
+    op.create_index(op.f('ix_dividend_calendars_symbol'), 'dividend_calendars', ['symbol'], unique=False)
     op.create_table('company_balance_sheets',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -197,8 +214,8 @@ def upgrade() -> None:
     sa.Column('record_date', sa.String(length=20), nullable=True),
     sa.Column('payment_date', sa.String(length=20), nullable=True),
     sa.Column('declaration_date', sa.String(length=20), nullable=True),
-    sa.Column('dividend', sa.Float(), nullable=True),
     sa.Column('adj_dividend', sa.Float(), nullable=True),
+    sa.Column('dividend', sa.Float(), nullable=True),
     sa.Column('dividend_yield', sa.Float(), nullable=True),
     sa.Column('frequency', sa.String(length=20), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -371,8 +388,8 @@ def upgrade() -> None:
     sa.Column('symbol', sa.String(length=12), nullable=False),
     sa.Column('date', sa.String(length=20), nullable=False),
     sa.Column('grading_company', sa.String(length=255), nullable=True),
-    sa.Column('previous_grade', sa.String(length=10), nullable=True),
-    sa.Column('new_grade', sa.String(length=10), nullable=True),
+    sa.Column('previous_grade', sa.String(length=50), nullable=True),
+    sa.Column('new_grade', sa.String(length=50), nullable=True),
     sa.Column('action', sa.String(length=50), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -440,8 +457,8 @@ def upgrade() -> None:
     sa.Column('fiscal_year', sa.String(length=10), nullable=False),
     sa.Column('period', sa.String(length=10), nullable=False),
     sa.Column('reported_currency', sa.String(length=10), nullable=False),
-    sa.Column('market_cap', sa.Integer(), nullable=True),
-    sa.Column('enterprise_value', sa.Integer(), nullable=True),
+    sa.Column('market_cap', sa.BigInteger(), nullable=True),
+    sa.Column('enterprise_value', sa.BigInteger(), nullable=True),
     sa.Column('ev_to_sales', sa.Float(), nullable=True),
     sa.Column('ev_to_operating_cash_flow', sa.Float(), nullable=True),
     sa.Column('ev_to_free_cash_flow', sa.Float(), nullable=True),
@@ -453,8 +470,8 @@ def upgrade() -> None:
     sa.Column('graham_net_net', sa.Float(), nullable=True),
     sa.Column('tax_burden', sa.Float(), nullable=True),
     sa.Column('interest_burden', sa.Float(), nullable=True),
-    sa.Column('working_capital', sa.Integer(), nullable=True),
-    sa.Column('invested_capital', sa.Integer(), nullable=True),
+    sa.Column('working_capital', sa.BigInteger(), nullable=True),
+    sa.Column('invested_capital', sa.BigInteger(), nullable=True),
     sa.Column('return_on_assets', sa.Float(), nullable=True),
     sa.Column('operating_return_on_assets', sa.Float(), nullable=True),
     sa.Column('return_on_tangible_assets', sa.Float(), nullable=True),
@@ -470,9 +487,9 @@ def upgrade() -> None:
     sa.Column('research_and_development_to_revenue', sa.Float(), nullable=True),
     sa.Column('stock_based_compensation_to_revenue', sa.Float(), nullable=True),
     sa.Column('intangibles_to_total_assets', sa.Float(), nullable=True),
-    sa.Column('average_receivables', sa.Integer(), nullable=True),
-    sa.Column('average_payables', sa.Integer(), nullable=True),
-    sa.Column('average_inventory', sa.Integer(), nullable=True),
+    sa.Column('average_receivables', sa.BigInteger(), nullable=True),
+    sa.Column('average_payables', sa.BigInteger(), nullable=True),
+    sa.Column('average_inventory', sa.BigInteger(), nullable=True),
     sa.Column('days_of_sales_outstanding', sa.Float(), nullable=True),
     sa.Column('days_of_payables_outstanding', sa.Float(), nullable=True),
     sa.Column('days_of_inventory_outstanding', sa.Float(), nullable=True),
@@ -480,8 +497,8 @@ def upgrade() -> None:
     sa.Column('cash_conversion_cycle', sa.Float(), nullable=True),
     sa.Column('free_cash_flow_to_equity', sa.Float(), nullable=True),
     sa.Column('free_cash_flow_to_firm', sa.Float(), nullable=True),
-    sa.Column('tangible_asset_value', sa.Integer(), nullable=True),
-    sa.Column('net_current_asset_value', sa.Integer(), nullable=True),
+    sa.Column('tangible_asset_value', sa.BigInteger(), nullable=True),
+    sa.Column('net_current_asset_value', sa.BigInteger(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
@@ -568,6 +585,26 @@ def upgrade() -> None:
     op.create_index(op.f('ix_company_rating_summaries_company_id'), 'company_rating_summaries', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_rating_summaries_id'), 'company_rating_summaries', ['id'], unique=False)
     op.create_index(op.f('ix_company_rating_summaries_symbol'), 'company_rating_summaries', ['symbol'], unique=False)
+    op.create_table('company_stock_news',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('company_id', sa.Integer(), nullable=True),
+    sa.Column('symbol', sa.String(length=12), nullable=True),
+    sa.Column('published_date', sa.DateTime(), nullable=False),
+    sa.Column('publisher', sa.String(length=255), nullable=False),
+    sa.Column('news_title', sa.String(length=500), nullable=False),
+    sa.Column('text', sa.Text(), nullable=False),
+    sa.Column('image', sa.String(length=1000), nullable=True),
+    sa.Column('site', sa.String(length=255), nullable=True),
+    sa.Column('news_url', sa.String(length=1000), nullable=False),
+    sa.Column('sentiment', sa.String(length=50), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_company_stock_news_company_id'), 'company_stock_news', ['company_id'], unique=False)
+    op.create_index(op.f('ix_company_stock_news_id'), 'company_stock_news', ['id'], unique=False)
+    op.create_index(op.f('ix_company_stock_news_symbol'), 'company_stock_news', ['symbol'], unique=False)
     op.create_table('company_stock_peers',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -654,6 +691,10 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_company_stock_peers_symbol'), table_name='company_stock_peers')
     op.drop_index(op.f('ix_company_stock_peers_company_id'), table_name='company_stock_peers')
     op.drop_table('company_stock_peers')
+    op.drop_index(op.f('ix_company_stock_news_symbol'), table_name='company_stock_news')
+    op.drop_index(op.f('ix_company_stock_news_id'), table_name='company_stock_news')
+    op.drop_index(op.f('ix_company_stock_news_company_id'), table_name='company_stock_news')
+    op.drop_table('company_stock_news')
     op.drop_index(op.f('ix_company_rating_summaries_symbol'), table_name='company_rating_summaries')
     op.drop_index(op.f('ix_company_rating_summaries_id'), table_name='company_rating_summaries')
     op.drop_index(op.f('ix_company_rating_summaries_company_id'), table_name='company_rating_summaries')
@@ -713,6 +754,9 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_company_balance_sheets_symbol'), table_name='company_balance_sheets')
     op.drop_index(op.f('ix_company_balance_sheets_company_id'), table_name='company_balance_sheets')
     op.drop_table('company_balance_sheets')
+    op.drop_index(op.f('ix_dividend_calendars_symbol'), table_name='dividend_calendars')
+    op.drop_index(op.f('ix_dividend_calendars_id'), table_name='dividend_calendars')
+    op.drop_table('dividend_calendars')
     op.drop_index(op.f('ix_companies_symbol'), table_name='companies')
     op.drop_table('companies')
     # ### end Alembic commands ###

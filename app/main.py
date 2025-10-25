@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.api.internal import (
     company_sync,
+    dcf_sync,
     financials_sync,
     grading_sync,
     metrics_sync,
@@ -19,17 +20,28 @@ setup_logging()
 app = FastAPI(title=config.app_name, debug=config.debug)
 
 app.include_router(company.router, prefix="/api/v1", tags=["company"])
-app.include_router(company_sync.router, prefix="/api/internal", tags=["company_data"])
 app.include_router(
-    financials_sync.router, prefix="/api/internal", tags=["financial_data"]
+    company_sync.router, prefix="/api/internal/company", tags=["company_data"]
 )
-app.include_router(news_sync.router, prefix="/api/internal", tags=["news_data"])
-app.include_router(grading_sync.router, prefix="/api/internal", tags=["grading_data"])
-app.include_router(metrics_sync.router, prefix="/api/internal", tags=["metrics_data"])
 app.include_router(
-    price_target_sync.router, prefix="/api/internal", tags=["price_target_data"]
+    financials_sync.router, prefix="/api/internal/financials", tags=["financial_data"]
 )
-app.include_router(rating_sync.router, prefix="/api/internal", tags=["rating_data"])
+app.include_router(news_sync.router, prefix="/api/internal/news", tags=["news_data"])
 app.include_router(
-    stock_info_sync.router, prefix="/api/internal", tags=["stock_info_data"]
+    grading_sync.router, prefix="/api/internal/grading", tags=["grading_data"]
 )
+app.include_router(
+    metrics_sync.router, prefix="/api/internal/metrics", tags=["metrics_data"]
+)
+app.include_router(
+    price_target_sync.router,
+    prefix="/api/internal/price_target",
+    tags=["price_target_data"],
+)
+app.include_router(
+    rating_sync.router, prefix="/api/internal/rating", tags=["rating_data"]
+)
+app.include_router(
+    stock_info_sync.router, prefix="/api/internal/stock_info", tags=["stock_info_data"]
+)
+app.include_router(dcf_sync.router, prefix="/api/internal/dcf", tags=["dcf_data"])

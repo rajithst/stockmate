@@ -1,11 +1,10 @@
-from datetime import date
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class FMPDFCValuation(BaseModel):
     symbol: str
-    date: date
+    date: str
     dcf: float
     stock_price: float = Field(..., alias="Stock Price")
 

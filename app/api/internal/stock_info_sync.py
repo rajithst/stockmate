@@ -8,7 +8,7 @@ from app.schemas.dividend import CompanyDividendRead
 from app.schemas.stock import CompanyStockSplitRead, CompanyStockPeerRead
 from app.services.internal.stock_info_sync_service import StockInfoSyncService
 
-router = APIRouter(prefix="/stock", tags=["Internal Stock Info"])
+router = APIRouter(prefix="", tags=["stock_info_data"])
 
 
 def get_stock_info_sync_service(

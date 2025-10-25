@@ -6,7 +6,7 @@ from app.dependencies import get_db_session, get_fmp_client
 from app.schemas.rating import CompanyRatingSummaryRead
 from app.services.internal.rating_sync_service import RatingSyncService
 
-router = APIRouter(prefix="/rating", tags=["Internal Rating"])
+router = APIRouter(prefix="", tags=["rating_data"])
 
 
 def get_rating_sync_service(

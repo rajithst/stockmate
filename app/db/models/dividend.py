@@ -23,9 +23,8 @@ class CompanyDividend(Base):
     record_date: Mapped[str] = mapped_column(String(20), nullable=True)
     payment_date: Mapped[str] = mapped_column(String(20), nullable=True)
     declaration_date: Mapped[str] = mapped_column(String(20), nullable=True)
-
-    dividend: Mapped[float] = mapped_column(nullable=True)
     adj_dividend: Mapped[float] = mapped_column(nullable=True)
+    dividend: Mapped[float] = mapped_column(nullable=True)
     dividend_yield: Mapped[float] = mapped_column(nullable=True)
     frequency: Mapped[str] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -48,3 +47,31 @@ class CompanyDividend(Base):
 
     def __repr__(self):
         return f"<CompanyDividend(symbol={self.symbol}, date={self.date}, dividend={self.dividend})>"
+
+
+class DividendCalendar(Base):
+    __tablename__ = "dividend_calendars"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    symbol: Mapped[str] = mapped_column(String(12), index=True)
+
+    date: Mapped[str] = mapped_column(String(20), nullable=False)
+    record_date: Mapped[str] = mapped_column(String(20), nullable=True)
+    payment_date: Mapped[str] = mapped_column(String(20), nullable=True)
+    declaration_date: Mapped[str] = mapped_column(String(20), nullable=True)
+    adj_dividend: Mapped[float] = mapped_column(nullable=True)
+    dividend: Mapped[float] = mapped_column(nullable=True)
+    dividend_yield: Mapped[float] = mapped_column(nullable=True)
+    frequency: Mapped[str] = mapped_column(String(20), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    def __repr__(self):
+        return f"<DividendCalendar(symbol={self.symbol}, date={self.date}, dividend={self.dividend})>"

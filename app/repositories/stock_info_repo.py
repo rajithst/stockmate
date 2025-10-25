@@ -14,21 +14,21 @@ class StockInfoRepository:
     def get_dividends_by_symbol(self, symbol: str) -> list[CompanyDividend]:
         return (
             self._db.query(CompanyDividend)
-            .filter(CompanyDividend.company_symbol == symbol)
+            .filter(CompanyDividend.symbol == symbol)
             .all()
         )
 
     def get_stock_splits_by_symbol(self, symbol: str) -> list[CompanyStockSplit]:
         return (
             self._db.query(CompanyStockSplit)
-            .filter(CompanyStockSplit.company_symbol == symbol)
+            .filter(CompanyStockSplit.symbol == symbol)
             .all()
         )
 
     def get_stock_peers_by_symbol(self, symbol: str) -> list[CompanyStockPeer]:
         return (
             self._db.query(CompanyStockPeer)
-            .filter(CompanyStockPeer.company_symbol == symbol)
+            .filter(CompanyStockPeer.symbol == symbol)
             .all()
         )
 
@@ -39,7 +39,7 @@ class StockInfoRepository:
         for dividend in dividends_data:
             existing = (
                 self._db.query(CompanyDividend)
-                .filter_by(company_symbol=dividend.symbol, date=dividend.date)
+                .filter_by(symbol=dividend.symbol, date=dividend.date)
                 .first()
             )
             if existing:
@@ -62,7 +62,7 @@ class StockInfoRepository:
         for split in splits_data:
             existing = (
                 self._db.query(CompanyStockSplit)
-                .filter_by(company_symbol=split.symbol, date=split.date)
+                .filter_by(symbol=split.symbol, date=split.date)
                 .first()
             )
             if existing:
@@ -77,21 +77,21 @@ class StockInfoRepository:
         return split_records
 
     def upsert_stock_peers(
-        self, symbol: str, peers_data: list[CompanyStockPeerWrite]
+        self, peers_data: list[CompanyStockPeerWrite]
     ) -> list[CompanyStockPeer]:
-        from app.db.models.stock import CompanyStockPeer
-
-        # First, delete existing peers for the symbol
-        self._db.query(CompanyStockPeer).filter_by(company_symbol=symbol).delete()
-
         peer_records = []
-        for peer_symbol in peers_data:
-            peer_record = CompanyStockPeer(
-                company_symbol=symbol, peer_symbol=peer_symbol
+        for peer in peers_data:
+            existing = (
+                self._db.query(CompanyStockPeer)
+                .filter_by(symbol=peer.symbol, company_id=peer.company_id)
+                .first()
             )
-            self._db.add(peer_record)
+            if existing:
+                peer_record = map_model(existing, peer)
+            else:
+                peer_record = CompanyStockPeer(**peer.model_dump(exclude_unset=True))
+                self._db.add(peer_record)
             peer_records.append(peer_record)
-
         self._db.commit()
         for record in peer_records:
             self._db.refresh(record)

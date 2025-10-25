@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class DiscountedCashFlow(BaseModel):
+    company_id: int
     symbol: str
     date: Optional[str]
     dcf: Optional[float]
@@ -13,9 +14,8 @@ class DiscountedCashFlow(BaseModel):
 
 class DiscountedCashFlowRead(DiscountedCashFlow):
     id: int
-    company_id: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

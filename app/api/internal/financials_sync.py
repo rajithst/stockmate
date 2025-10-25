@@ -10,7 +10,7 @@ from app.schemas.cashflow import CompanyCashFlowStatementRead
 from app.schemas.income_statement import CompanyIncomeStatementRead
 from app.services.internal.financial_sync_service import FinancialSyncService
 
-router = APIRouter(prefix="/financials", tags=["Internal Financials"])
+router = APIRouter(prefix="", tags=["financial_data"])
 
 period_options = ["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]
 

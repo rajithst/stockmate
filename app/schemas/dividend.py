@@ -27,3 +27,27 @@ class CompanyDividendRead(CompanyDividend):
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class DividendCalendar(BaseModel):
+    symbol: str
+    date: str
+    record_date: Optional[str] = None
+    payment_date: Optional[str] = None
+    declaration_date: Optional[str] = None
+    adj_dividend: Optional[float] = None
+    dividend: Optional[float] = None
+    dividend_yield: Optional[float] = None
+    frequency: Optional[str] = None
+
+
+class DividendCalendarWrite(DividendCalendar):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DividendCalendarRead(DividendCalendar):
+    id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
