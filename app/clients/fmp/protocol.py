@@ -20,6 +20,7 @@ from app.clients.fmp.models.news import (
     FMPStockGradingNews,
     FMPStockNews,
 )
+from app.clients.fmp.models.quotes import FMPStockPriceChange
 from app.clients.fmp.models.stock import (
     FMPStockGrading,
     FMPStockGradingSummary,
@@ -178,4 +179,8 @@ class FMPClientProtocol(Protocol):
         self, symbol: str, params: Dict[str, Any]
     ) -> Optional[FMPDFCValuation]:
         """Fetches the discounted cash flow valuation for a given stock symbol with custom parameters."""
+        ...
+
+    def get_price_change_quote(self, symbol: str) -> Optional[FMPStockPriceChange]:
+        """Fetches the stock price change quote for a given stock symbol."""
         ...

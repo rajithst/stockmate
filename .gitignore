@@ -43,6 +43,9 @@ Temporary Items
 .idea
 test_stockmate.db
 uv.lock
+
+# TypeScript interfaces (auto-generated from Pydantic schemas)
+app/schemas/ts_interfaces/
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml

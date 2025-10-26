@@ -21,13 +21,6 @@ class GradingSyncService:
         self._grading_summary_repository = GradingSummaryRepository(session)
         self._company_repository = CompanyRepository(session)
 
-    def get_gradings(self, symbol: str, limit: int = 10) -> list[CompanyGradingRead]:
-        gradings = self._grading_repository.get_gradings_by_symbol(symbol, limit)
-        return [
-            CompanyGradingRead.model_validate(grading.model_dump())
-            for grading in gradings
-        ]
-
     def upsert_gradings(self, symbol: str) -> list[CompanyGradingRead] | None:
         try:
             company = self._company_repository.get_company_by_symbol(symbol)
@@ -58,7 +51,7 @@ class GradingSyncService:
             logger.error(f"Error upserting gradings for symbol {symbol}: {e}")
             return None
 
-    def upsert_grading_summary(self, symbol: str) -> CompanyGradingRead | None:
+    def upsert_grading_summary(self, symbol: str) -> CompanyGradingSummaryRead | None:
         try:
             company = self._company_repository.get_company_by_symbol(symbol)
             if not company:

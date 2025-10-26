@@ -24,6 +24,7 @@ from app.clients.fmp.models.news import (
     FMPStockGradingNews,
     FMPStockNews,
 )
+from app.clients.fmp.models.quotes import FMPStockPriceChange
 from app.clients.fmp.models.stock import (
     FMPStockGrading,
     FMPStockGradingSummary,
@@ -504,6 +505,18 @@ class FMPClient:
             endpoint="custom-discounted-cash-flow", params={"symbol": symbol, **params}
         )
         return self._handle_single_response(dfc, FMPDFCValuation)
+    
+    def get_price_change_quote(self, symbol: str) -> Optional[FMPStockPriceChange]:
+        """Fetches the price change quote for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the price change quote for.
+        Returns:
+            Optional[FMPStockPriceChange]: The price change quote if found, else None.
+        """
+        price_change = self.__get_by_url(
+            endpoint="stock-price-change", params={"symbol": symbol}
+        )
+        return self._handle_single_response(price_change, FMPStockPriceChange)
 
     def _validate_symbol(self, symbol: str) -> None:
         """Validate stock symbol parameter"""

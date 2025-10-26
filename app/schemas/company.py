@@ -3,8 +3,14 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
+from app.schemas.balance_sheet import CompanyBalanceSheetRead
+from app.schemas.cashflow import CompanyCashFlowStatementRead
 from app.schemas.dcf import DiscountedCashFlowRead
-from app.schemas.grading import CompanyGradingSummaryRead
+from app.schemas.dividend import CompanyDividendRead
+from app.schemas.financial_ratio import CompanyFinancialRatioRead
+from app.schemas.grading import CompanyGradingRead, CompanyGradingSummaryRead
+from app.schemas.income_statement import CompanyIncomeStatementRead
+from app.schemas.key_metrics import CompanyKeyMetricsRead
 from app.schemas.news import (
     CompanyGeneralNewsRead,
     CompanyGradingNewsRead,
@@ -68,8 +74,20 @@ class CompanyPageResponse(BaseModel):
     price_target: Optional[CompanyPriceTargetRead]
     price_change: Optional[StockPriceChangeRead]
     price_target_summary: Optional[CompanyPriceTargetSummaryRead]
+    latest_gradings: List[CompanyGradingRead] = []
     price_target_news: List[CompanyPriceTargetNewsRead] = []
     general_news: List[CompanyGeneralNewsRead] = []
     grading_news: List[CompanyGradingNewsRead] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyFinancialResponse(BaseModel):
+    balance_sheets: List[CompanyBalanceSheetRead] = []
+    income_statements: List[CompanyIncomeStatementRead] = []
+    cash_flow_statements: List[CompanyCashFlowStatementRead] = []
+    key_metrics: List[CompanyKeyMetricsRead] = []
+    financial_ratios: List[CompanyFinancialRatioRead] = []
+    dividends: List[CompanyDividendRead] = []
 
     model_config = ConfigDict(from_attributes=True)
