@@ -57,5 +57,6 @@ app.include_router(
     stock_info_sync.router, prefix="/api/internal/stock_info", tags=["stock_info_data"]
 )
 app.include_router(dcf_sync.router, prefix="/api/internal/dcf", tags=["dcf_data"])
-app.include_router(quotes_sync.router, prefix="/api/internal/quotes", tags=["quotes_data"])
-
+app.include_router(
+    quotes_sync.router, prefix="/api/internal/quotes", tags=["quotes_data"]
+)

@@ -1,3 +1,4 @@
+from enum import Enum
 from logging import getLogger
 
 from sqlalchemy.orm import Session
@@ -11,12 +12,14 @@ from app.repositories.stock_info_repo import StockInfoRepository
 from app.schemas.balance_sheet import CompanyBalanceSheetRead
 from app.schemas.cashflow import CompanyCashFlowStatementRead
 from app.schemas.company import (
+    CompanyFinancialHealthResponse,
     CompanyFinancialResponse,
     CompanyPageResponse,
     CompanyRead,
 )
 from app.schemas.dcf import DiscountedCashFlowRead
 from app.schemas.dividend import CompanyDividendRead
+from app.schemas.financial_health import FinancialHealthRead
 from app.schemas.financial_ratio import CompanyFinancialRatioRead
 from app.schemas.grading import CompanyGradingRead, CompanyGradingSummaryRead
 from app.schemas.income_statement import CompanyIncomeStatementRead
@@ -34,6 +37,16 @@ from app.schemas.quote import StockPriceChangeRead
 from app.schemas.rating import CompanyRatingSummaryRead
 
 logger = getLogger(__name__)
+
+
+class FinancialHealthSectorsEnum(Enum):
+    PROFITABILITY = "profitability"
+    EFFICIENCY = "efficiency"
+    LIQUIDITY_AND_SOLVENCY = "liquidity_and_solvency"
+    CASHFLOW_STRENGTH = "cashflow_strength"
+    VALUATION = "valuation"
+    GROWTH_AND_INVESTMENT = "growth_and_investment"
+    DIVIDEND_AND_SHAREHOLDER_RETURN = "dividend_and_shareholder_return"
 
 
 class CompanyService:
@@ -155,4 +168,75 @@ class CompanyService:
             )
         except Exception as e:
             logger.error(f"Error retrieving financials for {symbol}: {str(e)}")
+            raise
+
+    def get_company_financial_health(
+        self, symbol: str
+    ) -> CompanyFinancialHealthResponse | None:
+        """Retrieve a company's financial health data by its stock symbol."""
+        try:
+            financials_repo = FinancialRepository(self._db)
+            company_repo = CompanyRepository(self._db)
+            company = company_repo.get_company_by_symbol(symbol)
+
+            if not company:
+                logger.warning(f"Company not found for symbol: {symbol}")
+                return None
+
+            company_read = CompanyRead.model_validate(company)
+
+            financial_health_read = [
+                FinancialHealthRead.model_validate(fh)
+                for fh in financials_repo.get_financial_health_by_symbol(symbol)
+            ]
+            profitability = [
+                FinancialHealthRead.model_validate(fh)
+                for fh in financial_health_read
+                if fh.category == FinancialHealthSectorsEnum.PROFITABILITY.value
+            ]
+            efficiency = [
+                FinancialHealthRead.model_validate(fh)
+                for fh in financial_health_read
+                if fh.category == FinancialHealthSectorsEnum.EFFICIENCY.value
+            ]
+            liquidity_and_solvency = [
+                FinancialHealthRead.model_validate(fh)
+                for fh in financial_health_read
+                if fh.category
+                == FinancialHealthSectorsEnum.LIQUIDITY_AND_SOLVENCY.value
+            ]
+            cashflow_strength = [
+                FinancialHealthRead.model_validate(fh)
+                for fh in financial_health_read
+                if fh.category == FinancialHealthSectorsEnum.CASHFLOW_STRENGTH.value
+            ]
+            valuation = [
+                FinancialHealthRead.model_validate(fh)
+                for fh in financial_health_read
+                if fh.category == FinancialHealthSectorsEnum.VALUATION.value
+            ]
+            growth_and_investment = [
+                FinancialHealthRead.model_validate(fh)
+                for fh in financial_health_read
+                if fh.category == FinancialHealthSectorsEnum.GROWTH_AND_INVESTMENT.value
+            ]
+            dividend_and_shareholder_return = [
+                FinancialHealthRead.model_validate(fh)
+                for fh in financial_health_read
+                if fh.category
+                == FinancialHealthSectorsEnum.DIVIDEND_AND_SHAREHOLDER_RETURN.value
+            ]
+
+            return CompanyFinancialHealthResponse(
+                company=company_read,
+                profitability=profitability,
+                efficiency=efficiency,
+                liquidity_and_solvency=liquidity_and_solvency,
+                cashflow_strength=cashflow_strength,
+                valuation=valuation,
+                growth_and_investment=growth_and_investment,
+                dividend_and_shareholder_return=dividend_and_shareholder_return,
+            )
+        except Exception as e:
+            logger.error(f"Error retrieving financial health for {symbol}: {str(e)}")
             raise

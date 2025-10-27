@@ -505,7 +505,7 @@ class FMPClient:
             endpoint="custom-discounted-cash-flow", params={"symbol": symbol, **params}
         )
         return self._handle_single_response(dfc, FMPDFCValuation)
-    
+
     def get_price_change_quote(self, symbol: str) -> Optional[FMPStockPriceChange]:
         """Fetches the price change quote for a given stock symbol.
         Args:

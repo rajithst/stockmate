@@ -1,13 +1,16 @@
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
-from typing import Optional
 import logging
+from typing import Optional
+
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from app.db.models.balance_sheet import CompanyBalanceSheet
 from app.db.models.cashflow import CompanyCashFlowStatement
+from app.db.models.financial_health import FinancialHealth
 from app.db.models.income_statement import CompanyIncomeStatement
 from app.schemas.balance_sheet import CompanyBalanceSheetWrite
 from app.schemas.cashflow import CompanyCashFlowStatementWrite
+from app.schemas.financial_health import FinancialHealthWrite
 from app.schemas.income_statement import CompanyIncomeStatementWrite
 from app.util.model_mapper import map_model
 
@@ -27,7 +30,9 @@ class FinancialRepository:
             .all()
         )
 
-    def get_income_statements_by_symbol(self, symbol: str) -> list[CompanyIncomeStatement]:
+    def get_income_statements_by_symbol(
+        self, symbol: str
+    ) -> list[CompanyIncomeStatement]:
         """Get all income statements for a symbol, ordered by date descending."""
         return (
             self._db.query(CompanyIncomeStatement)
@@ -36,7 +41,9 @@ class FinancialRepository:
             .all()
         )
 
-    def get_cash_flow_statements_by_symbol(self, symbol: str) -> list[CompanyCashFlowStatement]:
+    def get_cash_flow_statements_by_symbol(
+        self, symbol: str
+    ) -> list[CompanyCashFlowStatement]:
         """Get all cash flow statements for a symbol, ordered by date descending."""
         return (
             self._db.query(CompanyCashFlowStatement)
@@ -44,6 +51,41 @@ class FinancialRepository:
             .order_by(CompanyCashFlowStatement.date.desc())
             .all()
         )
+
+    def get_financial_health_by_symbol(self, symbol: str) -> list[FinancialHealth]:
+        """Get all financial health records for a symbol."""
+        return (
+            self._db.query(FinancialHealth)
+            .filter(FinancialHealth.symbol == symbol)
+            .all()
+        )
+
+    def upsert_financial_health(
+        self, financial_health: list[FinancialHealthWrite]
+    ) -> list[FinancialHealth]:
+        """Upsert financial health data for a company."""
+        try:
+            records = []
+            for fh in financial_health:
+                existing = (
+                    self._db.query(FinancialHealth)
+                    .filter_by(symbol=fh.symbol, section=fh.section, metric=fh.metric)
+                    .first()
+                )
+                if existing:
+                    record = map_model(existing, fh)
+                else:
+                    record = FinancialHealth(**fh.model_dump(exclude_unset=True))
+                    self._db.add(record)
+                records.append(record)
+            self._db.commit()
+            for record in records:
+                self._db.refresh(record)
+            return records
+        except SQLAlchemyError as e:
+            self._db.rollback()
+            logger.error(f"Error upserting financial health data: {e}")
+            raise
 
     def upsert_balance_sheets(
         self, balance_sheets: list[CompanyBalanceSheetWrite]
@@ -65,7 +107,7 @@ class FinancialRepository:
                     )
                     self._db.add(record)
                 records.append(record)
-            
+
             self._db.commit()
             for record in records:
                 self._db.refresh(record)
@@ -84,7 +126,9 @@ class FinancialRepository:
             for income_statement in income_statements:
                 existing = (
                     self._db.query(CompanyIncomeStatement)
-                    .filter_by(symbol=income_statement.symbol, date=income_statement.date)
+                    .filter_by(
+                        symbol=income_statement.symbol, date=income_statement.date
+                    )
                     .first()
                 )
                 if existing:
@@ -95,7 +139,7 @@ class FinancialRepository:
                     )
                     self._db.add(record)
                 records.append(record)
-            
+
             self._db.commit()
             for record in records:
                 self._db.refresh(record)
@@ -127,7 +171,7 @@ class FinancialRepository:
                     )
                     self._db.add(record)
                 records.append(record)
-            
+
             self._db.commit()
             for record in records:
                 self._db.refresh(record)
@@ -137,7 +181,9 @@ class FinancialRepository:
             logger.error(f"Error upserting cash flow statements: {e}")
             raise
 
-    def delete_balance_sheet(self, symbol: str, year: int) -> Optional[CompanyBalanceSheet]:
+    def delete_balance_sheet(
+        self, symbol: str, year: int
+    ) -> Optional[CompanyBalanceSheet]:
         """Delete balance sheet by symbol and fiscal year."""
         try:
             record = (
@@ -158,7 +204,9 @@ class FinancialRepository:
             logger.error(f"Error deleting balance sheet for {symbol} year {year}: {e}")
             raise
 
-    def delete_income_statement(self, symbol: str, year: int) -> Optional[CompanyIncomeStatement]:
+    def delete_income_statement(
+        self, symbol: str, year: int
+    ) -> Optional[CompanyIncomeStatement]:
         """Delete income statement by symbol and fiscal year."""
         try:
             record = (
@@ -176,10 +224,14 @@ class FinancialRepository:
             return None
         except SQLAlchemyError as e:
             self._db.rollback()
-            logger.error(f"Error deleting income statement for {symbol} year {year}: {e}")
+            logger.error(
+                f"Error deleting income statement for {symbol} year {year}: {e}"
+            )
             raise
 
-    def delete_cash_flow_statement(self, symbol: str, year: int) -> Optional[CompanyCashFlowStatement]:
+    def delete_cash_flow_statement(
+        self, symbol: str, year: int
+    ) -> Optional[CompanyCashFlowStatement]:
         """Delete cash flow statement by symbol and fiscal year."""
         try:
             record = (
@@ -197,5 +249,7 @@ class FinancialRepository:
             return None
         except SQLAlchemyError as e:
             self._db.rollback()
-            logger.error(f"Error deleting cash flow statement for {symbol} year {year}: {e}")
+            logger.error(
+                f"Error deleting cash flow statement for {symbol} year {year}: {e}"
+            )
             raise

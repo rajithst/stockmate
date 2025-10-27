@@ -5,13 +5,14 @@ from sqlalchemy import DateTime, Float, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
-from app.db.models.financial_ratio import CompanyFinancialRatio
-from app.db.models.financial_score import CompanyFinancialScore
 
 if TYPE_CHECKING:
     from app.db.models.balance_sheet import CompanyBalanceSheet
     from app.db.models.cashflow import CompanyCashFlowStatement
     from app.db.models.dcf import DiscountedCashFlow
+    from app.db.models.financial_health import FinancialHealth
+    from app.db.models.financial_ratio import CompanyFinancialRatio
+    from app.db.models.financial_score import CompanyFinancialScore
     from app.db.models.grading import CompanyGrading, CompanyGradingSummary
     from app.db.models.income_statement import CompanyIncomeStatement
     from app.db.models.key_metrics import (
@@ -145,6 +146,9 @@ class Company(Base):
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     stock_prices: Mapped[list["StockPrice"]] = relationship(
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
+    )
+    financial_health: Mapped[list["FinancialHealth"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
 
