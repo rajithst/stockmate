@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from app.db.models.company import Company
 
 
-class FinancialHealth(Base):
-    __tablename__ = "financial_health"
+class CompanyFinancialHealth(Base):
+    __tablename__ = "company_financial_health"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     company_id: Mapped[int] = mapped_column(

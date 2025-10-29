@@ -6,11 +6,11 @@ from sqlalchemy.orm import Session
 
 from app.db.models.balance_sheet import CompanyBalanceSheet
 from app.db.models.cashflow import CompanyCashFlowStatement
-from app.db.models.financial_health import FinancialHealth
+from app.db.models.financial_health import CompanyFinancialHealth
 from app.db.models.income_statement import CompanyIncomeStatement
 from app.schemas.balance_sheet import CompanyBalanceSheetWrite
 from app.schemas.cashflow import CompanyCashFlowStatementWrite
-from app.schemas.financial_health import FinancialHealthWrite
+from app.schemas.financial_health import CompanyFinancialHealthWrite
 from app.schemas.income_statement import CompanyIncomeStatementWrite
 from app.util.model_mapper import map_model
 
@@ -52,30 +52,32 @@ class FinancialRepository:
             .all()
         )
 
-    def get_financial_health_by_symbol(self, symbol: str) -> list[FinancialHealth]:
+    def get_financial_health_by_symbol(
+        self, symbol: str
+    ) -> list[CompanyFinancialHealth]:
         """Get all financial health records for a symbol."""
         return (
-            self._db.query(FinancialHealth)
-            .filter(FinancialHealth.symbol == symbol)
+            self._db.query(CompanyFinancialHealth)
+            .filter(CompanyFinancialHealth.symbol == symbol)
             .all()
         )
 
     def upsert_financial_health(
-        self, financial_health: list[FinancialHealthWrite]
-    ) -> list[FinancialHealth]:
+        self, financial_health: list[CompanyFinancialHealthWrite]
+    ) -> list[CompanyFinancialHealth]:
         """Upsert financial health data for a company."""
         try:
             records = []
             for fh in financial_health:
                 existing = (
-                    self._db.query(FinancialHealth)
+                    self._db.query(CompanyFinancialHealth)
                     .filter_by(symbol=fh.symbol, section=fh.section, metric=fh.metric)
                     .first()
                 )
                 if existing:
                     record = map_model(existing, fh)
                 else:
-                    record = FinancialHealth(**fh.model_dump(exclude_unset=True))
+                    record = CompanyFinancialHealth(**fh.model_dump(exclude_unset=True))
                     self._db.add(record)
                 records.append(record)
             self._db.commit()

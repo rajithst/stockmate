@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from app.db.models.balance_sheet import CompanyBalanceSheet
     from app.db.models.cashflow import CompanyCashFlowStatement
     from app.db.models.dcf import DiscountedCashFlow
-    from app.db.models.financial_health import FinancialHealth
+    from app.db.models.financial_health import CompanyFinancialHealth
     from app.db.models.financial_ratio import CompanyFinancialRatio
     from app.db.models.financial_score import CompanyFinancialScore
     from app.db.models.grading import CompanyGrading, CompanyGradingSummary
@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from app.db.models.quote import StockPrice, StockPriceChange
     from app.db.models.ratings import CompanyRatingSummary
     from app.db.models.stock import CompanyDividend, CompanyStockPeer, CompanyStockSplit
+    from app.db.models.technical_indicators import CompanyTechnicalIndicator
 
 
 class Company(Base):
@@ -148,7 +149,10 @@ class Company(Base):
     stock_prices: Mapped[list["StockPrice"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
-    financial_health: Mapped[list["FinancialHealth"]] = relationship(
+    financial_health: Mapped[list["CompanyFinancialHealth"]] = relationship(
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
+    )
+    technical_indicators: Mapped[list["CompanyTechnicalIndicator"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
 

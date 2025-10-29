@@ -7,7 +7,7 @@ from app.schemas.balance_sheet import CompanyBalanceSheetRead
 from app.schemas.cashflow import CompanyCashFlowStatementRead
 from app.schemas.dcf import DiscountedCashFlowRead
 from app.schemas.dividend import CompanyDividendRead
-from app.schemas.financial_health import FinancialHealthRead
+from app.schemas.financial_health import CompanyFinancialHealthRead
 from app.schemas.financial_ratio import CompanyFinancialRatioRead
 from app.schemas.grading import CompanyGradingRead, CompanyGradingSummaryRead
 from app.schemas.income_statement import CompanyIncomeStatementRead
@@ -96,12 +96,12 @@ class CompanyFinancialResponse(BaseModel):
 
 class CompanyFinancialHealthResponse(BaseModel):
     company: CompanyRead
-    profitability: List[FinancialHealthRead] = []
-    efficiency: List[FinancialHealthRead] = []
-    liquidity_and_solvency: List[FinancialHealthRead] = []
-    cashflow_strength: List[FinancialHealthRead] = []
-    valuation: List[FinancialHealthRead] = []
-    growth_and_investment: List[FinancialHealthRead] = []
-    dividend_and_shareholder_return: List[FinancialHealthRead] = []
+    profitability: List[CompanyFinancialHealthRead] = []
+    efficiency: List[CompanyFinancialHealthRead] = []
+    liquidity_and_solvency: List[CompanyFinancialHealthRead] = []
+    cashflow_strength: List[CompanyFinancialHealthRead] = []
+    valuation: List[CompanyFinancialHealthRead] = []
+    growth_and_investment: List[CompanyFinancialHealthRead] = []
+    dividend_and_shareholder_return: List[CompanyFinancialHealthRead] = []
 
     model_config = ConfigDict(from_attributes=True)

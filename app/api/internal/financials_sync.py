@@ -7,6 +7,7 @@ from app.clients.fmp.protocol import FMPClientProtocol
 from app.dependencies import get_db_session, get_fmp_client
 from app.schemas.balance_sheet import CompanyBalanceSheetRead
 from app.schemas.cashflow import CompanyCashFlowStatementRead
+from app.schemas.financial_health import CompanyFinancialHealthRead
 from app.schemas.income_statement import CompanyIncomeStatementRead
 from app.services.internal.financial_sync_service import FinancialSyncService
 
@@ -93,3 +94,25 @@ async def sync_company_cash_flow_statements(
             detail=f"Cash flow statements not found for symbol: {symbol}",
         )
     return statements
+
+
+@router.get(
+    "/financial-health/{symbol}/sync",
+    response_model=List[CompanyFinancialHealthRead],
+    summary="Sync company financial health data from external API",
+    description="Fetches and upserts company's financial health data from the external API into the database.",
+)
+async def sync_company_financial_health(
+    symbol: str,
+    service: FinancialSyncService = Depends(get_financials_sync_service),
+):
+    """
+    Sync company's financial health data from the external API and store in the database.
+    """
+    health_data = service.upsert_financial_health(symbol)
+    if not health_data:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Financial health data not found for symbol: {symbol}",
+        )
+    return health_data

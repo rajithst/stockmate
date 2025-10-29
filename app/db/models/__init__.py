@@ -15,4 +15,5 @@ from .stock import CompanyStockPeer, CompanyStockSplit
 from .dcf import DiscountedCashFlow
 from .price_target import CompanyPriceTarget, CompanyPriceTargetSummary
 from .quote import StockPriceChange, StockPrice
-from .financial_health import FinancialHealth
+from .financial_health import CompanyFinancialHealth
+from .technical_indicators import CompanyTechnicalIndicator

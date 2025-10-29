@@ -1,8 +1,8 @@
 """initial migration
 
-Revision ID: a1f6686414e3
+Revision ID: aa5e87d1ce60
 Revises: 
-Create Date: 2025-10-25 19:16:56.288611
+Create Date: 2025-10-30 00:07:12.486643
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a1f6686414e3'
+revision: str = 'aa5e87d1ce60'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -226,6 +226,23 @@ def upgrade() -> None:
     op.create_index(op.f('ix_company_dividends_company_id'), 'company_dividends', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_dividends_id'), 'company_dividends', ['id'], unique=False)
     op.create_index(op.f('ix_company_dividends_symbol'), 'company_dividends', ['symbol'], unique=False)
+    op.create_table('company_financial_health',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('company_id', sa.Integer(), nullable=False),
+    sa.Column('symbol', sa.String(length=12), nullable=False),
+    sa.Column('section', sa.String(length=100), nullable=False),
+    sa.Column('metric', sa.String(length=100), nullable=False),
+    sa.Column('benchmark', sa.String(length=100), nullable=True),
+    sa.Column('value', sa.String(length=50), nullable=False),
+    sa.Column('status', sa.String(length=50), nullable=False),
+    sa.Column('insight', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_company_financial_health_company_id'), 'company_financial_health', ['company_id'], unique=False)
+    op.create_index(op.f('ix_company_financial_health_symbol'), 'company_financial_health', ['symbol'], unique=False)
     op.create_table('company_financial_ratios',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -612,8 +629,8 @@ def upgrade() -> None:
     sa.Column('company_name', sa.String(length=255), nullable=False),
     sa.Column('price', sa.Float(), nullable=False),
     sa.Column('market_cap', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -633,6 +650,27 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_company_stock_splits_company_id'), 'company_stock_splits', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_stock_splits_symbol'), 'company_stock_splits', ['symbol'], unique=False)
+    op.create_table('company_technical_indicators',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('company_id', sa.Integer(), nullable=False),
+    sa.Column('symbol', sa.String(length=12), nullable=False),
+    sa.Column('date', sa.String(length=20), nullable=False),
+    sa.Column('simple_moving_average', sa.Float(), nullable=True),
+    sa.Column('exponential_moving_average', sa.Float(), nullable=True),
+    sa.Column('weighted_moving_average', sa.Float(), nullable=True),
+    sa.Column('double_exponential_moving_average', sa.Float(), nullable=True),
+    sa.Column('triple_exponential_moving_average', sa.Float(), nullable=True),
+    sa.Column('relative_strength_index', sa.Float(), nullable=True),
+    sa.Column('standard_deviation', sa.Float(), nullable=True),
+    sa.Column('williams_percent_r', sa.Float(), nullable=True),
+    sa.Column('average_directional_index', sa.Float(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_company_technical_indicators_company_id'), 'company_technical_indicators', ['company_id'], unique=False)
+    op.create_index(op.f('ix_company_technical_indicators_symbol'), 'company_technical_indicators', ['symbol'], unique=False)
     op.create_table('stock_price_changes',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -685,6 +723,9 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_stock_price_changes_symbol'), table_name='stock_price_changes')
     op.drop_index(op.f('ix_stock_price_changes_company_id'), table_name='stock_price_changes')
     op.drop_table('stock_price_changes')
+    op.drop_index(op.f('ix_company_technical_indicators_symbol'), table_name='company_technical_indicators')
+    op.drop_index(op.f('ix_company_technical_indicators_company_id'), table_name='company_technical_indicators')
+    op.drop_table('company_technical_indicators')
     op.drop_index(op.f('ix_company_stock_splits_symbol'), table_name='company_stock_splits')
     op.drop_index(op.f('ix_company_stock_splits_company_id'), table_name='company_stock_splits')
     op.drop_table('company_stock_splits')
@@ -740,6 +781,9 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_company_financial_ratios_id'), table_name='company_financial_ratios')
     op.drop_index(op.f('ix_company_financial_ratios_company_id'), table_name='company_financial_ratios')
     op.drop_table('company_financial_ratios')
+    op.drop_index(op.f('ix_company_financial_health_symbol'), table_name='company_financial_health')
+    op.drop_index(op.f('ix_company_financial_health_company_id'), table_name='company_financial_health')
+    op.drop_table('company_financial_health')
     op.drop_index(op.f('ix_company_dividends_symbol'), table_name='company_dividends')
     op.drop_index(op.f('ix_company_dividends_id'), table_name='company_dividends')
     op.drop_index(op.f('ix_company_dividends_company_id'), table_name='company_dividends')

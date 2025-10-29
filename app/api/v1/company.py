@@ -7,6 +7,7 @@ from app.schemas.company import (
     CompanyFinancialResponse,
     CompanyPageResponse,
 )
+from app.schemas.technical_indicator import CompanyTechnicalIndicatorRead
 from app.services.company_service import CompanyService
 
 router = APIRouter(prefix="")
@@ -43,6 +44,18 @@ def get_company_financial_health(
     symbol: str, service: CompanyService = Depends(get_company_service)
 ):
     page = service.get_company_financial_health(symbol)
+    if not page:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return page
+
+
+@router.get(
+    "/{symbol}/technical-indicators", response_model=CompanyTechnicalIndicatorRead
+)
+def get_company_technical_indicators(
+    symbol: str, service: CompanyService = Depends(get_company_service)
+):
+    page = service.get_company_technical_indicators(symbol)
     if not page:
         raise HTTPException(status_code=404, detail="Company not found")
     return page

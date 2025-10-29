@@ -9,6 +9,7 @@ from app.repositories.grading_repo import GradingRepository
 from app.repositories.metrics_repo import MetricsRepository
 from app.repositories.news_repo import CompanyNewsRepository
 from app.repositories.stock_info_repo import StockInfoRepository
+from app.repositories.technical_indicator_repo import TechnicalIndicatorRepository
 from app.schemas.balance_sheet import CompanyBalanceSheetRead
 from app.schemas.cashflow import CompanyCashFlowStatementRead
 from app.schemas.company import (
@@ -19,7 +20,7 @@ from app.schemas.company import (
 )
 from app.schemas.dcf import DiscountedCashFlowRead
 from app.schemas.dividend import CompanyDividendRead
-from app.schemas.financial_health import FinancialHealthRead
+from app.schemas.financial_health import CompanyFinancialHealthRead
 from app.schemas.financial_ratio import CompanyFinancialRatioRead
 from app.schemas.grading import CompanyGradingRead, CompanyGradingSummaryRead
 from app.schemas.income_statement import CompanyIncomeStatementRead
@@ -35,18 +36,19 @@ from app.schemas.price_target import (
 )
 from app.schemas.quote import StockPriceChangeRead
 from app.schemas.rating import CompanyRatingSummaryRead
+from app.schemas.technical_indicator import CompanyTechnicalIndicatorRead
 
 logger = getLogger(__name__)
 
 
 class FinancialHealthSectorsEnum(Enum):
-    PROFITABILITY = "profitability"
-    EFFICIENCY = "efficiency"
-    LIQUIDITY_AND_SOLVENCY = "liquidity_and_solvency"
-    CASHFLOW_STRENGTH = "cashflow_strength"
-    VALUATION = "valuation"
-    GROWTH_AND_INVESTMENT = "growth_and_investment"
-    DIVIDEND_AND_SHAREHOLDER_RETURN = "dividend_and_shareholder_return"
+    PROFITABILITY = "Profitability"
+    EFFICIENCY = "Efficiency"
+    LIQUIDITY_AND_SOLVENCY = "Liquidity & Solvency"
+    CASHFLOW_STRENGTH = "Cash Flow Strength"
+    VALUATION = "Valuation"
+    GROWTH_AND_INVESTMENT = "Growth & Investment"
+    DIVIDEND_AND_SHAREHOLDER_RETURN = "Dividend & Shareholder Return"
 
 
 class CompanyService:
@@ -186,44 +188,43 @@ class CompanyService:
             company_read = CompanyRead.model_validate(company)
 
             financial_health_read = [
-                FinancialHealthRead.model_validate(fh)
+                CompanyFinancialHealthRead.model_validate(fh)
                 for fh in financials_repo.get_financial_health_by_symbol(symbol)
             ]
             profitability = [
-                FinancialHealthRead.model_validate(fh)
+                CompanyFinancialHealthRead.model_validate(fh)
                 for fh in financial_health_read
-                if fh.category == FinancialHealthSectorsEnum.PROFITABILITY.value
+                if fh.section == FinancialHealthSectorsEnum.PROFITABILITY.value
             ]
             efficiency = [
-                FinancialHealthRead.model_validate(fh)
+                CompanyFinancialHealthRead.model_validate(fh)
                 for fh in financial_health_read
-                if fh.category == FinancialHealthSectorsEnum.EFFICIENCY.value
+                if fh.section == FinancialHealthSectorsEnum.EFFICIENCY.value
             ]
             liquidity_and_solvency = [
-                FinancialHealthRead.model_validate(fh)
+                CompanyFinancialHealthRead.model_validate(fh)
                 for fh in financial_health_read
-                if fh.category
-                == FinancialHealthSectorsEnum.LIQUIDITY_AND_SOLVENCY.value
+                if fh.section == FinancialHealthSectorsEnum.LIQUIDITY_AND_SOLVENCY.value
             ]
             cashflow_strength = [
-                FinancialHealthRead.model_validate(fh)
+                CompanyFinancialHealthRead.model_validate(fh)
                 for fh in financial_health_read
-                if fh.category == FinancialHealthSectorsEnum.CASHFLOW_STRENGTH.value
+                if fh.section == FinancialHealthSectorsEnum.CASHFLOW_STRENGTH.value
             ]
             valuation = [
-                FinancialHealthRead.model_validate(fh)
+                CompanyFinancialHealthRead.model_validate(fh)
                 for fh in financial_health_read
-                if fh.category == FinancialHealthSectorsEnum.VALUATION.value
+                if fh.section == FinancialHealthSectorsEnum.VALUATION.value
             ]
             growth_and_investment = [
-                FinancialHealthRead.model_validate(fh)
+                CompanyFinancialHealthRead.model_validate(fh)
                 for fh in financial_health_read
-                if fh.category == FinancialHealthSectorsEnum.GROWTH_AND_INVESTMENT.value
+                if fh.section == FinancialHealthSectorsEnum.GROWTH_AND_INVESTMENT.value
             ]
             dividend_and_shareholder_return = [
-                FinancialHealthRead.model_validate(fh)
+                CompanyFinancialHealthRead.model_validate(fh)
                 for fh in financial_health_read
-                if fh.category
+                if fh.section
                 == FinancialHealthSectorsEnum.DIVIDEND_AND_SHAREHOLDER_RETURN.value
             ]
 
@@ -239,4 +240,32 @@ class CompanyService:
             )
         except Exception as e:
             logger.error(f"Error retrieving financial health for {symbol}: {str(e)}")
+            raise
+
+    def get_company_technical_indicators(
+        self, symbol: str
+    ) -> list[CompanyTechnicalIndicatorRead] | None:
+        """Retrieve a company's technical indicators by its stock symbol."""
+        try:
+            company_repo = CompanyRepository(self._db)
+            company = company_repo.get_company_by_symbol(symbol)
+
+            if not company:
+                logger.warning(f"Company not found for symbol: {symbol}")
+                return None
+
+            technical_indicators = TechnicalIndicatorRepository(self._db)
+            indicators = technical_indicators.get_technical_indicators_by_symbol(symbol)
+            if not indicators:
+                logger.info(f"No technical indicators found for symbol: {symbol}")
+                return None
+
+            return [
+                CompanyTechnicalIndicatorRead.model_validate(indicator)
+                for indicator in indicators
+            ]
+        except Exception as e:
+            logger.error(
+                f"Error retrieving technical indicators for {symbol}: {str(e)}"
+            )
             raise

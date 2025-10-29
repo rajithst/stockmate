@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.db.models.financial_ratio import CompanyFinancialRatio
@@ -20,6 +21,28 @@ class MetricsRepository:
             .all()
         )
 
+    def get_latest_key_metrics_for_year(self, symbol: str) -> CompanyKeyMetrics | None:
+        """
+        Get the latest key metrics for the current year for a symbol.
+        Priority: FY > Q4 > Q3 > Q2 > Q1
+        """
+        current_year = str(datetime.now().year)
+        periods = ["FY", "Q4", "Q3", "Q2", "Q1"]
+        for period in periods:
+            record = (
+                self._db.query(CompanyKeyMetrics)
+                .filter(
+                    CompanyKeyMetrics.symbol == symbol,
+                    CompanyKeyMetrics.fiscal_year == current_year,
+                    CompanyKeyMetrics.period == period,
+                )
+                .order_by(CompanyKeyMetrics.date.desc())
+                .first()
+            )
+            if record:
+                return record
+        return None
+
     def get_financial_ratios_by_symbol(
         self, symbol: str
     ) -> list[CompanyFinancialRatio]:
@@ -28,6 +51,27 @@ class MetricsRepository:
             .filter(CompanyFinancialRatio.symbol == symbol)
             .all()
         )
+
+    def get_financial_ratios_for_year(
+        self, symbol: str, year: str = str(datetime.now().year)
+    ) -> CompanyFinancialRatio | None:
+        """Get the latest financial ratios for the current year for a symbol."""
+        current_year = year
+        periods = ["FY", "Q4", "Q3", "Q2", "Q1"]
+        for period in periods:
+            record = (
+                self._db.query(CompanyFinancialRatio)
+                .filter(
+                    CompanyFinancialRatio.symbol == symbol,
+                    CompanyFinancialRatio.fiscal_year == current_year,
+                    CompanyFinancialRatio.period == period,
+                )
+                .order_by(CompanyFinancialRatio.date.desc())
+                .first()
+            )
+            if record:
+                return record
+        return None
 
     def get_financial_scores_by_symbol(
         self, symbol: str
