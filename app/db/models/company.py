@@ -38,6 +38,8 @@ class Company(Base):
     symbol: Mapped[str] = mapped_column(String(250), index=True)
     company_name: Mapped[str] = mapped_column(String(250), nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
+    price_change: Mapped[float] = mapped_column(Float, nullable=True)
+    price_change_percent: Mapped[float] = mapped_column(Float, nullable=True)
     market_cap: Mapped[float] = mapped_column(Float, nullable=False)
     currency: Mapped[str] = mapped_column(String(50), nullable=False)
     exchange_full_name: Mapped[str] = mapped_column(String(250), nullable=False)

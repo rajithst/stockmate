@@ -29,6 +29,8 @@ class Company(BaseModel):
     symbol: str
     company_name: str
     price: float
+    price_change: float
+    price_change_percent: float
     market_cap: float
     currency: str
     exchange_full_name: str

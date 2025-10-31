@@ -17,3 +17,7 @@ from .price_target import CompanyPriceTarget, CompanyPriceTargetSummary
 from .quote import StockPriceChange, StockPrice
 from .financial_health import CompanyFinancialHealth
 from .technical_indicators import CompanyTechnicalIndicator
+from .user import User, NotificationPreference
+from .watchlist import Watchlist, WatchlistItem
+from .portfolio import Portfolio, PortfolioSectorPerformance, PortfolioIndustryPerformance, PortfolioHoldingPerformance, PortfolioTradingHistory, PortfolioDividendHistory
+from .notification import Notification
