@@ -6,14 +6,9 @@ from pydantic import BaseModel, ConfigDict
 
 # Portfolio Schemas
 class Portfolio(BaseModel):
-    user_id: int
     name: str
     description: Optional[str] = None
     currency: str = "USD"
-    total_value: float = 0.0
-    total_invested: float = 0.0
-    total_gain_loss: float = 0.0
-    dividends_received: float = 0.0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -22,8 +17,18 @@ class PortfolioWrite(Portfolio):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PortfolioCreate(Portfolio):
+    user_id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
 class PortfolioRead(Portfolio):
     id: int
+    total_value: float = 0.0
+    total_invested: float = 0.0
+    total_gain_loss: float = 0.0
+    dividends_received: float = 0.0
+    total_return_percentage: float = 0.0
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -34,10 +39,7 @@ class PortfolioRead(Portfolio):
 class PortfolioSectorPerformance(BaseModel):
     portfolio_id: int
     sector: str
-    allocation_percentage: float = 0.0
     currency: str = "USD"
-    total_invested: float = 0.0
-    total_gain_loss: float = 0.0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -48,6 +50,9 @@ class PortfolioSectorPerformanceWrite(PortfolioSectorPerformance):
 
 class PortfolioSectorPerformanceRead(PortfolioSectorPerformance):
     id: int
+    allocation_percentage: float = 0.0
+    total_invested: float = 0.0
+    total_gain_loss: float = 0.0
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -58,10 +63,7 @@ class PortfolioSectorPerformanceRead(PortfolioSectorPerformance):
 class PortfolioIndustryPerformance(BaseModel):
     portfolio_id: int
     industry: str
-    allocation_percentage: float = 0.0
     currency: str = "USD"
-    total_invested: float = 0.0
-    total_gain_loss: float = 0.0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -72,6 +74,9 @@ class PortfolioIndustryPerformanceWrite(PortfolioIndustryPerformance):
 
 class PortfolioIndustryPerformanceRead(PortfolioIndustryPerformance):
     id: int
+    allocation_percentage: float = 0.0
+    total_invested: float = 0.0
+    total_gain_loss: float = 0.0
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -83,10 +88,6 @@ class PortfolioHoldingPerformance(BaseModel):
     portfolio_id: int
     holding_symbol: str
     currency: str = "USD"
-    total_shares: float = 0.0
-    allocation_percentage: float = 0.0
-    total_invested: float = 0.0
-    total_gain_loss: float = 0.0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -97,6 +98,11 @@ class PortfolioHoldingPerformanceWrite(PortfolioHoldingPerformance):
 
 class PortfolioHoldingPerformanceRead(PortfolioHoldingPerformance):
     id: int
+    total_shares: float = 0.0
+    allocation_percentage: float = 0.0
+    total_invested: float = 0.0
+    total_gain_loss: float = 0.0
+    average_cost_per_share: float = 0.0
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -112,6 +118,10 @@ class PortfolioTradingHistory(BaseModel):
     shares: float = 0.0
     price_per_share: float = 0.0
     total_value: float = 0.0
+    commission: float = 0.0
+    fees: float = 0.0
+    tax: float = 0.0
+    net_total: float = 0.0
     trade_date: datetime
 
     model_config = ConfigDict(from_attributes=True)

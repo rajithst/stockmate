@@ -1,3 +1,4 @@
+from datetime import date as date_type
 from datetime import datetime
 from typing import Optional
 
@@ -7,7 +8,7 @@ from pydantic import BaseModel, ConfigDict
 class CompanyGrading(BaseModel):
     company_id: int
     symbol: str
-    date: str
+    date: date_type
     grading_company: Optional[str] = None
     previous_grade: Optional[str] = None
     new_grade: Optional[str] = None

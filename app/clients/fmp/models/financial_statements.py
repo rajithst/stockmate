@@ -1,8 +1,9 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from datetime import date as date_type
 
 
 class FMPCompanyIncomeStatement(BaseModel):
-    date: str = Field(..., description="Financial report date")
+    date: date_type = Field(..., description="Financial report date")
     symbol: str = Field(..., description="Ticker symbol of the company")
     reported_currency: str = Field(
         ..., alias="reportedCurrency", description="Currency used in the report"
@@ -137,9 +138,19 @@ class FMPCompanyIncomeStatement(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
+    @field_validator("date", mode="before")
+    @classmethod
+    def convert_date_string_to_date(cls, v):
+        """Convert date string (YYYY-MM-DD) to Python date object."""
+        if isinstance(v, date_type):
+            return v
+        if isinstance(v, str):
+            return date_type.fromisoformat(v)
+        return v
+
 
 class FMPCompanyBalanceSheet(BaseModel):
-    date: str = Field(..., description="Date of the financial statement")
+    date: date_type = Field(..., description="Date of the financial statement")
     symbol: str = Field(..., description="Ticker symbol of the company")
     reported_currency: str = Field(
         ..., alias="reportedCurrency", description="Currency reported in the statement"
@@ -327,12 +338,21 @@ class FMPCompanyBalanceSheet(BaseModel):
         ..., alias="netDebt", description="Net debt (total debt - cash)"
     )
 
-    class Config:
-        populate_by_name = True  # allows both snake_case and API camelCase
+    model_config = ConfigDict(populate_by_name=True)
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def convert_date_string_to_date(cls, v):
+        """Convert date string (YYYY-MM-DD) to Python date object."""
+        if isinstance(v, date_type):
+            return v
+        if isinstance(v, str):
+            return date_type.fromisoformat(v)
+        return v
 
 
 class FMPCompanyCashFlowStatement(BaseModel):
-    date: str
+    date: date_type = Field(..., description="Date of the financial statement")
     symbol: str
     reported_currency: str = Field(alias="reportedCurrency")
     cik: str
@@ -392,5 +412,14 @@ class FMPCompanyCashFlowStatement(BaseModel):
     income_taxes_paid: int = Field(alias="incomeTaxesPaid")
     interest_paid: int = Field(alias="interestPaid")
 
-    class Config:
-        populate_by_name = True  # allows both snake_case and camelCase
+    model_config = ConfigDict(populate_by_name=True)
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def convert_date_string_to_date(cls, v):
+        """Convert date string (YYYY-MM-DD) to Python date object."""
+        if isinstance(v, date_type):
+            return v
+        if isinstance(v, str):
+            return date_type.fromisoformat(v)
+        return v

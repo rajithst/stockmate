@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date as date_type, datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict
 class CompanyStockSplit(BaseModel):
     company_id: int
     symbol: str
-    date: str
+    date: date_type
     numerator: int
     denominator: int
 

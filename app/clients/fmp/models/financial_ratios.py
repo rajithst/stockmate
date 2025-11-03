@@ -1,11 +1,12 @@
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from datetime import date as date_type
 
 
 class FMPKeyMetrics(BaseModel):
     symbol: str
-    date: str
+    date: date_type
     fiscal_year: str = Field(alias="fiscalYear")
     period: str
     reported_currency: str = Field(alias="reportedCurrency")
@@ -73,13 +74,23 @@ class FMPKeyMetrics(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
+    @field_validator("date", mode="before")
+    @classmethod
+    def convert_date_string_to_date(cls, v):
+        """Convert date string (YYYY-MM-DD) to Python date object."""
+        if isinstance(v, date_type):
+            return v
+        if isinstance(v, str):
+            return date_type.fromisoformat(v)
+        return v
+
 
 class FMPFinancialRatios(BaseModel):
     symbol: str
-    date: Optional[str] = None
-    fiscal_year: Optional[str] = Field(None, alias="fiscalYear")
-    period: Optional[str] = None
-    reported_currency: Optional[str] = Field(None, alias="reportedCurrency")
+    date: date_type
+    fiscal_year: str = Field(None, alias="fiscalYear")
+    period: str = None
+    reported_currency: str = Field(None, alias="reportedCurrency")
 
     gross_profit_margin: Optional[float] = Field(None, alias="grossProfitMargin")
     ebit_margin: Optional[float] = Field(None, alias="ebitMargin")
@@ -198,6 +209,18 @@ class FMPFinancialRatios(BaseModel):
         None, alias="enterpriseValueMultiple"
     )
 
+    model_config = ConfigDict(populate_by_name=True)
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def convert_date_string_to_date(cls, v):
+        """Convert date string (YYYY-MM-DD) to Python date object."""
+        if isinstance(v, date_type):
+            return v
+        if isinstance(v, str):
+            return date_type.fromisoformat(v)
+        return v
+
 
 class FMPFinancialScores(BaseModel):
     symbol: str
@@ -212,5 +235,4 @@ class FMPFinancialScores(BaseModel):
     total_liabilities: Optional[float] = Field(None, alias="totalLiabilities")
     revenue: Optional[float] = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

@@ -1,9 +1,10 @@
 from pydantic import BaseModel, ConfigDict, Field
+from datetime import date as date_type
 
 
 class FMPAnalystEstimates(BaseModel):
     symbol: str
-    date: str
+    date: date_type = Field(..., description="Date of the estimate")
 
     revenue_low: int = Field(..., alias="revenueLow")
     revenue_high: int = Field(..., alias="revenueHigh")

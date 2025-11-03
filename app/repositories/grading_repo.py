@@ -1,69 +1,55 @@
+import logging
+
 from sqlalchemy.orm import Session
 
 from app.db.models.grading import CompanyGrading, CompanyGradingSummary
+from app.repositories.base_repo import BaseRepository
 from app.schemas.grading import CompanyGradingSummaryWrite, CompanyGradingWrite
-from app.util.model_mapper import map_model
+
+logger = logging.getLogger(__name__)
 
 
-class GradingRepository:
+class GradingRepository(BaseRepository):
+    """Repository for managing CompanyGrading records."""
+
     def __init__(self, session: Session):
-        self._db = session
+        super().__init__(session)
 
     def get_gradings_by_symbol(
         self, symbol: str, limit: int = 100
     ) -> list[CompanyGrading]:
-        return (
-            self._db.query(CompanyGrading)
-            .filter(CompanyGrading.symbol == symbol)
-            .order_by(CompanyGrading.date.desc())
-            .limit(limit)
-            .all()
+        return self._get_by_filter(
+            CompanyGrading,
+            {"symbol": symbol},
+            order_by_desc=CompanyGrading.date,
+            limit=limit,
         )
 
     def upsert_grading(
         self, symbol: str, grading_data: list[CompanyGradingWrite]
-    ) -> list[CompanyGrading] | None:
-        grading_records = []
-        for grading in grading_data:
-            existing = (
-                self._db.query(CompanyGrading)
-                .filter_by(symbol=symbol, date=grading.date)
-                .first()
-            )
-            if existing:
-                grading_record = map_model(existing, grading)
-            else:
-                grading_record = CompanyGrading(
-                    **grading.model_dump(exclude_unset=True)
-                )
-                self._db.add(grading_record)
-            grading_records.append(grading_record)
-        self._db.commit()
-        for record in grading_records:
-            self._db.refresh(record)
-        return grading_records
+    ) -> list[CompanyGrading]:
+        """Upsert gradings using the base class pattern."""
+        return self._upsert_records(
+            grading_data,
+            CompanyGrading,
+            lambda g: {"symbol": symbol, "date": g.date},
+            "upsert_grading",
+        )
 
 
-class GradingSummaryRepository:
+class GradingSummaryRepository(BaseRepository):
+    """Repository for managing CompanyGradingSummary records."""
+
     def __init__(self, session: Session):
-        self._db = session
+        super().__init__(session)
 
     def upsert_grading_summary(
         self, summary_data: CompanyGradingSummaryWrite
     ) -> CompanyGradingSummary:
-        existing = (
-            self._db.query(CompanyGradingSummary)
-            .filter_by(symbol=summary_data.symbol)
-            .first()
+        """Upsert grading summary by symbol."""
+        return self._upsert_single(
+            summary_data,
+            CompanyGradingSummary,
+            lambda s: {"symbol": s.symbol},
+            "upsert_grading_summary",
         )
-
-        if existing:
-            summary = map_model(existing, summary_data)
-        else:
-            summary = CompanyGradingSummary(
-                **summary_data.model_dump(exclude_unset=True)
-            )
-            self._db.add(summary)
-        self._db.commit()
-        self._db.refresh(summary)
-        return summary

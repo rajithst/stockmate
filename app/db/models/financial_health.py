@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -12,6 +12,10 @@ if TYPE_CHECKING:
 
 class CompanyFinancialHealth(Base):
     __tablename__ = "company_financial_health"
+    __table_args__ = (
+        UniqueConstraint("company_id", "section", "metric", name="uq_health_metric"),
+        Index("ix_health_symbol_section", "symbol", "section"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     company_id: Mapped[int] = mapped_column(
@@ -20,10 +24,10 @@ class CompanyFinancialHealth(Base):
     symbol: Mapped[str] = mapped_column(String(12), index=True, nullable=False)
     section: Mapped[str] = mapped_column(String(100), nullable=False)
     metric: Mapped[str] = mapped_column(String(100), nullable=False)
-    benchmark: Mapped[str] = mapped_column(String(100), nullable=True)
+    benchmark: Mapped[str | None] = mapped_column(String(100), nullable=True)
     value: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[str] = mapped_column(String(50), nullable=False)
-    insight: Mapped[str] = mapped_column(Text, nullable=True)
+    insight: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -39,7 +43,7 @@ class CompanyFinancialHealth(Base):
         "Company",
         back_populates="financial_health",
         foreign_keys=[company_id],
-        lazy="joined",
+        lazy="select",
     )
 
     def __repr__(self) -> str:

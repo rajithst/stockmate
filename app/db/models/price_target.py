@@ -1,6 +1,14 @@
 from typing import TYPE_CHECKING
 from app.db.engine import Base
-from sqlalchemy import Float, DateTime, ForeignKey, String, func
+from sqlalchemy import (
+    Float,
+    DateTime,
+    ForeignKey,
+    String,
+    func,
+    UniqueConstraint,
+    Index,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from datetime import datetime
@@ -32,11 +40,13 @@ class CompanyPriceTarget(Base):
         onupdate=func.now(),
     )
 
+    __table_args__ = (UniqueConstraint("company_id", name="uq_price_target_company"),)
+
     company: Mapped["Company"] = relationship(
         "Company",
         back_populates="price_target",
         foreign_keys=[company_id],
-        lazy="joined",
+        lazy="select",
         uselist=False,
     )
 
@@ -49,7 +59,7 @@ class CompanyPriceTargetSummary(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     company_id: Mapped[int] = mapped_column(
-        ForeignKey("companies.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=False
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
     last_month_count: Mapped[int] = mapped_column(nullable=False)
@@ -75,13 +85,18 @@ class CompanyPriceTargetSummary(Base):
         onupdate=func.now(),
     )
 
+    __table_args__ = (
+        UniqueConstraint("company_id", name="uq_price_target_summary_company"),
+        Index("ix_price_target_summary_symbol", "symbol"),
+    )
+
     company: Mapped["Company"] = relationship(
         "Company",
         back_populates="price_target_summary",
         foreign_keys=[company_id],
-        lazy="joined",
+        lazy="select",
         uselist=False,
     )
 
     def __repr__(self):
-        return f"<CompanyPriceTargetSummary(symbol={self.symbol}, average_target={self.average_target}, number_of_analysts={self.number_of_analysts})>"
+        return f"<CompanyPriceTargetSummary(symbol={self.symbol}, last_month_avg={self.last_month_average_price_target}, all_time_avg={self.all_time_average_price_target})>"

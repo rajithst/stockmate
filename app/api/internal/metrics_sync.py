@@ -1,71 +1,94 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
 
-from app.clients.fmp.protocol import FMPClientProtocol
-from app.dependencies import get_db_session, get_fmp_client
+from app.api.internal.config import DEFAULTS, ERROR_MESSAGES, LIMITS, PERIOD_TYPES, TAGS
+from app.dependencies.sync_services import create_sync_service_provider
 from app.schemas.financial_ratio import CompanyFinancialRatioRead
 from app.schemas.financial_score import CompanyFinancialScoresRead
 from app.schemas.key_metrics import CompanyKeyMetricsRead
 from app.services.internal.metrics_sync_service import MetricsSyncService
 
-router = APIRouter(prefix="", tags=["metrics_data"])
-period_options = ["Q1", "Q2", "Q3", "Q4", "FY", "annual", "quarter"]
+router = APIRouter(prefix="", tags=[TAGS["metrics"]["name"]])
 
-
-def get_metrics_sync_service(
-    fmp_client: FMPClientProtocol = Depends(get_fmp_client),
-    db_session: Session = Depends(get_db_session),
-) -> MetricsSyncService:
-    """
-    Provides MetricsSyncService with required dependencies.
-    """
-    return MetricsSyncService(market_api_client=fmp_client, session=db_session)
+# Create dependency provider for MetricsSyncService
+get_metrics_sync_service = create_sync_service_provider(MetricsSyncService)
 
 
 @router.get(
     "/key-metrics/{symbol}/sync",
-    response_model=List[CompanyKeyMetricsRead],
+    response_model=list[CompanyKeyMetricsRead],
     summary="Sync company key metrics from external API",
     description="Fetches and upserts company's key metrics from the external API into the database.",
 )
-async def sync_company_key_metrics(
+def sync_key_metrics(
     symbol: str,
-    limit: int = Query(default=40, ge=1, le=100),
-    period: str = Query(default="quarter", enum=period_options),
+    limit: int = Query(
+        default=DEFAULTS["metrics_limit"],
+        ge=LIMITS["metrics_limit"]["min"],
+        le=LIMITS["metrics_limit"]["max"],
+    ),
+    period: str = Query(default="quarter", enum=PERIOD_TYPES["metrics"]),
     service: MetricsSyncService = Depends(get_metrics_sync_service),
 ):
     """
     Sync company's key metrics from the external API and store in the database.
+
+    Args:
+        symbol: Stock symbol (e.g., 'AAPL')
+        limit: Number of records to fetch (1-100)
+        period: Period type ('annual' or 'quarter')
+        service: MetricsSyncService instance (injected)
+
+    Returns:
+        list[CompanyKeyMetricsRead]: Synced key metrics records
+
+    Raises:
+        HTTPException: 404 if key metrics not found
     """
     metrics = service.upsert_key_metrics(symbol, limit, period)
     if not metrics:
         raise HTTPException(
-            status_code=404, detail=f"Key metrics not found for symbol: {symbol}"
+            status_code=404,
+            detail=ERROR_MESSAGES["NOT_FOUND_KEY_METRICS"].format(symbol=symbol),
         )
     return metrics
 
 
 @router.get(
     "/financial-ratios/{symbol}/sync",
-    response_model=List[CompanyFinancialRatioRead],
+    response_model=list[CompanyFinancialRatioRead],
     summary="Sync company financial ratios from external API",
     description="Fetches and upserts company's financial ratios from the external API into the database.",
 )
-async def sync_company_financial_ratios(
+def sync_financial_ratios(
     symbol: str,
-    limit: int = Query(default=40, ge=1, le=100),
-    period: str = Query(default="quarter", enum=period_options),
+    limit: int = Query(
+        default=DEFAULTS["metrics_limit"],
+        ge=LIMITS["metrics_limit"]["min"],
+        le=LIMITS["metrics_limit"]["max"],
+    ),
+    period: str = Query(default="quarter", enum=PERIOD_TYPES["metrics"]),
     service: MetricsSyncService = Depends(get_metrics_sync_service),
 ):
     """
     Sync company's financial ratios from the external API and store in the database.
+
+    Args:
+        symbol: Stock symbol (e.g., 'AAPL')
+        limit: Number of records to fetch (1-100)
+        period: Period type ('annual' or 'quarter')
+        service: MetricsSyncService instance (injected)
+
+    Returns:
+        list[CompanyFinancialRatioRead]: Synced financial ratio records
+
+    Raises:
+        HTTPException: 404 if financial ratios not found
     """
     ratios = service.upsert_financial_ratios(symbol, limit, period)
     if not ratios:
         raise HTTPException(
-            status_code=404, detail=f"Financial ratios not found for symbol: {symbol}"
+            status_code=404,
+            detail=ERROR_MESSAGES["NOT_FOUND_FINANCIAL_RATIOS"].format(symbol=symbol),
         )
     return ratios
 
@@ -76,15 +99,26 @@ async def sync_company_financial_ratios(
     summary="Sync company financial scores from external API",
     description="Fetches and upserts company's financial scores from the external API into the database.",
 )
-async def sync_company_financial_scores(
+def sync_financial_scores(
     symbol: str, service: MetricsSyncService = Depends(get_metrics_sync_service)
 ):
     """
     Sync company's financial scores from the external API and store in the database.
+
+    Args:
+        symbol: Stock symbol (e.g., 'AAPL')
+        service: MetricsSyncService instance (injected)
+
+    Returns:
+        CompanyFinancialScoresRead: Synced financial scores record
+
+    Raises:
+        HTTPException: 404 if financial scores not found
     """
     scores = service.upsert_financial_scores(symbol)
     if not scores:
         raise HTTPException(
-            status_code=404, detail=f"Financial scores not found for symbol: {symbol}"
+            status_code=404,
+            detail=ERROR_MESSAGES["NOT_FOUND_FINANCIAL_SCORES"].format(symbol=symbol),
         )
     return scores

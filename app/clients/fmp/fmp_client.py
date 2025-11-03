@@ -24,7 +24,7 @@ from app.clients.fmp.models.news import (
     FMPStockGradingNews,
     FMPStockNews,
 )
-from app.clients.fmp.models.quotes import FMPStockPriceChange
+from app.clients.fmp.models.quotes import FMPStockPrice, FMPStockPriceChange
 from app.clients.fmp.models.stock import (
     FMPStockGrading,
     FMPStockGradingSummary,
@@ -181,13 +181,9 @@ class FMPClient:
         Returns:
             list: A list of cash flow statement records.
         """
-        if IS_DEV:
-            params = {"symbol": symbol}
-        else:
-            params = {"symbol": symbol, "period": period, "limit": limit}
         cash_flow_statements = self.__get_by_url(
             endpoint="cash-flow-statement",
-            params=params,
+            params={"symbol": symbol, "period": period, "limit": limit},
         )
         return self._handle_list_response(
             cash_flow_statements, FMPCompanyCashFlowStatement
@@ -207,13 +203,10 @@ class FMPClient:
         self._validate_symbol(symbol)
         self._validate_period(period)
         self._validate_limit(limit)
-        if IS_DEV:
-            params = {"symbol": symbol}
-        else:
-            params = {"symbol": symbol, "period": period, "limit": limit}
+
         key_metrics = self.__get_by_url(
             endpoint="key-metrics",
-            params=params,
+            params={"symbol": symbol, "period": period, "limit": limit},
         )
         return self._handle_list_response(key_metrics, FMPKeyMetrics)
 
@@ -231,13 +224,10 @@ class FMPClient:
         self._validate_symbol(symbol)
         self._validate_period(period)
         self._validate_limit(limit)
-        if IS_DEV:
-            params = {"symbol": symbol}
-        else:
-            params = {"symbol": symbol, "period": period, "limit": limit}
+
         ratios = self.__get_by_url(
             endpoint="ratios",
-            params=params,
+            params={"symbol": symbol, "period": period, "limit": limit},
         )
         return self._handle_list_response(ratios, FMPFinancialRatios)
 
@@ -429,9 +419,13 @@ class FMPClient:
         Returns:
             list: A list of dividend records within the specified date range.
         """
+        if IS_DEV:
+            params = {}
+        else:
+            params = {"from": from_date, "to": to_date}
         calendar = self.__get_by_url(
             endpoint="dividends-calendar",
-            params={"from": from_date, "to": to_date},
+            params=params,
         )
         return self._handle_list_response(calendar, FMPDividendCalendar)
 
@@ -517,6 +511,16 @@ class FMPClient:
             endpoint="stock-price-change", params={"symbol": symbol}
         )
         return self._handle_single_response(price_change, FMPStockPriceChange)
+
+    def get_current_price_quote(self, symbol: str) -> Optional[FMPStockPrice]:
+        """Fetches the current price quote for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the current price quote for.
+        Returns:
+            Optional[FMPStockPrice]: The current price quote if found, else None.
+        """
+        current_price = self.__get_by_url(endpoint="quote", params={"symbol": symbol})
+        return self._handle_single_response(current_price, FMPStockPrice)
 
     def _validate_symbol(self, symbol: str) -> None:
         """Validate stock symbol parameter"""

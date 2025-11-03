@@ -1,4 +1,5 @@
 from typing import List
+import logging
 
 from sqlalchemy.orm import Session
 
@@ -14,139 +15,92 @@ from app.schemas.news import (
     CompanyPriceTargetNewsWrite,
     CompanyStockNewsWrite,
 )
-from app.util.model_mapper import map_model
+from app.repositories.base_repo import BaseRepository
+
+logger = logging.getLogger(__name__)
 
 
-class CompanyNewsRepository:
+class CompanyNewsRepository(BaseRepository):
     def __init__(self, db: Session):
-        self._db = db
+        super().__init__(db)
 
     def get_general_news_by_symbol(
         self, symbol: str, limit: int = 20
     ) -> list[CompanyGeneralNews]:
         """Retrieve general news articles for a given company symbol."""
-        return (
-            self._db.query(CompanyGeneralNews)
-            .filter(CompanyGeneralNews.symbol == symbol)
-            .order_by(CompanyGeneralNews.published_date.desc())
-            .limit(limit)
-            .all()
+        return self._get_by_filter(
+            CompanyGeneralNews,
+            {"symbol": symbol},
+            order_by_desc=CompanyGeneralNews.published_date,
+            limit=limit,
         )
 
     def get_price_target_news_by_symbol(
         self, symbol: str, limit: int = 20
     ) -> list[CompanyPriceTargetNews]:
         """Retrieve price target news articles for a given company symbol."""
-        return (
-            self._db.query(CompanyPriceTargetNews)
-            .filter(CompanyPriceTargetNews.symbol == symbol)
-            .order_by(CompanyPriceTargetNews.published_date.desc())
-            .limit(limit)
-            .all()
+        return self._get_by_filter(
+            CompanyPriceTargetNews,
+            {"symbol": symbol},
+            order_by_desc=CompanyPriceTargetNews.published_date,
+            limit=limit,
         )
 
     def get_grading_news_by_symbol(
         self, symbol: str, limit: int = 20
     ) -> list[CompanyGradingNews]:
         """Retrieve stock grading news articles for a given company symbol."""
-        return (
-            self._db.query(CompanyGradingNews)
-            .filter(CompanyGradingNews.symbol == symbol)
-            .order_by(CompanyGradingNews.published_date.desc())
-            .limit(limit)
-            .all()
+        return self._get_by_filter(
+            CompanyGradingNews,
+            {"symbol": symbol},
+            order_by_desc=CompanyGradingNews.published_date,
+            limit=limit,
         )
 
     def upsert_general_news(
         self, news_data: List[CompanyGeneralNewsWrite]
     ) -> List[CompanyGeneralNews]:
         """Insert or update general news articles."""
-        news_records = []
-        for news in news_data:
-            existing = (
-                self._db.query(CompanyGeneralNews)
-                .filter_by(
-                    publisher=news.publisher,
-                    title=news.title,
-                    published_date=news.published_date,
-                )
-                .first()
-            )
-            if existing:
-                news_record = map_model(existing, news)
-            else:
-                news_record = CompanyGeneralNews(**news.model_dump(exclude_unset=True))
-                self._db.add(news_record)
-            news_records.append(news_record)
-        self._db.commit()
-        for record in news_records:
-            self._db.refresh(record)
-        return news_records
+        return self._upsert_records(
+            news_data,
+            CompanyGeneralNews,
+            lambda news: {
+                "publisher": news.publisher,
+                "title": news.title,
+                "published_date": news.published_date,
+            },
+            "upsert_general_news",
+        )
 
     def upsert_price_target_news(
         self, news_data: List[CompanyPriceTargetNewsWrite]
     ) -> List[CompanyPriceTargetNews]:
         """Insert or update price target news articles."""
-        news_records = []
-        for news in news_data:
-            existing = (
-                self._db.query(CompanyPriceTargetNews)
-                .filter_by(symbol=news.symbol, title=news.title)
-                .first()
-            )
-            if existing:
-                news_record = map_model(existing, news)
-            else:
-                news_record = CompanyPriceTargetNews(
-                    **news.model_dump(exclude_unset=True)
-                )
-                self._db.add(news_record)
-            news_records.append(news_record)
-        self._db.commit()
-        for record in news_records:
-            self._db.refresh(record)
-        return news_records
+        return self._upsert_records(
+            news_data,
+            CompanyPriceTargetNews,
+            lambda news: {"symbol": news.symbol, "title": news.title},
+            "upsert_price_target_news",
+        )
 
     def upsert_grading_news(
         self, news_data: List[CompanyGradingNewsWrite]
     ) -> List[CompanyGradingNews]:
         """Insert or update stock grading news articles."""
-        news_records = []
-        for news in news_data:
-            existing = (
-                self._db.query(CompanyGradingNews)
-                .filter_by(symbol=news.symbol, title=news.title)
-                .first()
-            )
-            if existing:
-                news_record = map_model(existing, news)
-            else:
-                news_record = CompanyGradingNews(**news.model_dump(exclude_unset=True))
-                self._db.add(news_record)
-            news_records.append(news_record)
-        self._db.commit()
-        for record in news_records:
-            self._db.refresh(record)
-        return news_records
+        return self._upsert_records(
+            news_data,
+            CompanyGradingNews,
+            lambda news: {"symbol": news.symbol, "title": news.title},
+            "upsert_grading_news",
+        )
 
     def upsert_stock_news(
         self, news_data: List[CompanyStockNewsWrite]
     ) -> List[CompanyStockNews]:
         """Insert or update stock news articles."""
-        news_records = []
-        for news in news_data:
-            existing = (
-                self._db.query(CompanyStockNews)
-                .filter_by(symbol=news.symbol, title=news.title)
-                .first()
-            )
-            if existing:
-                news_record = map_model(existing, news)
-            else:
-                news_record = CompanyGradingNews(**news.model_dump(exclude_unset=True))
-                self._db.add(news_record)
-            news_records.append(news_record)
-        self._db.commit()
-        for record in news_records:
-            self._db.refresh(record)
-        return news_records
+        return self._upsert_records(
+            news_data,
+            CompanyStockNews,
+            lambda news: {"symbol": news.symbol, "title": news.title},
+            "upsert_stock_news",
+        )

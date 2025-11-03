@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date as date_type, datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -7,8 +7,8 @@ from pydantic import BaseModel, ConfigDict
 class CompanyKeyMetrics(BaseModel):
     company_id: int
     symbol: str
-    date: str
-    fiscal_year: str
+    date: date_type
+    fiscal_year: int
     period: str
     reported_currency: str
     market_cap: Optional[int] = None

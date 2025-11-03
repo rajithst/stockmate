@@ -1,8 +1,8 @@
-"""initial migration
+"""add relationship
 
-Revision ID: aa5e87d1ce60
+Revision ID: 9ae31411a4b5
 Revises: 
-Create Date: 2025-10-30 00:07:12.486643
+Create Date: 2025-11-03 18:45:01.347046
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'aa5e87d1ce60'
+revision: str = '9ae31411a4b5'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,207 +25,223 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('symbol', sa.String(length=250), nullable=False),
     sa.Column('company_name', sa.String(length=250), nullable=False),
-    sa.Column('price', sa.Float(), nullable=False),
     sa.Column('market_cap', sa.Float(), nullable=False),
     sa.Column('currency', sa.String(length=50), nullable=False),
     sa.Column('exchange_full_name', sa.String(length=250), nullable=False),
     sa.Column('exchange', sa.String(length=250), nullable=False),
     sa.Column('industry', sa.String(length=250), nullable=True),
+    sa.Column('sector', sa.String(length=250), nullable=True),
     sa.Column('website', sa.String(length=250), nullable=True),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('sector', sa.String(length=250), nullable=True),
+    sa.Column('image', sa.String(length=250), nullable=True),
+    sa.Column('ipo_date', sa.Date(), nullable=True),
     sa.Column('country', sa.String(length=250), nullable=True),
     sa.Column('phone', sa.String(length=50), nullable=True),
     sa.Column('address', sa.String(length=250), nullable=True),
     sa.Column('city', sa.String(length=100), nullable=True),
     sa.Column('state', sa.String(length=100), nullable=True),
     sa.Column('zip', sa.String(length=20), nullable=True),
-    sa.Column('image', sa.String(length=250), nullable=True),
-    sa.Column('ipo_date', sa.String(length=50), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_companies_symbol'), 'companies', ['symbol'], unique=False)
-    op.create_table('dividend_calendars',
+    op.create_index(op.f('ix_companies_exchange'), 'companies', ['exchange'], unique=False)
+    op.create_index(op.f('ix_companies_sector'), 'companies', ['sector'], unique=False)
+    op.create_index(op.f('ix_companies_symbol'), 'companies', ['symbol'], unique=True)
+    op.create_index('ix_company_sector_industry', 'companies', ['sector', 'industry'], unique=False)
+    op.create_index('ix_company_symbol_exchange', 'companies', ['symbol', 'exchange'], unique=False)
+    op.create_table('company_dividends',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('symbol', sa.String(length=12), nullable=False),
-    sa.Column('date', sa.String(length=20), nullable=False),
-    sa.Column('record_date', sa.String(length=20), nullable=True),
-    sa.Column('payment_date', sa.String(length=20), nullable=True),
-    sa.Column('declaration_date', sa.String(length=20), nullable=True),
+    sa.Column('date', sa.Date(), nullable=False),
+    sa.Column('record_date', sa.Date(), nullable=True),
+    sa.Column('payment_date', sa.Date(), nullable=True),
+    sa.Column('declaration_date', sa.Date(), nullable=True),
     sa.Column('adj_dividend', sa.Float(), nullable=True),
     sa.Column('dividend', sa.Float(), nullable=True),
     sa.Column('dividend_yield', sa.Float(), nullable=True),
     sa.Column('frequency', sa.String(length=20), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('symbol', 'date', name='uq_dividend_date')
+    )
+    op.create_index(op.f('ix_company_dividends_id'), 'company_dividends', ['id'], unique=False)
+    op.create_index(op.f('ix_company_dividends_symbol'), 'company_dividends', ['symbol'], unique=False)
+    op.create_index('ix_dividend_symbol_date', 'company_dividends', ['symbol', 'date'], unique=False)
+    op.create_table('users',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('username', sa.String(length=50), nullable=False),
+    sa.Column('email', sa.String(length=100), nullable=False),
+    sa.Column('first_name', sa.String(length=50), nullable=True),
+    sa.Column('last_name', sa.String(length=50), nullable=True),
+    sa.Column('phone_number', sa.String(length=20), nullable=True),
+    sa.Column('hashed_password', sa.String(length=255), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('last_login', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('last_password_change', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('theme_preference', sa.String(length=20), nullable=False),
+    sa.Column('language_preference', sa.String(length=10), nullable=False),
+    sa.Column('email_verified', sa.Boolean(), nullable=False),
+    sa.Column('two_factor_enabled', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_dividend_calendars_id'), 'dividend_calendars', ['id'], unique=False)
-    op.create_index(op.f('ix_dividend_calendars_symbol'), 'dividend_calendars', ['symbol'], unique=False)
+    op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
+    op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
     op.create_table('company_balance_sheets',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.Column('symbol', sa.String(length=12), nullable=False),
-    sa.Column('date', sa.String(length=20), nullable=False),
+    sa.Column('date', sa.Date(), nullable=False),
     sa.Column('reported_currency', sa.String(length=10), nullable=False),
     sa.Column('cik', sa.String(length=20), nullable=False),
-    sa.Column('filing_date', sa.String(length=20), nullable=False),
-    sa.Column('accepted_date', sa.String(length=30), nullable=False),
-    sa.Column('fiscal_year', sa.String(length=10), nullable=False),
+    sa.Column('filing_date', sa.Date(), nullable=False),
+    sa.Column('accepted_date', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('fiscal_year', sa.Integer(), nullable=False),
     sa.Column('period', sa.String(length=5), nullable=False),
-    sa.Column('cash_and_cash_equivalents', sa.BigInteger(), nullable=False),
-    sa.Column('short_term_investments', sa.BigInteger(), nullable=False),
-    sa.Column('cash_and_short_term_investments', sa.BigInteger(), nullable=False),
-    sa.Column('net_receivables', sa.BigInteger(), nullable=False),
-    sa.Column('accounts_receivables', sa.BigInteger(), nullable=False),
-    sa.Column('other_receivables', sa.BigInteger(), nullable=False),
-    sa.Column('inventory', sa.BigInteger(), nullable=False),
-    sa.Column('prepaids', sa.BigInteger(), nullable=False),
-    sa.Column('other_current_assets', sa.BigInteger(), nullable=False),
-    sa.Column('total_current_assets', sa.BigInteger(), nullable=False),
-    sa.Column('property_plant_equipment_net', sa.BigInteger(), nullable=False),
-    sa.Column('goodwill', sa.BigInteger(), nullable=False),
-    sa.Column('intangible_assets', sa.BigInteger(), nullable=False),
-    sa.Column('goodwill_and_intangible_assets', sa.BigInteger(), nullable=False),
-    sa.Column('long_term_investments', sa.BigInteger(), nullable=False),
-    sa.Column('tax_assets', sa.BigInteger(), nullable=False),
-    sa.Column('other_non_current_assets', sa.BigInteger(), nullable=False),
-    sa.Column('total_non_current_assets', sa.BigInteger(), nullable=False),
-    sa.Column('other_assets', sa.BigInteger(), nullable=False),
-    sa.Column('total_assets', sa.BigInteger(), nullable=False),
-    sa.Column('total_payables', sa.BigInteger(), nullable=False),
-    sa.Column('account_payables', sa.BigInteger(), nullable=False),
-    sa.Column('other_payables', sa.BigInteger(), nullable=False),
-    sa.Column('accrued_expenses', sa.BigInteger(), nullable=False),
-    sa.Column('short_term_debt', sa.BigInteger(), nullable=False),
-    sa.Column('capital_lease_obligations_current', sa.BigInteger(), nullable=False),
-    sa.Column('tax_payables', sa.BigInteger(), nullable=False),
-    sa.Column('deferred_revenue', sa.BigInteger(), nullable=False),
-    sa.Column('other_current_liabilities', sa.BigInteger(), nullable=False),
-    sa.Column('total_current_liabilities', sa.BigInteger(), nullable=False),
-    sa.Column('long_term_debt', sa.BigInteger(), nullable=False),
-    sa.Column('deferred_revenue_non_current', sa.BigInteger(), nullable=False),
-    sa.Column('deferred_tax_liabilities_non_current', sa.BigInteger(), nullable=False),
-    sa.Column('other_non_current_liabilities', sa.BigInteger(), nullable=False),
-    sa.Column('total_non_current_liabilities', sa.BigInteger(), nullable=False),
-    sa.Column('other_liabilities', sa.BigInteger(), nullable=False),
-    sa.Column('capital_lease_obligations', sa.BigInteger(), nullable=False),
-    sa.Column('total_liabilities', sa.BigInteger(), nullable=False),
-    sa.Column('treasury_stock', sa.BigInteger(), nullable=False),
-    sa.Column('preferred_stock', sa.BigInteger(), nullable=False),
-    sa.Column('common_stock', sa.BigInteger(), nullable=False),
-    sa.Column('retained_earnings', sa.BigInteger(), nullable=False),
-    sa.Column('additional_paid_in_capital', sa.BigInteger(), nullable=False),
-    sa.Column('accumulated_other_comprehensive_income_loss', sa.BigInteger(), nullable=False),
-    sa.Column('other_total_stockholders_equity', sa.BigInteger(), nullable=False),
-    sa.Column('total_stockholders_equity', sa.BigInteger(), nullable=False),
-    sa.Column('total_equity', sa.BigInteger(), nullable=False),
-    sa.Column('minority_interest', sa.BigInteger(), nullable=False),
-    sa.Column('total_liabilities_and_total_equity', sa.BigInteger(), nullable=False),
-    sa.Column('total_investments', sa.BigInteger(), nullable=False),
-    sa.Column('total_debt', sa.BigInteger(), nullable=False),
-    sa.Column('net_debt', sa.BigInteger(), nullable=False),
+    sa.Column('cash_and_cash_equivalents', sa.BigInteger(), nullable=True),
+    sa.Column('short_term_investments', sa.BigInteger(), nullable=True),
+    sa.Column('cash_and_short_term_investments', sa.BigInteger(), nullable=True),
+    sa.Column('net_receivables', sa.BigInteger(), nullable=True),
+    sa.Column('accounts_receivables', sa.BigInteger(), nullable=True),
+    sa.Column('other_receivables', sa.BigInteger(), nullable=True),
+    sa.Column('inventory', sa.BigInteger(), nullable=True),
+    sa.Column('prepaids', sa.BigInteger(), nullable=True),
+    sa.Column('other_current_assets', sa.BigInteger(), nullable=True),
+    sa.Column('total_current_assets', sa.BigInteger(), nullable=True),
+    sa.Column('property_plant_equipment_net', sa.BigInteger(), nullable=True),
+    sa.Column('goodwill', sa.BigInteger(), nullable=True),
+    sa.Column('intangible_assets', sa.BigInteger(), nullable=True),
+    sa.Column('goodwill_and_intangible_assets', sa.BigInteger(), nullable=True),
+    sa.Column('long_term_investments', sa.BigInteger(), nullable=True),
+    sa.Column('tax_assets', sa.BigInteger(), nullable=True),
+    sa.Column('other_non_current_assets', sa.BigInteger(), nullable=True),
+    sa.Column('total_non_current_assets', sa.BigInteger(), nullable=True),
+    sa.Column('other_assets', sa.BigInteger(), nullable=True),
+    sa.Column('total_assets', sa.BigInteger(), nullable=True),
+    sa.Column('total_payables', sa.BigInteger(), nullable=True),
+    sa.Column('account_payables', sa.BigInteger(), nullable=True),
+    sa.Column('other_payables', sa.BigInteger(), nullable=True),
+    sa.Column('accrued_expenses', sa.BigInteger(), nullable=True),
+    sa.Column('short_term_debt', sa.BigInteger(), nullable=True),
+    sa.Column('capital_lease_obligations_current', sa.BigInteger(), nullable=True),
+    sa.Column('tax_payables', sa.BigInteger(), nullable=True),
+    sa.Column('deferred_revenue', sa.BigInteger(), nullable=True),
+    sa.Column('other_current_liabilities', sa.BigInteger(), nullable=True),
+    sa.Column('total_current_liabilities', sa.BigInteger(), nullable=True),
+    sa.Column('long_term_debt', sa.BigInteger(), nullable=True),
+    sa.Column('deferred_revenue_non_current', sa.BigInteger(), nullable=True),
+    sa.Column('deferred_tax_liabilities_non_current', sa.BigInteger(), nullable=True),
+    sa.Column('other_non_current_liabilities', sa.BigInteger(), nullable=True),
+    sa.Column('total_non_current_liabilities', sa.BigInteger(), nullable=True),
+    sa.Column('other_liabilities', sa.BigInteger(), nullable=True),
+    sa.Column('capital_lease_obligations', sa.BigInteger(), nullable=True),
+    sa.Column('total_liabilities', sa.BigInteger(), nullable=True),
+    sa.Column('treasury_stock', sa.BigInteger(), nullable=True),
+    sa.Column('preferred_stock', sa.BigInteger(), nullable=True),
+    sa.Column('common_stock', sa.BigInteger(), nullable=True),
+    sa.Column('retained_earnings', sa.BigInteger(), nullable=True),
+    sa.Column('additional_paid_in_capital', sa.BigInteger(), nullable=True),
+    sa.Column('accumulated_other_comprehensive_income_loss', sa.BigInteger(), nullable=True),
+    sa.Column('other_total_stockholders_equity', sa.BigInteger(), nullable=True),
+    sa.Column('total_stockholders_equity', sa.BigInteger(), nullable=True),
+    sa.Column('total_equity', sa.BigInteger(), nullable=True),
+    sa.Column('minority_interest', sa.BigInteger(), nullable=True),
+    sa.Column('total_liabilities_and_total_equity', sa.BigInteger(), nullable=True),
+    sa.Column('total_investments', sa.BigInteger(), nullable=True),
+    sa.Column('total_debt', sa.BigInteger(), nullable=True),
+    sa.Column('net_debt', sa.BigInteger(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'fiscal_year', 'period', name='uq_balance_sheet_period')
     )
+    op.create_index('ix_balance_sheet_fiscal_year', 'company_balance_sheets', ['fiscal_year'], unique=False)
+    op.create_index('ix_balance_sheet_symbol_date', 'company_balance_sheets', ['symbol', 'date'], unique=False)
     op.create_index(op.f('ix_company_balance_sheets_company_id'), 'company_balance_sheets', ['company_id'], unique=False)
+    op.create_index(op.f('ix_company_balance_sheets_fiscal_year'), 'company_balance_sheets', ['fiscal_year'], unique=False)
     op.create_index(op.f('ix_company_balance_sheets_symbol'), 'company_balance_sheets', ['symbol'], unique=False)
     op.create_table('company_cash_flow_statements',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.Column('symbol', sa.String(length=12), nullable=False),
-    sa.Column('date', sa.String(length=20), nullable=False),
+    sa.Column('date', sa.Date(), nullable=False),
     sa.Column('reported_currency', sa.String(length=10), nullable=False),
     sa.Column('cik', sa.String(length=20), nullable=False),
-    sa.Column('filing_date', sa.String(length=20), nullable=False),
-    sa.Column('accepted_date', sa.String(length=20), nullable=False),
-    sa.Column('fiscal_year', sa.String(length=10), nullable=False),
+    sa.Column('filing_date', sa.Date(), nullable=False),
+    sa.Column('accepted_date', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('fiscal_year', sa.Integer(), nullable=False),
     sa.Column('period', sa.String(length=10), nullable=False),
-    sa.Column('net_income', sa.BigInteger(), nullable=False),
-    sa.Column('depreciation_and_amortization', sa.BigInteger(), nullable=False),
-    sa.Column('deferred_income_tax', sa.BigInteger(), nullable=False),
-    sa.Column('stock_based_compensation', sa.BigInteger(), nullable=False),
-    sa.Column('change_in_working_capital', sa.BigInteger(), nullable=False),
-    sa.Column('accounts_receivables', sa.BigInteger(), nullable=False),
-    sa.Column('inventory', sa.BigInteger(), nullable=False),
-    sa.Column('accounts_payables', sa.BigInteger(), nullable=False),
-    sa.Column('other_working_capital', sa.BigInteger(), nullable=False),
-    sa.Column('other_non_cash_items', sa.BigInteger(), nullable=False),
-    sa.Column('net_cash_provided_by_operating_activities', sa.BigInteger(), nullable=False),
-    sa.Column('investments_in_property_plant_and_equipment', sa.BigInteger(), nullable=False),
-    sa.Column('acquisitions_net', sa.BigInteger(), nullable=False),
-    sa.Column('purchases_of_investments', sa.BigInteger(), nullable=False),
-    sa.Column('sales_maturities_of_investments', sa.BigInteger(), nullable=False),
-    sa.Column('other_investing_activities', sa.BigInteger(), nullable=False),
-    sa.Column('net_cash_provided_by_investing_activities', sa.BigInteger(), nullable=False),
-    sa.Column('net_debt_issuance', sa.BigInteger(), nullable=False),
-    sa.Column('long_term_net_debt_issuance', sa.BigInteger(), nullable=False),
-    sa.Column('short_term_net_debt_issuance', sa.BigInteger(), nullable=False),
-    sa.Column('net_stock_issuance', sa.BigInteger(), nullable=False),
-    sa.Column('net_common_stock_issuance', sa.BigInteger(), nullable=False),
-    sa.Column('common_stock_issuance', sa.BigInteger(), nullable=False),
-    sa.Column('common_stock_repurchased', sa.BigInteger(), nullable=False),
-    sa.Column('net_preferred_stock_issuance', sa.BigInteger(), nullable=False),
-    sa.Column('net_dividends_paid', sa.BigInteger(), nullable=False),
-    sa.Column('common_dividends_paid', sa.BigInteger(), nullable=False),
-    sa.Column('preferred_dividends_paid', sa.BigInteger(), nullable=False),
-    sa.Column('other_financing_activities', sa.BigInteger(), nullable=False),
-    sa.Column('net_cash_provided_by_financing_activities', sa.BigInteger(), nullable=False),
-    sa.Column('effect_of_forex_changes_on_cash', sa.BigInteger(), nullable=False),
-    sa.Column('net_change_in_cash', sa.BigInteger(), nullable=False),
-    sa.Column('cash_at_end_of_period', sa.BigInteger(), nullable=False),
-    sa.Column('cash_at_beginning_of_period', sa.BigInteger(), nullable=False),
-    sa.Column('operating_cash_flow', sa.BigInteger(), nullable=False),
-    sa.Column('capital_expenditure', sa.BigInteger(), nullable=False),
-    sa.Column('free_cash_flow', sa.BigInteger(), nullable=False),
-    sa.Column('income_taxes_paid', sa.BigInteger(), nullable=False),
-    sa.Column('interest_paid', sa.BigInteger(), nullable=False),
+    sa.Column('net_income', sa.BigInteger(), nullable=True),
+    sa.Column('depreciation_and_amortization', sa.BigInteger(), nullable=True),
+    sa.Column('deferred_income_tax', sa.BigInteger(), nullable=True),
+    sa.Column('stock_based_compensation', sa.BigInteger(), nullable=True),
+    sa.Column('change_in_working_capital', sa.BigInteger(), nullable=True),
+    sa.Column('accounts_receivables', sa.BigInteger(), nullable=True),
+    sa.Column('inventory', sa.BigInteger(), nullable=True),
+    sa.Column('accounts_payables', sa.BigInteger(), nullable=True),
+    sa.Column('other_working_capital', sa.BigInteger(), nullable=True),
+    sa.Column('other_non_cash_items', sa.BigInteger(), nullable=True),
+    sa.Column('net_cash_provided_by_operating_activities', sa.BigInteger(), nullable=True),
+    sa.Column('investments_in_property_plant_and_equipment', sa.BigInteger(), nullable=True),
+    sa.Column('acquisitions_net', sa.BigInteger(), nullable=True),
+    sa.Column('purchases_of_investments', sa.BigInteger(), nullable=True),
+    sa.Column('sales_maturities_of_investments', sa.BigInteger(), nullable=True),
+    sa.Column('other_investing_activities', sa.BigInteger(), nullable=True),
+    sa.Column('net_cash_provided_by_investing_activities', sa.BigInteger(), nullable=True),
+    sa.Column('net_debt_issuance', sa.BigInteger(), nullable=True),
+    sa.Column('long_term_net_debt_issuance', sa.BigInteger(), nullable=True),
+    sa.Column('short_term_net_debt_issuance', sa.BigInteger(), nullable=True),
+    sa.Column('net_stock_issuance', sa.BigInteger(), nullable=True),
+    sa.Column('net_common_stock_issuance', sa.BigInteger(), nullable=True),
+    sa.Column('common_stock_issuance', sa.BigInteger(), nullable=True),
+    sa.Column('common_stock_repurchased', sa.BigInteger(), nullable=True),
+    sa.Column('net_preferred_stock_issuance', sa.BigInteger(), nullable=True),
+    sa.Column('net_dividends_paid', sa.BigInteger(), nullable=True),
+    sa.Column('common_dividends_paid', sa.BigInteger(), nullable=True),
+    sa.Column('preferred_dividends_paid', sa.BigInteger(), nullable=True),
+    sa.Column('other_financing_activities', sa.BigInteger(), nullable=True),
+    sa.Column('net_cash_provided_by_financing_activities', sa.BigInteger(), nullable=True),
+    sa.Column('effect_of_forex_changes_on_cash', sa.BigInteger(), nullable=True),
+    sa.Column('net_change_in_cash', sa.BigInteger(), nullable=True),
+    sa.Column('cash_at_end_of_period', sa.BigInteger(), nullable=True),
+    sa.Column('cash_at_beginning_of_period', sa.BigInteger(), nullable=True),
+    sa.Column('operating_cash_flow', sa.BigInteger(), nullable=True),
+    sa.Column('capital_expenditure', sa.BigInteger(), nullable=True),
+    sa.Column('free_cash_flow', sa.BigInteger(), nullable=True),
+    sa.Column('income_taxes_paid', sa.BigInteger(), nullable=True),
+    sa.Column('interest_paid', sa.BigInteger(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'fiscal_year', 'period', name='uq_cashflow_period')
     )
+    op.create_index('ix_cashflow_fiscal_year', 'company_cash_flow_statements', ['fiscal_year'], unique=False)
+    op.create_index('ix_cashflow_symbol_date', 'company_cash_flow_statements', ['symbol', 'date'], unique=False)
     op.create_index(op.f('ix_company_cash_flow_statements_company_id'), 'company_cash_flow_statements', ['company_id'], unique=False)
+    op.create_index(op.f('ix_company_cash_flow_statements_fiscal_year'), 'company_cash_flow_statements', ['fiscal_year'], unique=False)
     op.create_index(op.f('ix_company_cash_flow_statements_symbol'), 'company_cash_flow_statements', ['symbol'], unique=False)
     op.create_table('company_dcf',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.Column('symbol', sa.String(length=12), nullable=False),
-    sa.Column('date', sa.String(length=20), nullable=True),
+    sa.Column('date', sa.Date(), nullable=True),
     sa.Column('dcf', sa.Float(), nullable=True),
     sa.Column('stock_price', sa.Float(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', name='uq_dcf_company')
     )
     op.create_index(op.f('ix_company_dcf_company_id'), 'company_dcf', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_dcf_id'), 'company_dcf', ['id'], unique=False)
     op.create_index(op.f('ix_company_dcf_symbol'), 'company_dcf', ['symbol'], unique=False)
-    op.create_table('company_dividends',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('company_id', sa.Integer(), nullable=False),
-    sa.Column('symbol', sa.String(length=12), nullable=False),
-    sa.Column('date', sa.String(length=20), nullable=False),
-    sa.Column('record_date', sa.String(length=20), nullable=True),
-    sa.Column('payment_date', sa.String(length=20), nullable=True),
-    sa.Column('declaration_date', sa.String(length=20), nullable=True),
-    sa.Column('adj_dividend', sa.Float(), nullable=True),
-    sa.Column('dividend', sa.Float(), nullable=True),
-    sa.Column('dividend_yield', sa.Float(), nullable=True),
-    sa.Column('frequency', sa.String(length=20), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_company_dividends_company_id'), 'company_dividends', ['company_id'], unique=False)
-    op.create_index(op.f('ix_company_dividends_id'), 'company_dividends', ['id'], unique=False)
-    op.create_index(op.f('ix_company_dividends_symbol'), 'company_dividends', ['symbol'], unique=False)
+    op.create_index('ix_dcf_symbol_date', 'company_dcf', ['symbol', 'date'], unique=False)
     op.create_table('company_financial_health',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -239,16 +255,18 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'section', 'metric', name='uq_health_metric')
     )
     op.create_index(op.f('ix_company_financial_health_company_id'), 'company_financial_health', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_financial_health_symbol'), 'company_financial_health', ['symbol'], unique=False)
+    op.create_index('ix_health_symbol_section', 'company_financial_health', ['symbol', 'section'], unique=False)
     op.create_table('company_financial_ratios',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.Column('symbol', sa.String(length=12), nullable=False),
-    sa.Column('date', sa.String(length=20), nullable=True),
-    sa.Column('fiscal_year', sa.String(length=10), nullable=True),
+    sa.Column('date', sa.Date(), nullable=True),
+    sa.Column('fiscal_year', sa.Integer(), nullable=True),
     sa.Column('period', sa.String(length=10), nullable=True),
     sa.Column('reported_currency', sa.String(length=10), nullable=True),
     sa.Column('gross_profit_margin', sa.Float(), nullable=True),
@@ -312,11 +330,15 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'fiscal_year', 'period', name='uq_ratio_period')
     )
     op.create_index(op.f('ix_company_financial_ratios_company_id'), 'company_financial_ratios', ['company_id'], unique=False)
+    op.create_index(op.f('ix_company_financial_ratios_fiscal_year'), 'company_financial_ratios', ['fiscal_year'], unique=False)
     op.create_index(op.f('ix_company_financial_ratios_id'), 'company_financial_ratios', ['id'], unique=False)
     op.create_index(op.f('ix_company_financial_ratios_symbol'), 'company_financial_ratios', ['symbol'], unique=False)
+    op.create_index('ix_ratio_fiscal_year', 'company_financial_ratios', ['fiscal_year'], unique=False)
+    op.create_index('ix_ratio_symbol_date', 'company_financial_ratios', ['symbol', 'date'], unique=False)
     op.create_table('company_financial_scores',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -331,14 +353,16 @@ def upgrade() -> None:
     sa.Column('market_cap', sa.Float(), nullable=True),
     sa.Column('total_liabilities', sa.Float(), nullable=True),
     sa.Column('revenue', sa.Float(), nullable=True),
-    sa.Column('ccreated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', name='uq_financial_score_company')
     )
     op.create_index(op.f('ix_company_financial_scores_company_id'), 'company_financial_scores', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_financial_scores_id'), 'company_financial_scores', ['id'], unique=False)
     op.create_index(op.f('ix_company_financial_scores_symbol'), 'company_financial_scores', ['symbol'], unique=False)
+    op.create_index('ix_score_symbol', 'company_financial_scores', ['symbol'], unique=False)
     op.create_table('company_general_news',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=True),
@@ -354,11 +378,13 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('symbol', 'news_title', name='uq_general_news_title')
     )
     op.create_index(op.f('ix_company_general_news_company_id'), 'company_general_news', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_general_news_id'), 'company_general_news', ['id'], unique=False)
     op.create_index(op.f('ix_company_general_news_symbol'), 'company_general_news', ['symbol'], unique=False)
+    op.create_index('ix_general_news_symbol_date', 'company_general_news', ['symbol', 'published_date'], unique=False)
     op.create_table('company_grading_news',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -377,11 +403,13 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'news_title', 'grading_company', name='uq_grading_news')
     )
     op.create_index(op.f('ix_company_grading_news_company_id'), 'company_grading_news', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_grading_news_id'), 'company_grading_news', ['id'], unique=False)
     op.create_index(op.f('ix_company_grading_news_symbol'), 'company_grading_news', ['symbol'], unique=False)
+    op.create_index('ix_grading_news_symbol_date', 'company_grading_news', ['symbol', 'published_date'], unique=False)
     op.create_table('company_grading_summaries',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -392,18 +420,20 @@ def upgrade() -> None:
     sa.Column('sell', sa.Integer(), nullable=False),
     sa.Column('strong_sell', sa.Integer(), nullable=False),
     sa.Column('consensus', sa.String(length=50), nullable=False),
-    sa.Column('ccreated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', name='uq_grading_summary_company')
     )
     op.create_index(op.f('ix_company_grading_summaries_id'), 'company_grading_summaries', ['id'], unique=False)
     op.create_index(op.f('ix_company_grading_summaries_symbol'), 'company_grading_summaries', ['symbol'], unique=False)
+    op.create_index('ix_grading_summary_symbol', 'company_grading_summaries', ['symbol'], unique=False)
     op.create_table('company_gradings',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.Column('symbol', sa.String(length=12), nullable=False),
-    sa.Column('date', sa.String(length=20), nullable=False),
+    sa.Column('date', sa.Date(), nullable=False),
     sa.Column('grading_company', sa.String(length=255), nullable=True),
     sa.Column('previous_grade', sa.String(length=50), nullable=True),
     sa.Column('new_grade', sa.String(length=50), nullable=True),
@@ -416,62 +446,67 @@ def upgrade() -> None:
     op.create_index(op.f('ix_company_gradings_company_id'), 'company_gradings', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_gradings_id'), 'company_gradings', ['id'], unique=False)
     op.create_index(op.f('ix_company_gradings_symbol'), 'company_gradings', ['symbol'], unique=False)
+    op.create_index('ix_grading_symbol_date', 'company_gradings', ['symbol', 'date'], unique=False)
     op.create_table('company_income_statements',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.Column('symbol', sa.String(length=12), nullable=False),
-    sa.Column('date', sa.String(length=20), nullable=False),
+    sa.Column('date', sa.Date(), nullable=False),
     sa.Column('reported_currency', sa.String(length=10), nullable=False),
     sa.Column('cik', sa.String(length=20), nullable=False),
-    sa.Column('filing_date', sa.String(length=20), nullable=False),
-    sa.Column('accepted_date', sa.String(length=30), nullable=False),
-    sa.Column('fiscal_year', sa.String(length=10), nullable=False),
+    sa.Column('filing_date', sa.Date(), nullable=False),
+    sa.Column('accepted_date', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('fiscal_year', sa.Integer(), nullable=False),
     sa.Column('period', sa.String(length=5), nullable=False),
-    sa.Column('revenue', sa.BigInteger(), nullable=False),
-    sa.Column('cost_of_revenue', sa.BigInteger(), nullable=False),
-    sa.Column('gross_profit', sa.BigInteger(), nullable=False),
-    sa.Column('research_and_development_expenses', sa.BigInteger(), nullable=False),
-    sa.Column('general_and_administrative_expenses', sa.BigInteger(), nullable=False),
-    sa.Column('selling_and_marketing_expenses', sa.BigInteger(), nullable=False),
-    sa.Column('selling_general_and_administrative_expenses', sa.BigInteger(), nullable=False),
-    sa.Column('other_expenses', sa.BigInteger(), nullable=False),
-    sa.Column('operating_expenses', sa.BigInteger(), nullable=False),
-    sa.Column('cost_and_expenses', sa.BigInteger(), nullable=False),
-    sa.Column('net_interest_income', sa.BigInteger(), nullable=False),
-    sa.Column('interest_income', sa.BigInteger(), nullable=False),
-    sa.Column('interest_expense', sa.BigInteger(), nullable=False),
-    sa.Column('depreciation_and_amortization', sa.BigInteger(), nullable=False),
-    sa.Column('ebitda', sa.BigInteger(), nullable=False),
-    sa.Column('ebit', sa.BigInteger(), nullable=False),
-    sa.Column('non_operating_income_excluding_interest', sa.BigInteger(), nullable=False),
-    sa.Column('operating_income', sa.BigInteger(), nullable=False),
-    sa.Column('total_other_income_expenses_net', sa.BigInteger(), nullable=False),
-    sa.Column('income_before_tax', sa.BigInteger(), nullable=False),
-    sa.Column('income_tax_expense', sa.BigInteger(), nullable=False),
-    sa.Column('net_income_from_continuing_operations', sa.BigInteger(), nullable=False),
-    sa.Column('net_income_from_discontinued_operations', sa.BigInteger(), nullable=False),
-    sa.Column('other_adjustments_to_net_income', sa.BigInteger(), nullable=False),
-    sa.Column('net_income', sa.BigInteger(), nullable=False),
-    sa.Column('net_income_deductions', sa.BigInteger(), nullable=False),
-    sa.Column('bottom_line_net_income', sa.BigInteger(), nullable=False),
-    sa.Column('eps', sa.Float(), nullable=False),
-    sa.Column('eps_diluted', sa.Float(), nullable=False),
-    sa.Column('weighted_average_shs_out', sa.BigInteger(), nullable=False),
-    sa.Column('weighted_average_shs_out_dil', sa.BigInteger(), nullable=False),
+    sa.Column('revenue', sa.BigInteger(), nullable=True),
+    sa.Column('cost_of_revenue', sa.BigInteger(), nullable=True),
+    sa.Column('gross_profit', sa.BigInteger(), nullable=True),
+    sa.Column('research_and_development_expenses', sa.BigInteger(), nullable=True),
+    sa.Column('general_and_administrative_expenses', sa.BigInteger(), nullable=True),
+    sa.Column('selling_and_marketing_expenses', sa.BigInteger(), nullable=True),
+    sa.Column('selling_general_and_administrative_expenses', sa.BigInteger(), nullable=True),
+    sa.Column('other_expenses', sa.BigInteger(), nullable=True),
+    sa.Column('operating_expenses', sa.BigInteger(), nullable=True),
+    sa.Column('cost_and_expenses', sa.BigInteger(), nullable=True),
+    sa.Column('net_interest_income', sa.BigInteger(), nullable=True),
+    sa.Column('interest_income', sa.BigInteger(), nullable=True),
+    sa.Column('interest_expense', sa.BigInteger(), nullable=True),
+    sa.Column('depreciation_and_amortization', sa.BigInteger(), nullable=True),
+    sa.Column('ebitda', sa.BigInteger(), nullable=True),
+    sa.Column('ebit', sa.BigInteger(), nullable=True),
+    sa.Column('non_operating_income_excluding_interest', sa.BigInteger(), nullable=True),
+    sa.Column('operating_income', sa.BigInteger(), nullable=True),
+    sa.Column('total_other_income_expenses_net', sa.BigInteger(), nullable=True),
+    sa.Column('income_before_tax', sa.BigInteger(), nullable=True),
+    sa.Column('income_tax_expense', sa.BigInteger(), nullable=True),
+    sa.Column('net_income_from_continuing_operations', sa.BigInteger(), nullable=True),
+    sa.Column('net_income_from_discontinued_operations', sa.BigInteger(), nullable=True),
+    sa.Column('other_adjustments_to_net_income', sa.BigInteger(), nullable=True),
+    sa.Column('net_income', sa.BigInteger(), nullable=True),
+    sa.Column('net_income_deductions', sa.BigInteger(), nullable=True),
+    sa.Column('bottom_line_net_income', sa.BigInteger(), nullable=True),
+    sa.Column('eps', sa.Float(), nullable=True),
+    sa.Column('eps_diluted', sa.Float(), nullable=True),
+    sa.Column('weighted_average_shs_out', sa.BigInteger(), nullable=True),
+    sa.Column('weighted_average_shs_out_dil', sa.BigInteger(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'fiscal_year', 'period', name='uq_income_period')
     )
     op.create_index(op.f('ix_company_income_statements_company_id'), 'company_income_statements', ['company_id'], unique=False)
+    op.create_index(op.f('ix_company_income_statements_fiscal_year'), 'company_income_statements', ['fiscal_year'], unique=False)
     op.create_index(op.f('ix_company_income_statements_id'), 'company_income_statements', ['id'], unique=False)
     op.create_index(op.f('ix_company_income_statements_symbol'), 'company_income_statements', ['symbol'], unique=False)
+    op.create_index('ix_income_fiscal_year', 'company_income_statements', ['fiscal_year'], unique=False)
+    op.create_index('ix_income_symbol_date', 'company_income_statements', ['symbol', 'date'], unique=False)
     op.create_table('company_key_metrics',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.Column('symbol', sa.String(length=12), nullable=False),
-    sa.Column('date', sa.String(length=20), nullable=False),
-    sa.Column('fiscal_year', sa.String(length=10), nullable=False),
+    sa.Column('date', sa.Date(), nullable=False),
+    sa.Column('fiscal_year', sa.Integer(), nullable=False),
     sa.Column('period', sa.String(length=10), nullable=False),
     sa.Column('reported_currency', sa.String(length=10), nullable=False),
     sa.Column('market_cap', sa.BigInteger(), nullable=True),
@@ -519,11 +554,15 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'fiscal_year', 'period', name='uq_metrics_period')
     )
     op.create_index(op.f('ix_company_key_metrics_company_id'), 'company_key_metrics', ['company_id'], unique=False)
+    op.create_index(op.f('ix_company_key_metrics_fiscal_year'), 'company_key_metrics', ['fiscal_year'], unique=False)
     op.create_index(op.f('ix_company_key_metrics_id'), 'company_key_metrics', ['id'], unique=False)
     op.create_index(op.f('ix_company_key_metrics_symbol'), 'company_key_metrics', ['symbol'], unique=False)
+    op.create_index('ix_metrics_fiscal_year', 'company_key_metrics', ['fiscal_year'], unique=False)
+    op.create_index('ix_metrics_symbol_date', 'company_key_metrics', ['symbol', 'date'], unique=False)
     op.create_table('company_price_target_news',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -542,10 +581,12 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'news_title', 'analyst_name', name='uq_price_target_news')
     )
     op.create_index(op.f('ix_company_price_target_news_id'), 'company_price_target_news', ['id'], unique=False)
     op.create_index(op.f('ix_company_price_target_news_symbol'), 'company_price_target_news', ['symbol'], unique=False)
+    op.create_index('ix_price_target_news_symbol_date', 'company_price_target_news', ['symbol', 'published_date'], unique=False)
     op.create_table('company_price_target_summaries',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -562,10 +603,13 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', name='uq_price_target_summary_company')
     )
+    op.create_index(op.f('ix_company_price_target_summaries_company_id'), 'company_price_target_summaries', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_price_target_summaries_id'), 'company_price_target_summaries', ['id'], unique=False)
     op.create_index(op.f('ix_company_price_target_summaries_symbol'), 'company_price_target_summaries', ['symbol'], unique=False)
+    op.create_index('ix_price_target_summary_symbol', 'company_price_target_summaries', ['symbol'], unique=False)
     op.create_table('company_price_targets',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -577,7 +621,8 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', name='uq_price_target_company')
     )
     op.create_index(op.f('ix_company_price_targets_company_id'), 'company_price_targets', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_price_targets_id'), 'company_price_targets', ['id'], unique=False)
@@ -597,11 +642,13 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', name='uq_rating_summary_company')
     )
     op.create_index(op.f('ix_company_rating_summaries_company_id'), 'company_rating_summaries', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_rating_summaries_id'), 'company_rating_summaries', ['id'], unique=False)
     op.create_index(op.f('ix_company_rating_summaries_symbol'), 'company_rating_summaries', ['symbol'], unique=False)
+    op.create_index('ix_rating_summary_symbol', 'company_rating_summaries', ['symbol'], unique=False)
     op.create_table('company_stock_news',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=True),
@@ -617,11 +664,13 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('symbol', 'news_title', name='uq_stock_news_title')
     )
     op.create_index(op.f('ix_company_stock_news_company_id'), 'company_stock_news', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_stock_news_id'), 'company_stock_news', ['id'], unique=False)
     op.create_index(op.f('ix_company_stock_news_symbol'), 'company_stock_news', ['symbol'], unique=False)
+    op.create_index('ix_stock_news_symbol_date', 'company_stock_news', ['symbol', 'published_date'], unique=False)
     op.create_table('company_stock_peers',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -632,29 +681,33 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'symbol', name='uq_stock_peer_company_symbol')
     )
     op.create_index(op.f('ix_company_stock_peers_company_id'), 'company_stock_peers', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_stock_peers_symbol'), 'company_stock_peers', ['symbol'], unique=False)
+    op.create_index('ix_stock_peer_symbol', 'company_stock_peers', ['symbol'], unique=False)
     op.create_table('company_stock_splits',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.Column('symbol', sa.String(length=12), nullable=False),
-    sa.Column('date', sa.String(length=20), nullable=False),
+    sa.Column('date', sa.Date(), nullable=False),
     sa.Column('numerator', sa.Integer(), nullable=False),
     sa.Column('denominator', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'date', name='uq_stock_split_company_date')
     )
     op.create_index(op.f('ix_company_stock_splits_company_id'), 'company_stock_splits', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_stock_splits_symbol'), 'company_stock_splits', ['symbol'], unique=False)
+    op.create_index('ix_stock_split_symbol_date', 'company_stock_splits', ['symbol', 'date'], unique=False)
     op.create_table('company_technical_indicators',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.Column('symbol', sa.String(length=12), nullable=False),
-    sa.Column('date', sa.String(length=20), nullable=False),
+    sa.Column('date', sa.Date(), nullable=False),
     sa.Column('simple_moving_average', sa.Float(), nullable=True),
     sa.Column('exponential_moving_average', sa.Float(), nullable=True),
     sa.Column('weighted_moving_average', sa.Float(), nullable=True),
@@ -667,10 +720,54 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'date', name='uq_technical_indicator_company_date')
     )
     op.create_index(op.f('ix_company_technical_indicators_company_id'), 'company_technical_indicators', ['company_id'], unique=False)
     op.create_index(op.f('ix_company_technical_indicators_symbol'), 'company_technical_indicators', ['symbol'], unique=False)
+    op.create_index('ix_technical_indicator_symbol_date', 'company_technical_indicators', ['symbol', 'date'], unique=False)
+    op.create_table('notification_preferences',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('email_notifications', sa.Boolean(), nullable=False),
+    sa.Column('push_notifications', sa.Boolean(), nullable=False),
+    sa.Column('portfolio_alerts', sa.Boolean(), nullable=False),
+    sa.Column('price_alerts', sa.Boolean(), nullable=False),
+    sa.Column('daily_news_digest', sa.Boolean(), nullable=False),
+    sa.Column('weekly_report', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_notification_preferences_user_id'), 'notification_preferences', ['user_id'], unique=False)
+    op.create_table('notifications',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('category', sa.String(length=100), nullable=False),
+    sa.Column('message', sa.String(length=500), nullable=False),
+    sa.Column('is_read', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_notification_category', 'notifications', ['category'], unique=False)
+    op.create_index('ix_notification_user_date', 'notifications', ['user_id', 'created_at'], unique=False)
+    op.create_index(op.f('ix_notifications_user_id'), 'notifications', ['user_id'], unique=False)
+    op.create_table('portfolios',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('description', sa.String(length=255), nullable=True),
+    sa.Column('currency', sa.Enum('USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', name='currency'), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_portfolios_user_id'), 'portfolios', ['user_id'], unique=False)
     op.create_table('stock_price_changes',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
@@ -688,8 +785,10 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', name='uq_price_change_company')
     )
+    op.create_index('ix_price_change_symbol', 'stock_price_changes', ['symbol'], unique=False)
     op.create_index(op.f('ix_stock_price_changes_company_id'), 'stock_price_changes', ['company_id'], unique=False)
     op.create_index(op.f('ix_stock_price_changes_symbol'), 'stock_price_changes', ['symbol'], unique=False)
     op.create_table('stock_prices',
@@ -704,38 +803,190 @@ def upgrade() -> None:
     sa.Column('volume', sa.Integer(), nullable=False),
     sa.Column('change', sa.Float(), nullable=True),
     sa.Column('change_percent', sa.Float(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('company_id', 'date', name='uq_stock_price_company_date')
     )
+    op.create_index('ix_stock_price_symbol_date', 'stock_prices', ['symbol', 'date'], unique=False)
     op.create_index(op.f('ix_stock_prices_company_id'), 'stock_prices', ['company_id'], unique=False)
     op.create_index(op.f('ix_stock_prices_symbol'), 'stock_prices', ['symbol'], unique=False)
+    op.create_table('watchlists',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('currency', sa.String(length=10), nullable=False),
+    sa.Column('description', sa.String(length=255), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_watchlists_user_id'), 'watchlists', ['user_id'], unique=False)
+    op.create_table('portfolio_dividend_histories',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('portfolio_id', sa.Integer(), nullable=False),
+    sa.Column('symbol', sa.String(length=20), nullable=False),
+    sa.Column('shares', sa.Float(), nullable=False),
+    sa.Column('dividend_per_share', sa.Float(), nullable=False),
+    sa.Column('dividend_amount', sa.Float(), nullable=False),
+    sa.Column('currency', sa.Enum('USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', name='currency'), nullable=False),
+    sa.Column('declaration_date', sa.Date(), nullable=False),
+    sa.Column('payment_date', sa.Date(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.CheckConstraint('dividend_amount >= 0', name='check_positive_dividend_amount'),
+    sa.CheckConstraint('dividend_per_share >= 0', name='check_positive_dps'),
+    sa.CheckConstraint('shares >= 0', name='check_positive_dividend_shares'),
+    sa.ForeignKeyConstraint(['portfolio_id'], ['portfolios.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_portfolio_dividend_histories_portfolio_id'), 'portfolio_dividend_histories', ['portfolio_id'], unique=False)
+    op.create_index(op.f('ix_portfolio_dividend_histories_symbol'), 'portfolio_dividend_histories', ['symbol'], unique=False)
+    op.create_index('ix_portfolio_symbol_payment_date', 'portfolio_dividend_histories', ['portfolio_id', 'symbol', 'payment_date'], unique=False)
+    op.create_table('portfolio_holding_performances',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('portfolio_id', sa.Integer(), nullable=False),
+    sa.Column('holding_symbol', sa.String(length=20), nullable=False),
+    sa.Column('currency', sa.Enum('USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', name='currency'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['portfolio_id'], ['portfolios.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('portfolio_id', 'holding_symbol', name='uq_portfolio_holding')
+    )
+    op.create_index('ix_holding_portfolio_symbol', 'portfolio_holding_performances', ['portfolio_id', 'holding_symbol'], unique=False)
+    op.create_index(op.f('ix_portfolio_holding_performances_holding_symbol'), 'portfolio_holding_performances', ['holding_symbol'], unique=False)
+    op.create_index(op.f('ix_portfolio_holding_performances_portfolio_id'), 'portfolio_holding_performances', ['portfolio_id'], unique=False)
+    op.create_table('portfolio_industry_performances',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('portfolio_id', sa.Integer(), nullable=False),
+    sa.Column('industry', sa.String(length=100), nullable=False),
+    sa.Column('currency', sa.Enum('USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', name='currency'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['portfolio_id'], ['portfolios.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('portfolio_id', 'industry', name='uq_portfolio_industry')
+    )
+    op.create_index('ix_industry_perf_user', 'portfolio_industry_performances', ['portfolio_id'], unique=False)
+    op.create_index(op.f('ix_portfolio_industry_performances_portfolio_id'), 'portfolio_industry_performances', ['portfolio_id'], unique=False)
+    op.create_table('portfolio_sector_performances',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('portfolio_id', sa.Integer(), nullable=False),
+    sa.Column('sector', sa.String(length=100), nullable=False),
+    sa.Column('currency', sa.Enum('USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', name='currency'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['portfolio_id'], ['portfolios.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('portfolio_id', 'sector', name='uq_portfolio_sector')
+    )
+    op.create_index(op.f('ix_portfolio_sector_performances_portfolio_id'), 'portfolio_sector_performances', ['portfolio_id'], unique=False)
+    op.create_index('ix_sector_perf_user', 'portfolio_sector_performances', ['portfolio_id'], unique=False)
+    op.create_table('portfolio_trading_histories',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('portfolio_id', sa.Integer(), nullable=False),
+    sa.Column('trade_type', sa.Enum('BUY', 'SELL', name='tradetype'), nullable=False),
+    sa.Column('currency', sa.Enum('USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', name='currency'), nullable=False),
+    sa.Column('symbol', sa.String(length=20), nullable=False),
+    sa.Column('shares', sa.Float(), nullable=False),
+    sa.Column('price_per_share', sa.Float(), nullable=False),
+    sa.Column('total_value', sa.Float(), nullable=False),
+    sa.Column('commission', sa.Float(), nullable=False),
+    sa.Column('fees', sa.Float(), nullable=False),
+    sa.Column('tax', sa.Float(), nullable=False),
+    sa.Column('net_total', sa.Float(), nullable=False),
+    sa.Column('notes', sa.String(length=500), nullable=True),
+    sa.Column('trade_date', sa.Date(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.CheckConstraint('commission >= 0', name='check_positive_commission'),
+    sa.CheckConstraint('fees >= 0', name='check_positive_fees'),
+    sa.CheckConstraint('price_per_share >= 0', name='check_positive_price'),
+    sa.CheckConstraint('shares > 0', name='check_positive_trade_shares'),
+    sa.CheckConstraint('tax >= 0', name='check_positive_tax'),
+    sa.ForeignKeyConstraint(['portfolio_id'], ['portfolios.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_portfolio_symbol_trade_date', 'portfolio_trading_histories', ['portfolio_id', 'symbol', 'trade_date'], unique=False)
+    op.create_index(op.f('ix_portfolio_trading_histories_portfolio_id'), 'portfolio_trading_histories', ['portfolio_id'], unique=False)
+    op.create_index(op.f('ix_portfolio_trading_histories_symbol'), 'portfolio_trading_histories', ['symbol'], unique=False)
+    op.create_table('watchlist_items',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('watchlist_id', sa.Integer(), nullable=False),
+    sa.Column('symbol', sa.String(length=12), nullable=False),
+    sa.Column('added_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['watchlist_id'], ['watchlists.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('watchlist_id', 'symbol', name='uq_watchlist_item')
+    )
+    op.create_index(op.f('ix_watchlist_items_symbol'), 'watchlist_items', ['symbol'], unique=False)
+    op.create_index(op.f('ix_watchlist_items_watchlist_id'), 'watchlist_items', ['watchlist_id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f('ix_watchlist_items_watchlist_id'), table_name='watchlist_items')
+    op.drop_index(op.f('ix_watchlist_items_symbol'), table_name='watchlist_items')
+    op.drop_table('watchlist_items')
+    op.drop_index(op.f('ix_portfolio_trading_histories_symbol'), table_name='portfolio_trading_histories')
+    op.drop_index(op.f('ix_portfolio_trading_histories_portfolio_id'), table_name='portfolio_trading_histories')
+    op.drop_index('ix_portfolio_symbol_trade_date', table_name='portfolio_trading_histories')
+    op.drop_table('portfolio_trading_histories')
+    op.drop_index('ix_sector_perf_user', table_name='portfolio_sector_performances')
+    op.drop_index(op.f('ix_portfolio_sector_performances_portfolio_id'), table_name='portfolio_sector_performances')
+    op.drop_table('portfolio_sector_performances')
+    op.drop_index(op.f('ix_portfolio_industry_performances_portfolio_id'), table_name='portfolio_industry_performances')
+    op.drop_index('ix_industry_perf_user', table_name='portfolio_industry_performances')
+    op.drop_table('portfolio_industry_performances')
+    op.drop_index(op.f('ix_portfolio_holding_performances_portfolio_id'), table_name='portfolio_holding_performances')
+    op.drop_index(op.f('ix_portfolio_holding_performances_holding_symbol'), table_name='portfolio_holding_performances')
+    op.drop_index('ix_holding_portfolio_symbol', table_name='portfolio_holding_performances')
+    op.drop_table('portfolio_holding_performances')
+    op.drop_index('ix_portfolio_symbol_payment_date', table_name='portfolio_dividend_histories')
+    op.drop_index(op.f('ix_portfolio_dividend_histories_symbol'), table_name='portfolio_dividend_histories')
+    op.drop_index(op.f('ix_portfolio_dividend_histories_portfolio_id'), table_name='portfolio_dividend_histories')
+    op.drop_table('portfolio_dividend_histories')
+    op.drop_index(op.f('ix_watchlists_user_id'), table_name='watchlists')
+    op.drop_table('watchlists')
     op.drop_index(op.f('ix_stock_prices_symbol'), table_name='stock_prices')
     op.drop_index(op.f('ix_stock_prices_company_id'), table_name='stock_prices')
+    op.drop_index('ix_stock_price_symbol_date', table_name='stock_prices')
     op.drop_table('stock_prices')
     op.drop_index(op.f('ix_stock_price_changes_symbol'), table_name='stock_price_changes')
     op.drop_index(op.f('ix_stock_price_changes_company_id'), table_name='stock_price_changes')
+    op.drop_index('ix_price_change_symbol', table_name='stock_price_changes')
     op.drop_table('stock_price_changes')
+    op.drop_index(op.f('ix_portfolios_user_id'), table_name='portfolios')
+    op.drop_table('portfolios')
+    op.drop_index(op.f('ix_notifications_user_id'), table_name='notifications')
+    op.drop_index('ix_notification_user_date', table_name='notifications')
+    op.drop_index('ix_notification_category', table_name='notifications')
+    op.drop_table('notifications')
+    op.drop_index(op.f('ix_notification_preferences_user_id'), table_name='notification_preferences')
+    op.drop_table('notification_preferences')
+    op.drop_index('ix_technical_indicator_symbol_date', table_name='company_technical_indicators')
     op.drop_index(op.f('ix_company_technical_indicators_symbol'), table_name='company_technical_indicators')
     op.drop_index(op.f('ix_company_technical_indicators_company_id'), table_name='company_technical_indicators')
     op.drop_table('company_technical_indicators')
+    op.drop_index('ix_stock_split_symbol_date', table_name='company_stock_splits')
     op.drop_index(op.f('ix_company_stock_splits_symbol'), table_name='company_stock_splits')
     op.drop_index(op.f('ix_company_stock_splits_company_id'), table_name='company_stock_splits')
     op.drop_table('company_stock_splits')
+    op.drop_index('ix_stock_peer_symbol', table_name='company_stock_peers')
     op.drop_index(op.f('ix_company_stock_peers_symbol'), table_name='company_stock_peers')
     op.drop_index(op.f('ix_company_stock_peers_company_id'), table_name='company_stock_peers')
     op.drop_table('company_stock_peers')
+    op.drop_index('ix_stock_news_symbol_date', table_name='company_stock_news')
     op.drop_index(op.f('ix_company_stock_news_symbol'), table_name='company_stock_news')
     op.drop_index(op.f('ix_company_stock_news_id'), table_name='company_stock_news')
     op.drop_index(op.f('ix_company_stock_news_company_id'), table_name='company_stock_news')
     op.drop_table('company_stock_news')
+    op.drop_index('ix_rating_summary_symbol', table_name='company_rating_summaries')
     op.drop_index(op.f('ix_company_rating_summaries_symbol'), table_name='company_rating_summaries')
     op.drop_index(op.f('ix_company_rating_summaries_id'), table_name='company_rating_summaries')
     op.drop_index(op.f('ix_company_rating_summaries_company_id'), table_name='company_rating_summaries')
@@ -744,63 +995,92 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_company_price_targets_id'), table_name='company_price_targets')
     op.drop_index(op.f('ix_company_price_targets_company_id'), table_name='company_price_targets')
     op.drop_table('company_price_targets')
+    op.drop_index('ix_price_target_summary_symbol', table_name='company_price_target_summaries')
     op.drop_index(op.f('ix_company_price_target_summaries_symbol'), table_name='company_price_target_summaries')
     op.drop_index(op.f('ix_company_price_target_summaries_id'), table_name='company_price_target_summaries')
+    op.drop_index(op.f('ix_company_price_target_summaries_company_id'), table_name='company_price_target_summaries')
     op.drop_table('company_price_target_summaries')
+    op.drop_index('ix_price_target_news_symbol_date', table_name='company_price_target_news')
     op.drop_index(op.f('ix_company_price_target_news_symbol'), table_name='company_price_target_news')
     op.drop_index(op.f('ix_company_price_target_news_id'), table_name='company_price_target_news')
     op.drop_table('company_price_target_news')
+    op.drop_index('ix_metrics_symbol_date', table_name='company_key_metrics')
+    op.drop_index('ix_metrics_fiscal_year', table_name='company_key_metrics')
     op.drop_index(op.f('ix_company_key_metrics_symbol'), table_name='company_key_metrics')
     op.drop_index(op.f('ix_company_key_metrics_id'), table_name='company_key_metrics')
+    op.drop_index(op.f('ix_company_key_metrics_fiscal_year'), table_name='company_key_metrics')
     op.drop_index(op.f('ix_company_key_metrics_company_id'), table_name='company_key_metrics')
     op.drop_table('company_key_metrics')
+    op.drop_index('ix_income_symbol_date', table_name='company_income_statements')
+    op.drop_index('ix_income_fiscal_year', table_name='company_income_statements')
     op.drop_index(op.f('ix_company_income_statements_symbol'), table_name='company_income_statements')
     op.drop_index(op.f('ix_company_income_statements_id'), table_name='company_income_statements')
+    op.drop_index(op.f('ix_company_income_statements_fiscal_year'), table_name='company_income_statements')
     op.drop_index(op.f('ix_company_income_statements_company_id'), table_name='company_income_statements')
     op.drop_table('company_income_statements')
+    op.drop_index('ix_grading_symbol_date', table_name='company_gradings')
     op.drop_index(op.f('ix_company_gradings_symbol'), table_name='company_gradings')
     op.drop_index(op.f('ix_company_gradings_id'), table_name='company_gradings')
     op.drop_index(op.f('ix_company_gradings_company_id'), table_name='company_gradings')
     op.drop_table('company_gradings')
+    op.drop_index('ix_grading_summary_symbol', table_name='company_grading_summaries')
     op.drop_index(op.f('ix_company_grading_summaries_symbol'), table_name='company_grading_summaries')
     op.drop_index(op.f('ix_company_grading_summaries_id'), table_name='company_grading_summaries')
     op.drop_table('company_grading_summaries')
+    op.drop_index('ix_grading_news_symbol_date', table_name='company_grading_news')
     op.drop_index(op.f('ix_company_grading_news_symbol'), table_name='company_grading_news')
     op.drop_index(op.f('ix_company_grading_news_id'), table_name='company_grading_news')
     op.drop_index(op.f('ix_company_grading_news_company_id'), table_name='company_grading_news')
     op.drop_table('company_grading_news')
+    op.drop_index('ix_general_news_symbol_date', table_name='company_general_news')
     op.drop_index(op.f('ix_company_general_news_symbol'), table_name='company_general_news')
     op.drop_index(op.f('ix_company_general_news_id'), table_name='company_general_news')
     op.drop_index(op.f('ix_company_general_news_company_id'), table_name='company_general_news')
     op.drop_table('company_general_news')
+    op.drop_index('ix_score_symbol', table_name='company_financial_scores')
     op.drop_index(op.f('ix_company_financial_scores_symbol'), table_name='company_financial_scores')
     op.drop_index(op.f('ix_company_financial_scores_id'), table_name='company_financial_scores')
     op.drop_index(op.f('ix_company_financial_scores_company_id'), table_name='company_financial_scores')
     op.drop_table('company_financial_scores')
+    op.drop_index('ix_ratio_symbol_date', table_name='company_financial_ratios')
+    op.drop_index('ix_ratio_fiscal_year', table_name='company_financial_ratios')
     op.drop_index(op.f('ix_company_financial_ratios_symbol'), table_name='company_financial_ratios')
     op.drop_index(op.f('ix_company_financial_ratios_id'), table_name='company_financial_ratios')
+    op.drop_index(op.f('ix_company_financial_ratios_fiscal_year'), table_name='company_financial_ratios')
     op.drop_index(op.f('ix_company_financial_ratios_company_id'), table_name='company_financial_ratios')
     op.drop_table('company_financial_ratios')
+    op.drop_index('ix_health_symbol_section', table_name='company_financial_health')
     op.drop_index(op.f('ix_company_financial_health_symbol'), table_name='company_financial_health')
     op.drop_index(op.f('ix_company_financial_health_company_id'), table_name='company_financial_health')
     op.drop_table('company_financial_health')
-    op.drop_index(op.f('ix_company_dividends_symbol'), table_name='company_dividends')
-    op.drop_index(op.f('ix_company_dividends_id'), table_name='company_dividends')
-    op.drop_index(op.f('ix_company_dividends_company_id'), table_name='company_dividends')
-    op.drop_table('company_dividends')
+    op.drop_index('ix_dcf_symbol_date', table_name='company_dcf')
     op.drop_index(op.f('ix_company_dcf_symbol'), table_name='company_dcf')
     op.drop_index(op.f('ix_company_dcf_id'), table_name='company_dcf')
     op.drop_index(op.f('ix_company_dcf_company_id'), table_name='company_dcf')
     op.drop_table('company_dcf')
     op.drop_index(op.f('ix_company_cash_flow_statements_symbol'), table_name='company_cash_flow_statements')
+    op.drop_index(op.f('ix_company_cash_flow_statements_fiscal_year'), table_name='company_cash_flow_statements')
     op.drop_index(op.f('ix_company_cash_flow_statements_company_id'), table_name='company_cash_flow_statements')
+    op.drop_index('ix_cashflow_symbol_date', table_name='company_cash_flow_statements')
+    op.drop_index('ix_cashflow_fiscal_year', table_name='company_cash_flow_statements')
     op.drop_table('company_cash_flow_statements')
     op.drop_index(op.f('ix_company_balance_sheets_symbol'), table_name='company_balance_sheets')
+    op.drop_index(op.f('ix_company_balance_sheets_fiscal_year'), table_name='company_balance_sheets')
     op.drop_index(op.f('ix_company_balance_sheets_company_id'), table_name='company_balance_sheets')
+    op.drop_index('ix_balance_sheet_symbol_date', table_name='company_balance_sheets')
+    op.drop_index('ix_balance_sheet_fiscal_year', table_name='company_balance_sheets')
     op.drop_table('company_balance_sheets')
-    op.drop_index(op.f('ix_dividend_calendars_symbol'), table_name='dividend_calendars')
-    op.drop_index(op.f('ix_dividend_calendars_id'), table_name='dividend_calendars')
-    op.drop_table('dividend_calendars')
+    op.drop_index(op.f('ix_users_username'), table_name='users')
+    op.drop_index(op.f('ix_users_email'), table_name='users')
+    op.drop_table('users')
+    op.drop_index('ix_dividend_symbol_date', table_name='company_dividends')
+    op.drop_index(op.f('ix_company_dividends_symbol'), table_name='company_dividends')
+    op.drop_index(op.f('ix_company_dividends_id'), table_name='company_dividends')
+    op.drop_table('company_dividends')
+    op.drop_index('ix_company_symbol_exchange', table_name='companies')
+    op.drop_index('ix_company_sector_industry', table_name='companies')
     op.drop_index(op.f('ix_companies_symbol'), table_name='companies')
+    op.drop_index(op.f('ix_companies_sector'), table_name='companies')
+    op.drop_index(op.f('ix_companies_exchange'), table_name='companies')
     op.drop_table('companies')
     # ### end Alembic commands ###

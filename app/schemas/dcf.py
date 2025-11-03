@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date as date_type, datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -7,8 +7,8 @@ from pydantic import BaseModel, ConfigDict
 class DiscountedCashFlow(BaseModel):
     company_id: int
     symbol: str
-    date: Optional[str]
-    dcf: Optional[float]
+    date: date_type
+    dcf: float
     stock_price: Optional[float]
 
 

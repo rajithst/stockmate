@@ -1,19 +1,24 @@
-from pytest import Session
+import logging
+from sqlalchemy.orm import Session
+
 from app.db.models.technical_indicators import CompanyTechnicalIndicator
+from app.repositories.base_repo import BaseRepository
+
+logger = logging.getLogger(__name__)
 
 
-class TechnicalIndicatorRepository:
+class TechnicalIndicatorRepository(BaseRepository):
     """Repository for accessing technical indicator data."""
 
     def __init__(self, db: Session):
-        self._db = db
+        super().__init__(db)
 
     def get_technical_indicators_by_symbol(
         self, symbol: str
     ) -> list[CompanyTechnicalIndicator]:
         """Retrieve technical indicators for a given company symbol."""
-        return (
-            self._db.query(CompanyTechnicalIndicator)
-            .filter(CompanyTechnicalIndicator.symbol == symbol)
-            .all()
+        return self._get_by_filter(
+            CompanyTechnicalIndicator,
+            {"symbol": symbol},
+            order_by_desc=CompanyTechnicalIndicator.date,
         )

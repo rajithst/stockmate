@@ -8,6 +8,7 @@ from app.db.engine import Base
 from app.db.models.portfolio import Portfolio
 
 if TYPE_CHECKING:
+    from app.db.models.notification import Notification, NotificationPreference
     from app.db.models.portfolio import Portfolio
     from app.db.models.watchlist import Watchlist
 
@@ -51,10 +52,29 @@ class User(Base):
 
     # Relationships
     portfolios: Mapped[list["Portfolio"]] = relationship(
-        "Portfolio", back_populates="user", cascade="all, delete-orphan", lazy="joined"
+        "Portfolio",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
     watchlists: Mapped[list["Watchlist"]] = relationship(
-        "Watchlist", back_populates="user", cascade="all, delete-orphan", lazy="joined"
+        "Watchlist",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    notification_preferences: Mapped["NotificationPreference | None"] = relationship(
+        "NotificationPreference",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        uselist=False,
+    )
+    notifications: Mapped[list["Notification"]] = relationship(
+        "Notification",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
     def __repr__(self):
@@ -89,7 +109,7 @@ class NotificationPreference(Base):
         "User",
         back_populates="notification_preferences",
         foreign_keys=[user_id],
-        lazy="joined",
+        lazy="select",
     )
 
     def __repr__(self):

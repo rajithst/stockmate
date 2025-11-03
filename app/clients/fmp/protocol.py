@@ -20,7 +20,7 @@ from app.clients.fmp.models.news import (
     FMPStockGradingNews,
     FMPStockNews,
 )
-from app.clients.fmp.models.quotes import FMPStockPriceChange
+from app.clients.fmp.models.quotes import FMPStockPrice, FMPStockPriceChange
 from app.clients.fmp.models.stock import (
     FMPStockGrading,
     FMPStockGradingSummary,
@@ -183,4 +183,8 @@ class FMPClientProtocol(Protocol):
 
     def get_price_change_quote(self, symbol: str) -> Optional[FMPStockPriceChange]:
         """Fetches the stock price change quote for a given stock symbol."""
+        ...
+
+    def get_current_price_quote(self, symbol: str) -> Optional[FMPStockPrice]:
+        """Fetches the current stock price quote for a given stock symbol."""
         ...

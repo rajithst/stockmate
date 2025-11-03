@@ -1,7 +1,15 @@
-from datetime import datetime
+from datetime import date as date_type, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, func
+from sqlalchemy import (
+    DateTime,
+    Float,
+    ForeignKey,
+    String,
+    func,
+    UniqueConstraint,
+    Index,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -40,12 +48,17 @@ class StockPriceChange(Base):
         onupdate=func.now(),
     )
 
+    __table_args__ = (
+        UniqueConstraint("company_id", name="uq_price_change_company"),
+        Index("ix_price_change_symbol", "symbol"),
+    )
+
     # Relationship to company
     company: Mapped["Company"] = relationship(
         "Company",
-        back_populates="price_change",
+        back_populates="stock_price_change",
         foreign_keys=[company_id],
-        lazy="joined",
+        lazy="select",
         uselist=False,
     )
 
@@ -58,7 +71,7 @@ class StockPrice(Base):
         ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=False
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True, nullable=False)
-    date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    date: Mapped[date_type] = mapped_column(DateTime, nullable=False)
     open_price: Mapped[float] = mapped_column(Float, nullable=False)
     close_price: Mapped[float] = mapped_column(Float, nullable=False)
     high_price: Mapped[float] = mapped_column(Float, nullable=False)
@@ -66,12 +79,24 @@ class StockPrice(Base):
     volume: Mapped[int] = mapped_column(nullable=False)
     change: Mapped[float] = mapped_column(Float, nullable=True)
     change_percent: Mapped[float] = mapped_column(Float, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "date", name="uq_stock_price_company_date"),
+        Index("ix_stock_price_symbol_date", "symbol", "date"),
+    )
 
     company: Mapped["Company"] = relationship(
         "Company",
         back_populates="stock_prices",
         foreign_keys=[company_id],
-        lazy="joined",
+        lazy="select",
     )

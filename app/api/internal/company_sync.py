@@ -1,20 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 
-from app.clients.fmp.protocol import FMPClientProtocol
-from app.dependencies import get_db_session, get_fmp_client
+from app.api.internal.config import ERROR_MESSAGES, TAGS
+from app.dependencies.sync_services import create_sync_service_provider
 from app.schemas.company import CompanyRead
 from app.services.internal.company_sync_service import CompanySyncService
 
-router = APIRouter(prefix="", tags=["company_data"])
+router = APIRouter(prefix="", tags=[TAGS["company"]["name"]])
 
-
-def get_company_sync_service(
-    fmp_client: FMPClientProtocol = Depends(get_fmp_client),
-    db_session: Session = Depends(get_db_session),
-) -> CompanySyncService:
-    """Provides CompanySyncService with required dependencies."""
-    return CompanySyncService(market_api_client=fmp_client, session=db_session)
+# Create dependency provider for CompanySyncService
+get_company_sync_service = create_sync_service_provider(CompanySyncService)
 
 
 @router.get(
@@ -28,8 +22,21 @@ def sync_company_profile(
 ):
     """
     Sync a company's profile from the external API and store it in the database.
+
+    Args:
+        symbol: Stock symbol (e.g., 'AAPL')
+        service: CompanySyncService instance (injected)
+
+    Returns:
+        CompanyRead: Synced company data
+
+    Raises:
+        HTTPException: 404 if company not found
     """
     company = service.upsert_company(symbol)
     if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
+        raise HTTPException(
+            status_code=404,
+            detail=ERROR_MESSAGES["NOT_FOUND_GENERIC"].format(symbol=symbol),
+        )
     return company

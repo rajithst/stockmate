@@ -1,98 +1,68 @@
+import logging
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db.models.company import Company
 from app.db.models.dividend import CompanyDividend
 from app.db.models.stock import CompanyStockPeer, CompanyStockSplit
 from app.schemas.dividend import CompanyDividendWrite
 from app.schemas.stock import CompanyStockPeerWrite, CompanyStockSplitWrite
-from app.util.model_mapper import map_model
+from app.repositories.base_repo import BaseRepository
+
+logger = logging.getLogger(__name__)
 
 
-class StockInfoRepository:
+class StockInfoRepository(BaseRepository):
     def __init__(self, session: Session) -> None:
-        self._db = session
+        super().__init__(session)
+
+    def get_all_company_symbols(self) -> list[str]:
+        """Retrieve all company stock symbols."""
+        statement = select(Company.symbol)
+        results = self._db.execute(statement).scalars().all()
+        return results
 
     def get_dividends_by_symbol(self, symbol: str) -> list[CompanyDividend]:
-        return (
-            self._db.query(CompanyDividend)
-            .filter(CompanyDividend.symbol == symbol)
-            .all()
-        )
+        """Get all dividends for a symbol."""
+        return self._get_by_filter(CompanyDividend, {"symbol": symbol})
 
     def get_stock_splits_by_symbol(self, symbol: str) -> list[CompanyStockSplit]:
-        return (
-            self._db.query(CompanyStockSplit)
-            .filter(CompanyStockSplit.symbol == symbol)
-            .all()
-        )
+        """Get all stock splits for a symbol."""
+        return self._get_by_filter(CompanyStockSplit, {"symbol": symbol})
 
     def get_stock_peers_by_symbol(self, symbol: str) -> list[CompanyStockPeer]:
-        return (
-            self._db.query(CompanyStockPeer)
-            .filter(CompanyStockPeer.symbol == symbol)
-            .all()
-        )
+        """Get all stock peers for a symbol."""
+        return self._get_by_filter(CompanyStockPeer, {"symbol": symbol})
 
     def upsert_dividends(
         self, dividends_data: list[CompanyDividendWrite]
-    ) -> list[CompanyDividend] | None:
-        dividend_records = []
-        for dividend in dividends_data:
-            existing = (
-                self._db.query(CompanyDividend)
-                .filter_by(symbol=dividend.symbol, date=dividend.date)
-                .first()
-            )
-            if existing:
-                dividend_record = map_model(existing, dividend)
-            else:
-                dividend_record = CompanyDividend(
-                    **dividend.model_dump(exclude_unset=True)
-                )
-                self._db.add(dividend_record)
-            dividend_records.append(dividend_record)
-        self._db.commit()
-        for record in dividend_records:
-            self._db.refresh(record)
-        return dividend_records
+    ) -> list[CompanyDividend]:
+        """Upsert multiple dividend records."""
+        return self._upsert_records(
+            dividends_data,
+            CompanyDividend,
+            lambda div: {"symbol": div.symbol, "date": div.date},
+            "upsert_dividends",
+        )
 
     def upsert_stock_splits(
         self, splits_data: list[CompanyStockSplitWrite]
-    ) -> list[CompanyStockSplit] | None:
-        split_records = []
-        for split in splits_data:
-            existing = (
-                self._db.query(CompanyStockSplit)
-                .filter_by(symbol=split.symbol, date=split.date)
-                .first()
-            )
-            if existing:
-                split_record = map_model(existing, split)
-            else:
-                split_record = CompanyStockSplit(**split.model_dump(exclude_unset=True))
-                self._db.add(split_record)
-            split_records.append(split_record)
-        self._db.commit()
-        for record in split_records:
-            self._db.refresh(record)
-        return split_records
+    ) -> list[CompanyStockSplit]:
+        """Upsert multiple stock split records."""
+        return self._upsert_records(
+            splits_data,
+            CompanyStockSplit,
+            lambda split: {"symbol": split.symbol, "date": split.date},
+            "upsert_stock_splits",
+        )
 
     def upsert_stock_peers(
         self, peers_data: list[CompanyStockPeerWrite]
     ) -> list[CompanyStockPeer]:
-        peer_records = []
-        for peer in peers_data:
-            existing = (
-                self._db.query(CompanyStockPeer)
-                .filter_by(symbol=peer.symbol, company_id=peer.company_id)
-                .first()
-            )
-            if existing:
-                peer_record = map_model(existing, peer)
-            else:
-                peer_record = CompanyStockPeer(**peer.model_dump(exclude_unset=True))
-                self._db.add(peer_record)
-            peer_records.append(peer_record)
-        self._db.commit()
-        for record in peer_records:
-            self._db.refresh(record)
-        return peer_records
+        """Upsert multiple stock peer records."""
+        return self._upsert_records(
+            peers_data,
+            CompanyStockPeer,
+            lambda peer: {"symbol": peer.symbol, "company_id": peer.company_id},
+            "upsert_stock_peers",
+        )

@@ -1,12 +1,13 @@
 from pydantic import BaseModel, ConfigDict, Field
+from datetime import date as date_type
 
 
 class FMPDividend(BaseModel):
     symbol: str
-    date: str
-    record_date: str = Field(..., alias="recordDate")
-    payment_date: str = Field(..., alias="paymentDate")
-    declaration_date: str = Field(..., alias="declarationDate")
+    date: date_type
+    record_date: date_type = Field(..., alias="recordDate")
+    payment_date: date_type = Field(..., alias="paymentDate")
+    declaration_date: date_type = Field(..., alias="declarationDate")
     adj_dividend: float = Field(..., alias="adjDividend")
     dividend: float
     dividend_yield: float = Field(..., alias="yield")
@@ -17,10 +18,10 @@ class FMPDividend(BaseModel):
 
 class FMPDividendCalendar(BaseModel):
     symbol: str
-    date: str
-    record_date: str = Field(..., alias="recordDate")
-    payment_date: str = Field(..., alias="paymentDate")
-    declaration_date: str = Field(..., alias="declarationDate")
+    date: date_type
+    record_date: date_type = Field(..., alias="recordDate")
+    payment_date: date_type = Field(..., alias="paymentDate")
+    declaration_date: date_type = Field(..., alias="declarationDate")
     adj_dividend: float = Field(..., alias="adjDividend")
     dividend: float
     dividend_yield: float = Field(..., alias="yield")

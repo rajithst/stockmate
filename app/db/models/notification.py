@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -12,6 +12,10 @@ if TYPE_CHECKING:
 
 class Notification(Base):
     __tablename__ = "notifications"
+    __table_args__ = (
+        Index("ix_notification_user_date", "user_id", "created_at"),
+        Index("ix_notification_category", "category"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(
@@ -31,5 +35,8 @@ class Notification(Base):
     )
 
     user: Mapped["User"] = relationship(
-        "User", back_populates="notifications", foreign_keys=[user_id], lazy="joined"
+        "User", back_populates="notifications", foreign_keys=[user_id], lazy="select"
     )
+
+    def __repr__(self):
+        return f"<Notification(user_id={self.user_id}, category={self.category}, is_read={self.is_read})>"

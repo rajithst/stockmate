@@ -1,3 +1,4 @@
+from datetime import date
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
@@ -20,7 +21,7 @@ class FMPCompanyProfile(BaseModel):
     state: str
     zip: str
     image: HttpUrl
-    ipo_date: str = Field(..., alias="ipoDate")
+    ipo_date: date = Field(..., alias="ipoDate")
     default_image: bool = Field(..., alias="defaultImage")
 
     model_config = ConfigDict(populate_by_name=True)

@@ -1,9 +1,9 @@
-from sqlalchemy import DateTime, Float
+from sqlalchemy import DateTime, Float, Date
 from app.db.engine import Base
-from sqlalchemy import ForeignKey, String, func
+from sqlalchemy import ForeignKey, String, func, UniqueConstraint, Index
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from datetime import datetime
+from datetime import datetime, date as date_type
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ class CompanyTechnicalIndicator(Base):
         ForeignKey("companies.id", ondelete="CASCADE"), index=True
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
-    date: Mapped[str] = mapped_column(String(20))
+    date: Mapped[date_type] = mapped_column(Date, nullable=False)
     simple_moving_average: Mapped[float] = mapped_column(Float, nullable=True)
     exponential_moving_average: Mapped[float] = mapped_column(Float, nullable=True)
     weighted_moving_average: Mapped[float] = mapped_column(Float, nullable=True)
@@ -42,11 +42,18 @@ class CompanyTechnicalIndicator(Base):
         onupdate=func.now(),
     )
 
+    __table_args__ = (
+        UniqueConstraint(
+            "company_id", "date", name="uq_technical_indicator_company_date"
+        ),
+        Index("ix_technical_indicator_symbol_date", "symbol", "date"),
+    )
+
     company: Mapped["Company"] = relationship(
         "Company",
         back_populates="technical_indicators",
         foreign_keys=[company_id],
-        lazy="joined",
+        lazy="select",
     )
 
     def __repr__(self) -> str:

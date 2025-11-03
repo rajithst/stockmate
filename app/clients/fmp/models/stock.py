@@ -1,4 +1,5 @@
 import json
+from datetime import date as date_type
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -6,11 +7,21 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class FMPStockSplit(BaseModel):
     symbol: str
-    date: str
+    date: date_type
     numerator: int
     denominator: int
 
     model_config = ConfigDict(populate_by_name=True)
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def convert_date_string_to_date(cls, v):
+        """Convert date string (YYYY-MM-DD) to Python date object."""
+        if isinstance(v, date_type):
+            return v
+        if isinstance(v, str):
+            return date_type.fromisoformat(v)
+        return v
 
 
 class FMPStockPeer(BaseModel):
@@ -70,13 +81,23 @@ class FMPStockRating(BaseModel):
 
 class FMPStockGrading(BaseModel):
     symbol: str
-    date: str
+    date: date_type
     grading_company: Optional[str] = Field(None, alias="gradingCompany")
     previous_grade: Optional[str] = Field(None, alias="previousGrade")
     new_grade: Optional[str] = Field(None, alias="newGrade")
     action: Optional[str] = None
 
     model_config = ConfigDict(populate_by_name=True)
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def convert_date_string_to_date(cls, v):
+        """Convert date string (YYYY-MM-DD) to Python date object."""
+        if isinstance(v, date_type):
+            return v
+        if isinstance(v, str):
+            return date_type.fromisoformat(v)
+        return v
 
 
 class FMPStockGradingSummary(BaseModel):

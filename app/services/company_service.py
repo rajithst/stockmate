@@ -42,77 +42,100 @@ logger = getLogger(__name__)
 
 
 class FinancialHealthSectorsEnum(Enum):
-    PROFITABILITY = "Profitability"
-    EFFICIENCY = "Efficiency"
-    LIQUIDITY_AND_SOLVENCY = "Liquidity & Solvency"
+    PROFITABILITY_ANALYSIS = "Profitability Analysis"
+    EFFICIENCY_ANALYSIS = "Efficiency and Productivity Analysis"
+    LIQUIDITY_AND_SHORT_TERM_SOLVENCY = "Liquidity and Short-Term Solvency"
+    LEVERAGE_AND_CAPITAL_STRUCTURE = "Leverage and Capital Structure"
+    VALUATION_AND_MARKET_MULTIPLES = "Valuation and Market Multiples"
     CASHFLOW_STRENGTH = "Cash Flow Strength"
-    VALUATION = "Valuation"
-    GROWTH_AND_INVESTMENT = "Growth & Investment"
-    DIVIDEND_AND_SHAREHOLDER_RETURN = "Dividend & Shareholder Return"
+    ASSET_QUALITY_AND_CAPITAL_EFFICIENCY = "Asset Quality and Capital Efficiency"
+    DIVIDEND_AND_SHAREHOLDER_RETURNS = "Dividend and Shareholder Returns"
+    PER_SHARE_PERFORMANCE = "Per Share Performance"
+    TAX_AND_COST_STRUCTURE = "Tax and Cost Structure Analysis"
 
 
 class CompanyService:
     def __init__(self, session: Session):
         self._db = session
 
+    @staticmethod
+    def _validate_models(schema_class, items):
+        """Helper to validate a list of ORM models against a Pydantic schema."""
+        if not items:
+            return []
+        return [schema_class.model_validate(item) for item in items]
+
+    @staticmethod
+    def _validate_single(schema_class, item):
+        """Helper to validate a single ORM model, returning None if item is None."""
+        return schema_class.model_validate(item) if item else None
+
+    @staticmethod
+    def _group_financial_health_by_section(
+        financial_health_items: list,
+    ) -> dict[str, list]:
+        """Group financial health metrics by their section."""
+        grouped = {section.value: [] for section in FinancialHealthSectorsEnum}
+
+        for item in financial_health_items:
+            for section in FinancialHealthSectorsEnum:
+                if item.section == section.value:
+                    grouped[section.value].append(
+                        CompanyFinancialHealthRead.model_validate(item)
+                    )
+                    break
+
+        return grouped
+
     def get_company_page(self, symbol: str) -> CompanyPageResponse | None:
         """Retrieve a company's profile by its stock symbol."""
         page_repo = CompanyRepository(self._db)
-
         response = page_repo.get_company_snapshot_by_symbol(symbol)
         if not response:
             return None
-        news_repo = CompanyNewsRepository(self._db)
-        grading_repo = GradingRepository(self._db)
 
+        # Validate company - from_attributes=True will call property methods automatically
         company_read = CompanyRead.model_validate(response)
-        grading_summary_read = (
-            CompanyGradingSummaryRead.model_validate(response.grading_summary)
-            if response.grading_summary
-            else None
-        )
-        dcf_read = (
-            DiscountedCashFlowRead.model_validate(response.discounted_cash_flow)
-            if response.discounted_cash_flow
-            else None
-        )
-        rating_summary_read = (
-            CompanyRatingSummaryRead.model_validate(response.rating_summary)
-            if response.rating_summary
-            else None
-        )
-        price_target_read = (
-            CompanyPriceTargetRead.model_validate(response.price_target)
-            if response.price_target
-            else None
-        )
-        price_target_summary_read = (
-            CompanyPriceTargetSummaryRead.model_validate(response.price_target_summary)
-            if response.price_target_summary
-            else None
-        )
-        price_change_read = (
-            StockPriceChangeRead.model_validate(response.price_change)
-            if response.price_change
-            else None
-        )
-        latest_gradings = [
-            CompanyGradingRead.model_validate(grading)
-            for grading in grading_repo.get_gradings_by_symbol(symbol, limit=6)
-        ]
 
-        general_news_read = [
-            CompanyGeneralNewsRead.model_validate(news)
-            for news in news_repo.get_general_news_by_symbol(symbol)
-        ]
-        price_target_news_read = [
-            CompanyPriceTargetNewsRead.model_validate(news)
-            for news in news_repo.get_price_target_news_by_symbol(symbol)
-        ]
-        grading_news_read = [
-            CompanyGradingNewsRead.model_validate(news)
-            for news in news_repo.get_grading_news_by_symbol(symbol)
-        ]
+        grading_summary_read = self._validate_single(
+            CompanyGradingSummaryRead, response.grading_summary
+        )
+        dcf_read = self._validate_single(
+            DiscountedCashFlowRead, response.discounted_cash_flow
+        )
+        rating_summary_read = self._validate_single(
+            CompanyRatingSummaryRead, response.rating_summary
+        )
+        price_target_read = self._validate_single(
+            CompanyPriceTargetRead, response.price_target
+        )
+        price_target_summary_read = self._validate_single(
+            CompanyPriceTargetSummaryRead, response.price_target_summary
+        )
+        price_change_read = self._validate_single(
+            StockPriceChangeRead, response.stock_price_change
+        )
+
+        # Use repository methods for collections
+        grading_repo = GradingRepository(self._db)
+        latest_gradings = self._validate_models(
+            CompanyGradingRead,
+            grading_repo.get_gradings_by_symbol(symbol, limit=6),
+        )
+
+        news_repo = CompanyNewsRepository(self._db)
+        general_news_read = self._validate_models(
+            CompanyGeneralNewsRead,
+            news_repo.get_general_news_by_symbol(symbol),
+        )
+        price_target_news_read = self._validate_models(
+            CompanyPriceTargetNewsRead,
+            news_repo.get_price_target_news_by_symbol(symbol),
+        )
+        grading_news_read = self._validate_models(
+            CompanyGradingNewsRead,
+            news_repo.get_grading_news_by_symbol(symbol),
+        )
 
         return CompanyPageResponse(
             company=company_read,
@@ -135,30 +158,30 @@ class CompanyService:
             metrics_repo = MetricsRepository(self._db)
             stock_info_repo = StockInfoRepository(self._db)
 
-            balance_sheets_read = [
-                CompanyBalanceSheetRead.model_validate(bs)
-                for bs in financials_repo.get_balance_sheets_by_symbol(symbol)
-            ]
-            income_statements_read = [
-                CompanyIncomeStatementRead.model_validate(is_)
-                for is_ in financials_repo.get_income_statements_by_symbol(symbol)
-            ]
-            cash_flow_statements_read = [
-                CompanyCashFlowStatementRead.model_validate(cs)
-                for cs in financials_repo.get_cash_flow_statements_by_symbol(symbol)
-            ]
-            key_metrics_read = [
-                CompanyKeyMetricsRead.model_validate(km)
-                for km in metrics_repo.get_key_metrics_by_symbol(symbol)
-            ]
-            financial_ratios_read = [
-                CompanyFinancialRatioRead.model_validate(fr)
-                for fr in metrics_repo.get_financial_ratios_by_symbol(symbol)
-            ]
-            dividends_read = [
-                CompanyDividendRead.model_validate(div)
-                for div in stock_info_repo.get_dividends_by_symbol(symbol)
-            ]
+            balance_sheets_read = self._validate_models(
+                CompanyBalanceSheetRead,
+                financials_repo.get_balance_sheets_by_symbol(symbol),
+            )
+            income_statements_read = self._validate_models(
+                CompanyIncomeStatementRead,
+                financials_repo.get_income_statements_by_symbol(symbol),
+            )
+            cash_flow_statements_read = self._validate_models(
+                CompanyCashFlowStatementRead,
+                financials_repo.get_cash_flow_statements_by_symbol(symbol),
+            )
+            key_metrics_read = self._validate_models(
+                CompanyKeyMetricsRead,
+                metrics_repo.get_key_metrics_by_symbol(symbol),
+            )
+            financial_ratios_read = self._validate_models(
+                CompanyFinancialRatioRead,
+                metrics_repo.get_financial_ratios_by_symbol(symbol),
+            )
+            dividends_read = self._validate_models(
+                CompanyDividendRead,
+                stock_info_repo.get_dividends_by_symbol(symbol),
+            )
 
             return CompanyFinancialResponse(
                 balance_sheets=balance_sheets_read,
@@ -186,57 +209,30 @@ class CompanyService:
                 return None
 
             company_read = CompanyRead.model_validate(company)
+            financial_health_items = financials_repo.get_financial_health_by_symbol(
+                symbol
+            )
 
-            financial_health_read = [
-                CompanyFinancialHealthRead.model_validate(fh)
-                for fh in financials_repo.get_financial_health_by_symbol(symbol)
-            ]
-            profitability = [
-                CompanyFinancialHealthRead.model_validate(fh)
-                for fh in financial_health_read
-                if fh.section == FinancialHealthSectorsEnum.PROFITABILITY.value
-            ]
-            efficiency = [
-                CompanyFinancialHealthRead.model_validate(fh)
-                for fh in financial_health_read
-                if fh.section == FinancialHealthSectorsEnum.EFFICIENCY.value
-            ]
-            liquidity_and_solvency = [
-                CompanyFinancialHealthRead.model_validate(fh)
-                for fh in financial_health_read
-                if fh.section == FinancialHealthSectorsEnum.LIQUIDITY_AND_SOLVENCY.value
-            ]
-            cashflow_strength = [
-                CompanyFinancialHealthRead.model_validate(fh)
-                for fh in financial_health_read
-                if fh.section == FinancialHealthSectorsEnum.CASHFLOW_STRENGTH.value
-            ]
-            valuation = [
-                CompanyFinancialHealthRead.model_validate(fh)
-                for fh in financial_health_read
-                if fh.section == FinancialHealthSectorsEnum.VALUATION.value
-            ]
-            growth_and_investment = [
-                CompanyFinancialHealthRead.model_validate(fh)
-                for fh in financial_health_read
-                if fh.section == FinancialHealthSectorsEnum.GROWTH_AND_INVESTMENT.value
-            ]
-            dividend_and_shareholder_return = [
-                CompanyFinancialHealthRead.model_validate(fh)
-                for fh in financial_health_read
-                if fh.section
-                == FinancialHealthSectorsEnum.DIVIDEND_AND_SHAREHOLDER_RETURN.value
-            ]
+            # Group financial health metrics by section with single iteration
+            grouped = self._group_financial_health_by_section(financial_health_items)
 
             return CompanyFinancialHealthResponse(
                 company=company_read,
-                profitability=profitability,
-                efficiency=efficiency,
-                liquidity_and_solvency=liquidity_and_solvency,
-                cashflow_strength=cashflow_strength,
-                valuation=valuation,
-                growth_and_investment=growth_and_investment,
-                dividend_and_shareholder_return=dividend_and_shareholder_return,
+                profitability=grouped[FinancialHealthSectorsEnum.PROFITABILITY.value],
+                efficiency=grouped[FinancialHealthSectorsEnum.EFFICIENCY.value],
+                liquidity_and_solvency=grouped[
+                    FinancialHealthSectorsEnum.LIQUIDITY_AND_SOLVENCY.value
+                ],
+                cashflow_strength=grouped[
+                    FinancialHealthSectorsEnum.CASHFLOW_STRENGTH.value
+                ],
+                valuation=grouped[FinancialHealthSectorsEnum.VALUATION.value],
+                growth_and_investment=grouped[
+                    FinancialHealthSectorsEnum.GROWTH_AND_INVESTMENT.value
+                ],
+                dividend_and_shareholder_return=grouped[
+                    FinancialHealthSectorsEnum.DIVIDEND_AND_SHAREHOLDER_RETURN.value
+                ],
             )
         except Exception as e:
             logger.error(f"Error retrieving financial health for {symbol}: {str(e)}")
@@ -254,16 +250,16 @@ class CompanyService:
                 logger.warning(f"Company not found for symbol: {symbol}")
                 return None
 
-            technical_indicators = TechnicalIndicatorRepository(self._db)
-            indicators = technical_indicators.get_technical_indicators_by_symbol(symbol)
+            technical_indicator_repo = TechnicalIndicatorRepository(self._db)
+            indicators = technical_indicator_repo.get_technical_indicators_by_symbol(
+                symbol
+            )
+
             if not indicators:
                 logger.info(f"No technical indicators found for symbol: {symbol}")
                 return None
 
-            return [
-                CompanyTechnicalIndicatorRead.model_validate(indicator)
-                for indicator in indicators
-            ]
+            return self._validate_models(CompanyTechnicalIndicatorRead, indicators)
         except Exception as e:
             logger.error(
                 f"Error retrieving technical indicators for {symbol}: {str(e)}"

@@ -19,7 +19,7 @@ class FMPStockNews(BaseModel):
 
 class FMPGeneralNews(BaseModel):
     symbol: Optional[str] = None
-    published_date: str = Field(..., alias="publishedDate")
+    published_date: datetime = Field(..., alias="publishedDate")
     publisher: str
     title: str
     image: HttpUrl

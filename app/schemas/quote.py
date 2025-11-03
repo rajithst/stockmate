@@ -28,3 +28,30 @@ class StockPriceChangeRead(StockPriceChangeBase):
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class StockPrice(BaseModel):
+    company_id: int
+    symbol: str
+    date: datetime
+    open_price: float
+    close_price: float
+    high_price: float
+    low_price: float
+    volume: int
+    change: Optional[float] = None
+    change_percent: Optional[float] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StockPriceRead(StockPrice):
+    id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StockPriceWrite(StockPrice):
+    model_config = ConfigDict(from_attributes=True)

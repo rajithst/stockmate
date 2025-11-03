@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date as date_type, datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -7,44 +7,44 @@ from pydantic import BaseModel, ConfigDict
 class CompanyIncomeStatement(BaseModel):
     company_id: int
     symbol: str
-    date: str
+    date: date_type
     reported_currency: str
     cik: str
-    filing_date: str
-    accepted_date: str
-    fiscal_year: str
+    filing_date: date_type
+    accepted_date: datetime
+    fiscal_year: int
     period: str
-    revenue: int
-    cost_of_revenue: int
-    gross_profit: int
-    research_and_development_expenses: int
-    general_and_administrative_expenses: int
-    selling_and_marketing_expenses: int
-    selling_general_and_administrative_expenses: int
-    other_expenses: int
-    operating_expenses: int
-    cost_and_expenses: int
-    net_interest_income: int
-    interest_income: int
-    interest_expense: int
-    depreciation_and_amortization: int
-    ebitda: int
-    ebit: int
-    non_operating_income_excluding_interest: int
-    operating_income: int
-    total_other_income_expenses_net: int
-    income_before_tax: int
-    income_tax_expense: int
-    net_income_from_continuing_operations: int
-    net_income_from_discontinued_operations: int
-    other_adjustments_to_net_income: int
-    net_income: int
-    net_income_deductions: int
-    bottom_line_net_income: int
-    eps: float
-    eps_diluted: float
-    weighted_average_shs_out: int
-    weighted_average_shs_out_dil: int
+    revenue: Optional[int] = None
+    cost_of_revenue: Optional[int] = None
+    gross_profit: Optional[int] = None
+    research_and_development_expenses: Optional[int] = None
+    general_and_administrative_expenses: Optional[int] = None
+    selling_and_marketing_expenses: Optional[int] = None
+    selling_general_and_administrative_expenses: Optional[int] = None
+    other_expenses: Optional[int] = None
+    operating_expenses: Optional[int] = None
+    cost_and_expenses: Optional[int] = None
+    net_interest_income: Optional[int] = None
+    interest_income: Optional[int] = None
+    interest_expense: Optional[int] = None
+    depreciation_and_amortization: Optional[int] = None
+    ebitda: Optional[int] = None
+    ebit: Optional[int] = None
+    non_operating_income_excluding_interest: Optional[int] = None
+    operating_income: Optional[int] = None
+    total_other_income_expenses_net: Optional[int] = None
+    income_before_tax: Optional[int] = None
+    income_tax_expense: Optional[int] = None
+    net_income_from_continuing_operations: Optional[int] = None
+    net_income_from_discontinued_operations: Optional[int] = None
+    other_adjustments_to_net_income: Optional[int] = None
+    net_income: Optional[int] = None
+    net_income_deductions: Optional[int] = None
+    bottom_line_net_income: Optional[int] = None
+    eps: Optional[float] = None
+    eps_diluted: Optional[float] = None
+    weighted_average_shs_out: Optional[int] = None
+    weighted_average_shs_out_dil: Optional[int] = None
 
 
 class CompanyIncomeStatementWrite(CompanyIncomeStatement):

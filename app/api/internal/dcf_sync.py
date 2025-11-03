@@ -1,43 +1,42 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 
-from app.clients.fmp.protocol import FMPClientProtocol
-from app.dependencies import get_db_session, get_fmp_client
+from app.api.internal.config import ERROR_MESSAGES, TAGS
+from app.dependencies.sync_services import create_sync_service_provider
 from app.schemas.dcf import DiscountedCashFlowRead
 from app.services.internal.dcf_sync_service import DiscountedCashFlowSyncService
 
-router = APIRouter(prefix="", tags=["dcf_data"])
+router = APIRouter(prefix="", tags=[TAGS["dcf"]["name"]])
 
-
-def get_dcf_sync_service(
-    fmp_client: FMPClientProtocol = Depends(get_fmp_client),
-    db_session: Session = Depends(get_db_session),
-) -> DiscountedCashFlowSyncService:
-    """
-    Provides DiscountedCashFlowSyncService with required dependencies.
-    """
-    return DiscountedCashFlowSyncService(
-        market_api_client=fmp_client, session=db_session
-    )
+# Create dependency provider for DiscountedCashFlowSyncService
+get_dcf_sync_service = create_sync_service_provider(DiscountedCashFlowSyncService)
 
 
 @router.get(
     "/{symbol}/sync",
     response_model=DiscountedCashFlowRead,
-    summary="Sync company discounted cash flow from external API",
-    description="Fetches and upserts company's discounted cash flow from the external API into the database.",
+    summary="Sync company DCF valuation from external API",
+    description="Fetches and upserts company's discounted cash flow valuation from the external API into the database.",
 )
-async def sync_company_discounted_cash_flow(
-    symbol: str,
-    service: DiscountedCashFlowSyncService = Depends(get_dcf_sync_service),
+def sync_company_dcf(
+    symbol: str, service: DiscountedCashFlowSyncService = Depends(get_dcf_sync_service)
 ):
     """
-    Sync company's discounted cash flow from the external API and store in the database.
+    Sync company's discounted cash flow valuation from the external API and store in the database.
+
+    Args:
+        symbol: Stock symbol (e.g., 'AAPL')
+        service: DiscountedCashFlowSyncService instance (injected)
+
+    Returns:
+        DiscountedCashFlowRead: Synced DCF valuation data
+
+    Raises:
+        HTTPException: 404 if DCF data not found
     """
-    statements = service.upsert_discounted_cash_flow(symbol)
-    if not statements:
+    dcf_data = service.upsert_discounted_cash_flow(symbol)
+    if not dcf_data:
         raise HTTPException(
             status_code=404,
-            detail=f"Discounted cash flow not found for symbol: {symbol}",
+            detail=ERROR_MESSAGES["NOT_FOUND_DCF"].format(symbol=symbol),
         )
-    return statements
+    return dcf_data

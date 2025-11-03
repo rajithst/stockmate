@@ -1,7 +1,16 @@
-from datetime import datetime
+from datetime import date as date_type, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, String, func
+from sqlalchemy import (
+    BigInteger,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -12,6 +21,13 @@ if TYPE_CHECKING:
 
 class CompanyKeyMetrics(Base):
     __tablename__ = "company_key_metrics"
+    __table_args__ = (
+        UniqueConstraint(
+            "company_id", "fiscal_year", "period", name="uq_metrics_period"
+        ),
+        Index("ix_metrics_symbol_date", "symbol", "date"),
+        Index("ix_metrics_fiscal_year", "fiscal_year"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     company_id: Mapped[int] = mapped_column(
@@ -19,62 +35,68 @@ class CompanyKeyMetrics(Base):
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
-    date: Mapped[str] = mapped_column(String(20), nullable=False)
-    fiscal_year: Mapped[str] = mapped_column(String(10), nullable=False)
+    date: Mapped[date_type] = mapped_column(Date, nullable=False)
+    fiscal_year: Mapped[int] = mapped_column(index=True, nullable=False)
     period: Mapped[str] = mapped_column(String(10), nullable=False)
     reported_currency: Mapped[str] = mapped_column(String(10), nullable=False)
 
     # Market metrics
-    market_cap: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    enterprise_value: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    ev_to_sales: Mapped[float] = mapped_column(nullable=True)
-    ev_to_operating_cash_flow: Mapped[float] = mapped_column(nullable=True)
-    ev_to_free_cash_flow: Mapped[float] = mapped_column(nullable=True)
-    ev_to_ebitda: Mapped[float] = mapped_column(nullable=True)
-    net_debt_to_ebitda: Mapped[float] = mapped_column(nullable=True)
-    current_ratio: Mapped[float] = mapped_column(nullable=True)
-    income_quality: Mapped[float] = mapped_column(nullable=True)
-    graham_number: Mapped[float] = mapped_column(nullable=True)
-    graham_net_net: Mapped[float] = mapped_column(nullable=True)
-    tax_burden: Mapped[float] = mapped_column(nullable=True)
-    interest_burden: Mapped[float] = mapped_column(nullable=True)
+    market_cap: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    enterprise_value: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    ev_to_sales: Mapped[float | None] = mapped_column(nullable=True)
+    ev_to_operating_cash_flow: Mapped[float | None] = mapped_column(nullable=True)
+    ev_to_free_cash_flow: Mapped[float | None] = mapped_column(nullable=True)
+    ev_to_ebitda: Mapped[float | None] = mapped_column(nullable=True)
+    net_debt_to_ebitda: Mapped[float | None] = mapped_column(nullable=True)
+    current_ratio: Mapped[float | None] = mapped_column(nullable=True)
+    income_quality: Mapped[float | None] = mapped_column(nullable=True)
+    graham_number: Mapped[float | None] = mapped_column(nullable=True)
+    graham_net_net: Mapped[float | None] = mapped_column(nullable=True)
+    tax_burden: Mapped[float | None] = mapped_column(nullable=True)
+    interest_burden: Mapped[float | None] = mapped_column(nullable=True)
 
     # Capital metrics
-    working_capital: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    invested_capital: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    return_on_assets: Mapped[float] = mapped_column(nullable=True)
-    operating_return_on_assets: Mapped[float] = mapped_column(nullable=True)
-    return_on_tangible_assets: Mapped[float] = mapped_column(nullable=True)
-    return_on_equity: Mapped[float] = mapped_column(nullable=True)
-    return_on_invested_capital: Mapped[float] = mapped_column(nullable=True)
-    return_on_capital_employed: Mapped[float] = mapped_column(nullable=True)
+    working_capital: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    invested_capital: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    return_on_assets: Mapped[float | None] = mapped_column(nullable=True)
+    operating_return_on_assets: Mapped[float | None] = mapped_column(nullable=True)
+    return_on_tangible_assets: Mapped[float | None] = mapped_column(nullable=True)
+    return_on_equity: Mapped[float | None] = mapped_column(nullable=True)
+    return_on_invested_capital: Mapped[float | None] = mapped_column(nullable=True)
+    return_on_capital_employed: Mapped[float | None] = mapped_column(nullable=True)
 
     # Cash flow metrics
-    earnings_yield: Mapped[float] = mapped_column(nullable=True)
-    free_cash_flow_yield: Mapped[float] = mapped_column(nullable=True)
-    capex_to_operating_cash_flow: Mapped[float] = mapped_column(nullable=True)
-    capex_to_depreciation: Mapped[float] = mapped_column(nullable=True)
-    capex_to_revenue: Mapped[float] = mapped_column(nullable=True)
+    earnings_yield: Mapped[float | None] = mapped_column(nullable=True)
+    free_cash_flow_yield: Mapped[float | None] = mapped_column(nullable=True)
+    capex_to_operating_cash_flow: Mapped[float | None] = mapped_column(nullable=True)
+    capex_to_depreciation: Mapped[float | None] = mapped_column(nullable=True)
+    capex_to_revenue: Mapped[float | None] = mapped_column(nullable=True)
 
     # Operational efficiency
-    sales_general_and_administrative_to_revenue: Mapped[float] = mapped_column(
+    sales_general_and_administrative_to_revenue: Mapped[float | None] = mapped_column(
         nullable=True
     )
-    research_and_development_to_revenue: Mapped[float] = mapped_column(nullable=True)
-    stock_based_compensation_to_revenue: Mapped[float] = mapped_column(nullable=True)
-    intangibles_to_total_assets: Mapped[float] = mapped_column(nullable=True)
-    average_receivables: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    average_payables: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    average_inventory: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    days_of_sales_outstanding: Mapped[float] = mapped_column(nullable=True)
-    days_of_payables_outstanding: Mapped[float] = mapped_column(nullable=True)
-    days_of_inventory_outstanding: Mapped[float] = mapped_column(nullable=True)
-    operating_cycle: Mapped[float] = mapped_column(nullable=True)
-    cash_conversion_cycle: Mapped[float] = mapped_column(nullable=True)
-    free_cash_flow_to_equity: Mapped[float] = mapped_column(nullable=True)
-    free_cash_flow_to_firm: Mapped[float] = mapped_column(nullable=True)
-    tangible_asset_value: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    net_current_asset_value: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    research_and_development_to_revenue: Mapped[float | None] = mapped_column(
+        nullable=True
+    )
+    stock_based_compensation_to_revenue: Mapped[float | None] = mapped_column(
+        nullable=True
+    )
+    intangibles_to_total_assets: Mapped[float | None] = mapped_column(nullable=True)
+    average_receivables: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    average_payables: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    average_inventory: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    days_of_sales_outstanding: Mapped[float | None] = mapped_column(nullable=True)
+    days_of_payables_outstanding: Mapped[float | None] = mapped_column(nullable=True)
+    days_of_inventory_outstanding: Mapped[float | None] = mapped_column(nullable=True)
+    operating_cycle: Mapped[float | None] = mapped_column(nullable=True)
+    cash_conversion_cycle: Mapped[float | None] = mapped_column(nullable=True)
+    free_cash_flow_to_equity: Mapped[float | None] = mapped_column(nullable=True)
+    free_cash_flow_to_firm: Mapped[float | None] = mapped_column(nullable=True)
+    tangible_asset_value: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    net_current_asset_value: Mapped[int | None] = mapped_column(
+        BigInteger, nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -90,7 +112,7 @@ class CompanyKeyMetrics(Base):
         "Company",
         back_populates="key_metrics",
         foreign_keys=[company_id],
-        lazy="joined",
+        lazy="select",
     )
 
     def to_dict(self):

@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date as date_type, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import Date, DateTime, ForeignKey, Index, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 class CompanyGrading(Base):
     __tablename__ = "company_gradings"
+    __table_args__ = (Index("ix_grading_symbol_date", "symbol", "date"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     company_id: Mapped[int] = mapped_column(
@@ -19,11 +20,11 @@ class CompanyGrading(Base):
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
 
-    date: Mapped[str] = mapped_column(String(20), nullable=False)
-    grading_company: Mapped[str] = mapped_column(String(255), nullable=True)
-    previous_grade: Mapped[str] = mapped_column(String(50), nullable=True)
-    new_grade: Mapped[str] = mapped_column(String(50), nullable=True)
-    action: Mapped[str] = mapped_column(String(50), nullable=True)
+    date: Mapped[date_type] = mapped_column(Date, nullable=False)
+    grading_company: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    previous_grade: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    new_grade: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    action: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -38,7 +39,7 @@ class CompanyGrading(Base):
         "Company",
         back_populates="gradings",
         foreign_keys=[company_id],
-        lazy="joined",
+        lazy="select",
     )
 
     def __repr__(self):
@@ -47,6 +48,10 @@ class CompanyGrading(Base):
 
 class CompanyGradingSummary(Base):
     __tablename__ = "company_grading_summaries"
+    __table_args__ = (
+        UniqueConstraint("company_id", name="uq_grading_summary_company"),
+        Index("ix_grading_summary_symbol", "symbol"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     company_id: Mapped[int] = mapped_column(
@@ -60,7 +65,7 @@ class CompanyGradingSummary(Base):
     sell: Mapped[int] = mapped_column(nullable=False)
     strong_sell: Mapped[int] = mapped_column(nullable=False)
     consensus: Mapped[str] = mapped_column(String(50), nullable=False)
-    ccreated_at: Mapped[datetime] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
@@ -74,7 +79,7 @@ class CompanyGradingSummary(Base):
         "Company",
         back_populates="grading_summary",
         foreign_keys=[company_id],
-        lazy="joined",
+        lazy="select",
         uselist=False,
     )
 

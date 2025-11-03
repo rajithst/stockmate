@@ -3,42 +3,47 @@ from logging import getLogger
 from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
-from app.repositories.company_repo import CompanyRepository
 from app.repositories.dcf_repo import DiscountedCashFlowRepository
 from app.schemas.dcf import DiscountedCashFlowRead, DiscountedCashFlowWrite
+from app.services.internal.base_sync_service import BaseSyncService
 
 logger = getLogger(__name__)
 
 
-class DiscountedCashFlowSyncService:
+class DiscountedCashFlowSyncService(BaseSyncService):
     def __init__(self, market_api_client: FMPClientProtocol, session: Session):
-        self._market_api_client = market_api_client
+        super().__init__(market_api_client, session)
         self._repository = DiscountedCashFlowRepository(session)
-        self._company_repository = CompanyRepository(session)
 
     def upsert_discounted_cash_flow(self, symbol: str) -> DiscountedCashFlowRead | None:
+        """
+        Fetch and upsert discounted cash flow valuation for a company.
+
+        Args:
+            symbol: Stock symbol
+
+        Returns:
+            Upserted DCF record or None if not found
+        """
         try:
-            company = self._company_repository.get_company_by_symbol(symbol)
+            company = self._get_company_or_fail(symbol)
             if not company:
-                logger.warning(f"Company not found for symbol: {symbol}")
                 return None
 
+            # Explicit control over API call
             dcf_data = self._market_api_client.get_discounted_cash_flow(symbol)
-            if not dcf_data:
-                logger.warning(
-                    f"No discounted cash flow data found for symbol: {symbol}"
-                )
+            if not self._validate_api_response(dcf_data, "dcf_valuation", symbol):
                 return None
 
-            logger.info(dcf_data)
-
-            dcf_in = DiscountedCashFlowWrite.model_validate(
-                {**dcf_data.model_dump(), "company_id": company.id}
+            dcf_in = self._add_company_id_to_record(
+                dcf_data, company.id, DiscountedCashFlowWrite
             )
             dcf = self._repository.upsert_discounted_cash_flow(dcf_in)
-            return DiscountedCashFlowRead.model_validate(dcf)
+            result = self._map_schema_single(dcf, DiscountedCashFlowRead)
+
+            self._log_sync_success("dcf_valuation", 1, symbol)
+            return result
+
         except Exception as e:
-            logger.error(
-                f"Error upserting discounted cash flow for symbol {symbol}: {e}"
-            )
-            return None
+            self._log_sync_failure("dcf_valuation", symbol, e)
+            raise

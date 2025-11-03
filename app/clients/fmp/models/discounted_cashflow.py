@@ -1,13 +1,24 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from datetime import date as date_type
 
 
 class FMPDFCValuation(BaseModel):
     symbol: str
-    date: str
+    date: date_type
     dcf: float
     stock_price: float = Field(..., alias="Stock Price")
 
     model_config = ConfigDict(populate_by_name=True)
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def convert_date_string_to_date(cls, v):
+        """Convert date string (YYYY-MM-DD) to Python date object."""
+        if isinstance(v, date_type):
+            return v
+        if isinstance(v, str):
+            return date_type.fromisoformat(v)
+        return v
 
 
 class FMPCustomDFCValuation(BaseModel):

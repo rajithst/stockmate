@@ -1,12 +1,11 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
 
 # Watchlist Schemas
 class Watchlist(BaseModel):
-    user_id: int
     name: str
     currency: str = "USD"
     description: Optional[str] = None
@@ -14,7 +13,19 @@ class Watchlist(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class WatchlistWrite(Watchlist):
+class WatchlistUpsertRequest(Watchlist):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WatchlistCreate(Watchlist):
+    user_id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WatchlistUpdate(Watchlist):
+    id: int
+    user_id: int
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -26,9 +37,13 @@ class WatchlistRead(Watchlist):
     model_config = ConfigDict(from_attributes=True)
 
 
+class WatchlistWrite(Watchlist):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
 # Watchlist Item Schemas
 class WatchlistItem(BaseModel):
-    watchlist_id: int
     symbol: str
 
     model_config = ConfigDict(from_attributes=True)
@@ -38,15 +53,31 @@ class WatchlistItemWrite(WatchlistItem):
     model_config = ConfigDict(from_attributes=True)
 
 
-class WatchlistItemRead(WatchlistItem):
-    id: int
-    added_at: Optional[datetime] = None
-
+class WatchlistItemCreate(WatchlistItem):
+    watchlist_id: int
     model_config = ConfigDict(from_attributes=True)
 
 
-# Composite Response Schema
-class WatchlistDetailRead(WatchlistRead):
-    items: List[WatchlistItemRead] = []
+class WatchlistCompanyItem(BaseModel):
+    symbol: str
+    company_name: str
+    price: float
+    currency: str
+    price_change: float
+    price_change_percent: float
+    market_cap: float
+    price_to_earnings_ratio: Optional[float] = None
+    price_to_earnings_growth_ratio: Optional[float] = None
+    forward_price_to_earnings_growth_ratio: Optional[float] = None
+    price_to_book_ratio: Optional[float] = None
+    price_to_sales_ratio: Optional[float] = None
+    price_to_free_cash_flow_ratio: Optional[float] = None
+    price_to_operating_cash_flow_ratio: Optional[float] = None
+    image: Optional[str] = None
+
+
+class WatchlistResponse(BaseModel):
+    watchlist: WatchlistRead
+    items: list[WatchlistCompanyItem] = []
 
     model_config = ConfigDict(from_attributes=True)

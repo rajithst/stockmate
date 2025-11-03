@@ -3,7 +3,6 @@ from logging import getLogger
 from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
-from app.repositories.company_repo import CompanyRepository
 from app.repositories.metrics_repo import MetricsRepository
 from app.schemas.financial_ratio import (
     CompanyFinancialRatioRead,
@@ -14,29 +13,30 @@ from app.schemas.financial_score import (
     CompanyFinancialScoresWrite,
 )
 from app.schemas.key_metrics import CompanyKeyMetricsRead, CompanyKeyMetricsWrite
+from app.services.internal.base_sync_service import BaseSyncService
 
 logger = getLogger(__name__)
 
 
-class MetricsSyncService:
+class MetricsSyncService(BaseSyncService):
     def __init__(self, market_api_client: FMPClientProtocol, session: Session) -> None:
-        self._market_api_client = market_api_client
+        super().__init__(market_api_client, session)
         self._repository = MetricsRepository(session)
-        self._company_repository = CompanyRepository(session)
 
     def get_key_metrics(self, symbol: str) -> list[CompanyKeyMetricsRead]:
+        """Get cached key metrics for a symbol."""
         key_metrics = self._repository.get_key_metrics_by_symbol(symbol)
-        return [CompanyKeyMetricsRead.model_validate(km) for km in key_metrics]
+        return self._map_schema_list(key_metrics, CompanyKeyMetricsRead)
 
     def get_financial_ratios(self, symbol: str) -> list[CompanyFinancialRatioRead]:
+        """Get cached financial ratios for a symbol."""
         financial_ratios = self._repository.get_financial_ratios_by_symbol(symbol)
-        return [CompanyFinancialRatioRead.model_validate(fr) for fr in financial_ratios]
+        return self._map_schema_list(financial_ratios, CompanyFinancialRatioRead)
 
     def get_financial_scores(self, symbol: str) -> list[CompanyFinancialScoresRead]:
+        """Get cached financial scores for a symbol."""
         financial_scores = self._repository.get_financial_scores_by_symbol(symbol)
-        return [
-            CompanyFinancialScoresRead.model_validate(fs) for fs in financial_scores
-        ]
+        return self._map_schema_list(financial_scores, CompanyFinancialScoresRead)
 
     def upsert_key_metrics(
         self, symbol: str, limit: int, period: str = "annual"
@@ -53,29 +53,28 @@ class MetricsSyncService:
             List of upserted key metrics records or None if not found
         """
         try:
-            # Get company to retrieve company_id
-            company = self._company_repository.get_company_snapshot_by_symbol(symbol)
+            company = self._get_company_or_fail(symbol)
             if not company:
-                logger.warning(f"Company not found for symbol: {symbol}")
                 return None
 
+            # Explicit control over API call with known parameters
             key_metrics_data = self._market_api_client.get_key_metrics(
-                symbol, period, limit
+                symbol, period=period, limit=limit
             )
-            if not key_metrics_data:
-                logger.info(f"No key metrics data found for symbol: {symbol}")
+            if not self._validate_api_response(key_metrics_data, "key_metrics", symbol):
                 return None
 
-            key_metrics_in = [
-                CompanyKeyMetricsWrite.model_validate(
-                    {**km.model_dump(), "company_id": company.id}
-                )
-                for km in key_metrics_data
-            ]
-            key_metrics = self._repository.upsert_key_metrics(key_metrics_in)
-            return [CompanyKeyMetricsRead.model_validate(km) for km in key_metrics]
+            records_to_persist = self._add_company_id_to_records(
+                key_metrics_data, company.id, CompanyKeyMetricsWrite
+            )
+            key_metrics = self._repository.upsert_key_metrics(records_to_persist)
+            result = self._map_schema_list(key_metrics, CompanyKeyMetricsRead)
+
+            self._log_sync_success("key_metrics", len(result), symbol)
+            return result
+
         except Exception as e:
-            logger.error(f"Error upserting key metrics for {symbol}: {str(e)}")
+            self._log_sync_failure("key_metrics", symbol, e)
             raise
 
     def upsert_financial_ratios(
@@ -93,33 +92,32 @@ class MetricsSyncService:
             List of upserted financial ratio records or None if not found
         """
         try:
-            # Get company to retrieve company_id
-            company = self._company_repository.get_company_snapshot_by_symbol(symbol)
+            company = self._get_company_or_fail(symbol)
             if not company:
-                logger.warning(f"Company not found for symbol: {symbol}")
                 return None
 
+            # Explicit control over API call with known parameters
             financial_ratios_data = self._market_api_client.get_financial_ratios(
-                symbol, period, limit
+                symbol, period=period, limit=limit
             )
-            if not financial_ratios_data:
-                logger.info(f"No financial ratios data found for symbol: {symbol}")
+            if not self._validate_api_response(
+                financial_ratios_data, "financial_ratios", symbol
+            ):
                 return None
 
-            financial_ratios_in = [
-                CompanyFinancialRatioWrite.model_validate(
-                    {**fr.model_dump(), "company_id": company.id}
-                )
-                for fr in financial_ratios_data
-            ]
-            financial_ratios = self._repository.upsert_financial_ratios(
-                financial_ratios_in
+            records_to_persist = self._add_company_id_to_records(
+                financial_ratios_data, company.id, CompanyFinancialRatioWrite
             )
-            return [
-                CompanyFinancialRatioRead.model_validate(fr) for fr in financial_ratios
-            ]
+            financial_ratios = self._repository.upsert_financial_ratios(
+                records_to_persist
+            )
+            result = self._map_schema_list(financial_ratios, CompanyFinancialRatioRead)
+
+            self._log_sync_success("financial_ratios", len(result), symbol)
+            return result
+
         except Exception as e:
-            logger.error(f"Error upserting financial ratios for {symbol}: {str(e)}")
+            self._log_sync_failure("financial_ratios", symbol, e)
             raise
 
     def upsert_financial_scores(self, symbol: str) -> CompanyFinancialScoresRead | None:
@@ -133,24 +131,30 @@ class MetricsSyncService:
             Upserted financial scores record or None if not found
         """
         try:
-            # Get company to retrieve company_id
-            company = self._company_repository.get_company_snapshot_by_symbol(symbol)
+            company = self._get_company_or_fail(symbol)
             if not company:
-                logger.warning(f"Company not found for symbol: {symbol}")
                 return None
 
+            # Explicit control over API call
             financial_scores_data = self._market_api_client.get_financial_scores(symbol)
-            if not financial_scores_data:
-                logger.info(f"No financial scores data found for symbol: {symbol}")
+            if not self._validate_api_response(
+                financial_scores_data, "financial_scores", symbol
+            ):
                 return None
 
-            financial_scores_in = CompanyFinancialScoresWrite.model_validate(
-                {**financial_scores_data.model_dump(), "company_id": company.id}
+            financial_scores_in = self._add_company_id_to_record(
+                financial_scores_data, company.id, CompanyFinancialScoresWrite
             )
             financial_scores = self._repository.upsert_financial_scores(
                 financial_scores_in
             )
-            return CompanyFinancialScoresRead.model_validate(financial_scores)
+            result = self._map_schema_single(
+                financial_scores, CompanyFinancialScoresRead
+            )
+
+            self._log_sync_success("financial_scores", 1, symbol)
+            return result
+
         except Exception as e:
-            logger.error(f"Error upserting financial scores for {symbol}: {str(e)}")
+            self._log_sync_failure("financial_scores", symbol, e)
             raise

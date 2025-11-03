@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import DateTime, ForeignKey, String, func, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -36,11 +36,16 @@ class CompanyRatingSummary(Base):
         onupdate=func.now(),
     )
 
+    __table_args__ = (
+        UniqueConstraint("company_id", name="uq_rating_summary_company"),
+        Index("ix_rating_summary_symbol", "symbol"),
+    )
+
     company: Mapped["Company"] = relationship(
         "Company",
         back_populates="rating_summary",
         foreign_keys=[company_id],
-        lazy="joined",
+        lazy="select",
         uselist=False,
     )
 

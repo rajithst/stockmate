@@ -1,28 +1,24 @@
+import logging
 from sqlalchemy.orm import Session
 
 from app.db.models.dcf import DiscountedCashFlow
 from app.schemas.dcf import DiscountedCashFlowWrite
-from app.util.model_mapper import map_model
+from app.repositories.base_repo import BaseRepository
+
+logger = logging.getLogger(__name__)
 
 
-class DiscountedCashFlowRepository:
+class DiscountedCashFlowRepository(BaseRepository):
     def __init__(self, session: Session):
-        self._session = session
+        super().__init__(session)
 
     def upsert_discounted_cash_flow(
         self, dcf_in: DiscountedCashFlowWrite
     ) -> DiscountedCashFlow:
-        dcf = (
-            self._session.query(DiscountedCashFlow)
-            .filter(DiscountedCashFlow.company_id == dcf_in.company_id)
-            .one_or_none()
+        """Upsert DCF record by company_id."""
+        return self._upsert_single(
+            dcf_in,
+            DiscountedCashFlow,
+            lambda dcf: {"company_id": dcf.company_id},
+            "upsert_discounted_cash_flow",
         )
-        if dcf:
-            dcf = map_model(dcf, dcf_in)
-        else:
-            dcf = DiscountedCashFlow(**dcf_in.model_dump())
-            self._session.add(dcf)
-
-        self._session.commit()
-        self._session.refresh(dcf)
-        return dcf

@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, date as date_type
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import DateTime, ForeignKey, String, func, UniqueConstraint, Index, Date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -18,7 +18,7 @@ class CompanyStockSplit(Base):
         ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=False
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
-    date: Mapped[str] = mapped_column(String(20), nullable=False)
+    date: Mapped[date_type] = mapped_column(Date, nullable=False)
     numerator: Mapped[int] = mapped_column(nullable=False)
     denominator: Mapped[int] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -31,12 +31,17 @@ class CompanyStockSplit(Base):
         onupdate=func.now(),
     )
 
+    __table_args__ = (
+        UniqueConstraint("company_id", "date", name="uq_stock_split_company_date"),
+        Index("ix_stock_split_symbol_date", "symbol", "date"),
+    )
+
     # Relationship
     company: Mapped["Company"] = relationship(
         "Company",
         back_populates="stock_splits",
         foreign_keys=[company_id],
-        lazy="joined",
+        lazy="select",
     )
 
     def __repr__(self):
@@ -64,8 +69,13 @@ class CompanyStockPeer(Base):
         onupdate=func.now(),
     )
 
+    __table_args__ = (
+        UniqueConstraint("company_id", "symbol", name="uq_stock_peer_company_symbol"),
+        Index("ix_stock_peer_symbol", "symbol"),
+    )
+
     company: Mapped["Company"] = relationship(
-        back_populates="stock_peers", foreign_keys=[company_id], lazy="joined"
+        back_populates="stock_peers", foreign_keys=[company_id], lazy="select"
     )
 
     def __repr__(self):

@@ -1,4 +1,3 @@
-from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.db.models.financial_ratio import CompanyFinancialRatio
@@ -7,138 +6,78 @@ from app.db.models.key_metrics import CompanyKeyMetrics
 from app.schemas.financial_ratio import CompanyFinancialRatioWrite
 from app.schemas.financial_score import CompanyFinancialScoresWrite
 from app.schemas.key_metrics import CompanyKeyMetricsWrite
-from app.util.model_mapper import map_model
+from app.repositories.base_repo import BaseRepository
 
 
-class MetricsRepository:
+class MetricsRepository(BaseRepository):
     def __init__(self, session: Session) -> None:
-        self._db = session
+        super().__init__(session)
 
     def get_key_metrics_by_symbol(self, symbol: str) -> list[CompanyKeyMetrics]:
-        return (
-            self._db.query(CompanyKeyMetrics)
-            .filter(CompanyKeyMetrics.symbol == symbol)
-            .all()
-        )
-
-    def get_latest_key_metrics_for_year(self, symbol: str) -> CompanyKeyMetrics | None:
-        """
-        Get the latest key metrics for the current year for a symbol.
-        Priority: FY > Q4 > Q3 > Q2 > Q1
-        """
-        current_year = str(datetime.now().year)
-        periods = ["FY", "Q4", "Q3", "Q2", "Q1"]
-        for period in periods:
-            record = (
-                self._db.query(CompanyKeyMetrics)
-                .filter(
-                    CompanyKeyMetrics.symbol == symbol,
-                    CompanyKeyMetrics.fiscal_year == current_year,
-                    CompanyKeyMetrics.period == period,
-                )
-                .order_by(CompanyKeyMetrics.date.desc())
-                .first()
-            )
-            if record:
-                return record
-        return None
+        return self._get_by_filter(CompanyKeyMetrics, {"symbol": symbol})
 
     def get_financial_ratios_by_symbol(
         self, symbol: str
     ) -> list[CompanyFinancialRatio]:
-        return (
-            self._db.query(CompanyFinancialRatio)
-            .filter(CompanyFinancialRatio.symbol == symbol)
-            .all()
-        )
-
-    def get_financial_ratios_for_year(
-        self, symbol: str, year: str = str(datetime.now().year)
-    ) -> CompanyFinancialRatio | None:
-        """Get the latest financial ratios for the current year for a symbol."""
-        current_year = year
-        periods = ["FY", "Q4", "Q3", "Q2", "Q1"]
-        for period in periods:
-            record = (
-                self._db.query(CompanyFinancialRatio)
-                .filter(
-                    CompanyFinancialRatio.symbol == symbol,
-                    CompanyFinancialRatio.fiscal_year == current_year,
-                    CompanyFinancialRatio.period == period,
-                )
-                .order_by(CompanyFinancialRatio.date.desc())
-                .first()
-            )
-            if record:
-                return record
-        return None
+        return self._get_by_filter(CompanyFinancialRatio, {"symbol": symbol})
 
     def get_financial_scores_by_symbol(
         self, symbol: str
     ) -> list[CompanyFinancialScore]:
-        return (
-            self._db.query(CompanyFinancialScore)
-            .filter(CompanyFinancialScore.symbol == symbol)
-            .all()
+        return self._get_by_filter(CompanyFinancialScore, {"symbol": symbol})
+
+    def get_latest_key_metrics(self, symbol: str) -> CompanyKeyMetrics | None:
+        """Get the latest key metrics."""
+        metrics = self._get_by_filter(
+            CompanyKeyMetrics,
+            {"symbol": symbol},
+            order_by_desc=CompanyKeyMetrics.fiscal_year,
+            limit=1,
         )
+        if metrics:
+            return metrics[0]
+        return None
+
+    def get_latest_financial_ratios(self, symbol: str) -> CompanyFinancialRatio | None:
+        """Get the latest financial ratios."""
+        metrics = self._get_by_filter(
+            CompanyFinancialRatio,
+            {"symbol": symbol},
+            order_by_desc=CompanyFinancialRatio.fiscal_year,
+            limit=1,
+        )
+        if metrics:
+            return metrics[0]
+        return None
 
     def upsert_key_metrics(
         self, key_metrics: list[CompanyKeyMetricsWrite]
-    ) -> list[CompanyKeyMetrics] | None:
-        records = []
-        for key_metric in key_metrics:
-            existing = (
-                self._db.query(CompanyKeyMetrics)
-                .filter_by(symbol=key_metric.symbol, date=key_metric.date)
-                .first()
-            )
-            if existing:
-                record = map_model(existing, key_metric)
-            else:
-                record = CompanyKeyMetrics(**key_metric.model_dump(exclude_unset=True))
-                self._db.add(record)
-            records.append(record)
-        self._db.commit()
-        for record in records:
-            self._db.refresh(record)
-        return records
+    ) -> list[CompanyKeyMetrics]:
+        """Upsert key metrics using the base class pattern."""
+        return self._upsert_records(
+            key_metrics,
+            CompanyKeyMetrics,
+            lambda km: {"symbol": km.symbol, "date": km.date},
+            "upsert_key_metrics",
+        )
 
     def upsert_financial_ratios(
         self, financial_ratios: list[CompanyFinancialRatioWrite]
-    ) -> list[CompanyFinancialRatio] | None:
-        records = []
-        for ratio in financial_ratios:
-            existing = (
-                self._db.query(CompanyFinancialRatio)
-                .filter_by(symbol=ratio.symbol, date=ratio.date)
-                .first()
-            )
-            if existing:
-                record = map_model(existing, ratio)
-            else:
-                record = CompanyFinancialRatio(**ratio.model_dump(exclude_unset=True))
-                self._db.add(record)
-            records.append(record)
-        self._db.commit()
-        for record in records:
-            self._db.refresh(record)
-        return records
+    ) -> list[CompanyFinancialRatio]:
+        """Upsert financial ratios using the base class pattern."""
+        return self._upsert_records(
+            financial_ratios,
+            CompanyFinancialRatio,
+            lambda fr: {"symbol": fr.symbol, "date": fr.date},
+            "upsert_financial_ratios",
+        )
 
     def upsert_financial_scores(
         self, financial_scores: CompanyFinancialScoresWrite
     ) -> CompanyFinancialScore | None:
-        existing = (
-            self._db.query(CompanyFinancialScore)
-            .filter_by(symbol=financial_scores.symbol)
-            .first()
+        return self._upsert_single(
+            financial_scores,
+            CompanyFinancialScore,
+            lambda fs: {"symbol": financial_scores.symbol},
+            "upsert_financial_scores",
         )
-        if existing:
-            record = map_model(existing, financial_scores)
-        else:
-            record = CompanyFinancialScore(
-                **financial_scores.model_dump(exclude_unset=True)
-            )
-            self._db.add(record)
-        self._db.commit()
-        self._db.refresh(record)
-        return record

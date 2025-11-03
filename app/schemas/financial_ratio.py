@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date as date_type, datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -7,10 +7,10 @@ from pydantic import BaseModel, ConfigDict
 class CompanyFinancialRatio(BaseModel):
     company_id: int
     symbol: str
-    date: Optional[str] = None
-    fiscal_year: Optional[str] = None
-    period: Optional[str] = None
-    reported_currency: Optional[str] = None
+    date: date_type
+    fiscal_year: int
+    period: str
+    reported_currency: str
 
     # Profitability margins
     gross_profit_margin: Optional[float] = None
