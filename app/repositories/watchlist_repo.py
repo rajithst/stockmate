@@ -1,14 +1,24 @@
 import logging
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
+from typing import TYPE_CHECKING
 
+from sqlalchemy import func as sql_func
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from app.db.models.company import Company
+from app.db.models.quote import StockPrice
 from app.db.models.watchlist import Watchlist, WatchlistItem
+from app.repositories.base_repo import BaseRepository
 from app.schemas.watchlist import (
     WatchlistCreate,
     WatchlistItemCreate,
     WatchlistUpdate,
 )
-from app.repositories.base_repo import BaseRepository
+
+if TYPE_CHECKING:
+    from app.db.models.company import Company
+    from app.db.models.financial_ratio import CompanyFinancialRatio
 
 logger = logging.getLogger(__name__)
 
@@ -107,3 +117,126 @@ class WatchlistItemRepository(BaseRepository):
             ],
             "delete_watchlist_item",
         )
+
+    def load_current_prices_for_items(
+        self, items: list[WatchlistItem]
+    ) -> dict[str, float]:
+        """
+        Bulk load current prices for all items to avoid N+1 queries.
+
+        Returns a dict mapping symbol -> current_price
+        """
+
+        if not items:
+            return {}
+
+        symbols = list({item.symbol for item in items})
+
+        # Get the most recent price for each symbol in a single query
+        stmt = (
+            select(
+                StockPrice.symbol, sql_func.max(StockPrice.date).label("latest_date")
+            )
+            .where(StockPrice.symbol.in_(symbols))
+            .group_by(StockPrice.symbol)
+        )
+
+        latest_dates = {row[0]: row[1] for row in self._db.execute(stmt).all()}
+
+        if not latest_dates:
+            return {symbol: 0.0 for symbol in symbols}
+
+        # Get the prices for those latest dates
+        stmt = (
+            select(StockPrice)
+            .where(StockPrice.symbol.in_(symbols))
+            .order_by(StockPrice.symbol, StockPrice.date.desc())
+        )
+
+        results = self._db.execute(stmt).scalars().all()
+        prices = {}
+        seen_symbols = set()
+        for result in results:
+            if result.symbol not in seen_symbols:
+                prices[result.symbol] = result.close_price
+                seen_symbols.add(result.symbol)
+
+        # Fill in missing symbols with 0.0
+        for symbol in symbols:
+            if symbol not in prices:
+                prices[symbol] = 0.0
+
+        return prices
+
+    def load_company_profiles_for_items(
+        self, items: list[WatchlistItem]
+    ) -> dict[str, "Company | None"]:
+        """
+        Bulk load company profiles for all items to avoid N+1 queries.
+
+        Returns a dict mapping symbol -> Company
+        """
+
+        if not items:
+            return {}
+
+        symbols = list({item.symbol for item in items})
+
+        # Get all companies in a single query
+        stmt = select(Company).where(Company.symbol.in_(symbols))
+        results = self._db.execute(stmt).scalars().all()
+
+        profiles = {company.symbol: company for company in results}
+
+        # Fill in missing symbols with None
+        for symbol in symbols:
+            if symbol not in profiles:
+                profiles[symbol] = None
+
+        return profiles
+
+    def load_financial_ratios_for_items(
+        self, items: list[WatchlistItem]
+    ) -> dict[str, "CompanyFinancialRatio | None"]:
+        """
+        Bulk load latest financial ratios for all items to avoid N+1 queries.
+
+        Returns a dict mapping symbol -> CompanyFinancialRatio
+        """
+        from app.db.models.financial_ratio import CompanyFinancialRatio
+
+        if not items:
+            return {}
+
+        symbols = list({item.symbol for item in items})
+        ratios = {}
+
+        # Priority: FY > Q4 > Q3 > Q2 > Q1
+        periods = ["FY", "Q4", "Q3", "Q2", "Q1"]
+
+        for symbol in symbols:
+            for period in periods:
+                # Get the latest fiscal year for this symbol and period
+                stmt = (
+                    select(CompanyFinancialRatio)
+                    .where(
+                        CompanyFinancialRatio.symbol == symbol,
+                        CompanyFinancialRatio.period == period,
+                    )
+                    .order_by(
+                        CompanyFinancialRatio.fiscal_year.desc(),
+                        CompanyFinancialRatio.date.desc(),
+                    )
+                    .limit(1)
+                )
+
+                result = self._db.execute(stmt).scalar_one_or_none()
+                if result:
+                    ratios[symbol] = result
+                    break
+
+            # Fill in missing symbol with None
+            if symbol not in ratios:
+                ratios[symbol] = None
+
+        return ratios

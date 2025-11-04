@@ -37,11 +37,6 @@ class WatchlistRead(Watchlist):
     model_config = ConfigDict(from_attributes=True)
 
 
-class WatchlistWrite(Watchlist):
-    id: int
-    model_config = ConfigDict(from_attributes=True)
-
-
 # Watchlist Item Schemas
 class WatchlistItem(BaseModel):
     symbol: str

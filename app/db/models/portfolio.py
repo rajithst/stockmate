@@ -65,18 +65,6 @@ class Portfolio(Base):
     user: Mapped["User"] = relationship(
         "User", back_populates="portfolios", foreign_keys=[user_id], lazy="select"
     )
-    sector_performances: Mapped[list["PortfolioSectorPerformance"]] = relationship(
-        "PortfolioSectorPerformance",
-        back_populates="portfolio",
-        cascade="all, delete-orphan",
-        lazy="selectin",
-    )
-    industry_performances: Mapped[list["PortfolioIndustryPerformance"]] = relationship(
-        "PortfolioIndustryPerformance",
-        back_populates="portfolio",
-        cascade="all, delete-orphan",
-        lazy="selectin",
-    )
     holding_performances: Mapped[list["PortfolioHoldingPerformance"]] = relationship(
         "PortfolioHoldingPerformance",
         back_populates="portfolio",
@@ -130,152 +118,18 @@ class Portfolio(Base):
         return f"<Portfolio(name={self.name}, user_id={self.user_id})>"
 
 
-class PortfolioSectorPerformance(Base):
-    __tablename__ = "portfolio_sector_performances"
-    __table_args__ = (
-        UniqueConstraint("portfolio_id", "sector", name="uq_portfolio_sector"),
-        Index("ix_sector_perf_user", "portfolio_id"),
-    )
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    portfolio_id: Mapped[int] = mapped_column(
-        ForeignKey("portfolios.id", ondelete="CASCADE"), index=True, nullable=False
-    )
-    sector: Mapped[str] = mapped_column(String(100), nullable=False)
-    currency: Mapped[Currency] = mapped_column(nullable=False, default=Currency.USD)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    # Relationships
-    portfolio: Mapped["Portfolio"] = relationship(
-        "Portfolio",
-        back_populates="sector_performances",
-        foreign_keys=[portfolio_id],
-        lazy="select",
-    )
-
-    @property
-    def total_invested(self) -> float:
-        """Calculate total invested in this sector from portfolio holdings."""
-        return sum(
-            holding.total_invested
-            for holding in self.portfolio.holding_performances
-            if self._get_holding_sector(holding) == self.sector
-        )
-
-    @property
-    def total_gain_loss(self) -> float:
-        """Calculate total gain/loss for this sector."""
-        return sum(
-            holding.total_gain_loss
-            for holding in self.portfolio.holding_performances
-            if self._get_holding_sector(holding) == self.sector
-        )
-
-    @property
-    def allocation_percentage(self) -> float:
-        """Calculate allocation percentage of this sector in the portfolio."""
-        portfolio_total = self.portfolio.total_invested
-        if portfolio_total == 0:
-            return 0.0
-        return (self.total_invested / portfolio_total) * 100
-
-    def _get_holding_sector(self, holding: "PortfolioHoldingPerformance") -> str:
-        """Get sector for a holding. This would typically query company data."""
-        # TODO: Implement lookup from company profile table
-        # For now, return empty string - needs company relationship
-        return ""
-
-    def __repr__(self):
-        return f"<PortfolioSectorPerformance(portfolio_id={self.portfolio_id}, sector={self.sector})>"
-
-
-class PortfolioIndustryPerformance(Base):
-    __tablename__ = "portfolio_industry_performances"
-    __table_args__ = (
-        UniqueConstraint("portfolio_id", "industry", name="uq_portfolio_industry"),
-        Index("ix_industry_perf_user", "portfolio_id"),
-    )
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    portfolio_id: Mapped[int] = mapped_column(
-        ForeignKey("portfolios.id", ondelete="CASCADE"), index=True, nullable=False
-    )
-    industry: Mapped[str] = mapped_column(String(100), nullable=False)
-    currency: Mapped[Currency] = mapped_column(nullable=False, default=Currency.USD)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    # Relationships
-    portfolio: Mapped["Portfolio"] = relationship(
-        "Portfolio",
-        back_populates="industry_performances",
-        foreign_keys=[portfolio_id],
-        lazy="select",
-    )
-
-    @property
-    def total_invested(self) -> float:
-        """Calculate total invested in this industry from portfolio holdings."""
-        return sum(
-            holding.total_invested
-            for holding in self.portfolio.holding_performances
-            if self._get_holding_industry(holding) == self.industry
-        )
-
-    @property
-    def total_gain_loss(self) -> float:
-        """Calculate total gain/loss for this industry."""
-        return sum(
-            holding.total_gain_loss
-            for holding in self.portfolio.holding_performances
-            if self._get_holding_industry(holding) == self.industry
-        )
-
-    @property
-    def allocation_percentage(self) -> float:
-        """Calculate allocation percentage of this industry in the portfolio."""
-        portfolio_total = self.portfolio.total_invested
-        if portfolio_total == 0:
-            return 0.0
-        return (self.total_invested / portfolio_total) * 100
-
-    def _get_holding_industry(self, holding: "PortfolioHoldingPerformance") -> str:
-        """Get industry for a holding. This would typically query company data."""
-        # TODO: Implement lookup from company profile table
-        # For now, return empty string - needs company relationship
-        return ""
-
-    def __repr__(self):
-        return f"<PortfolioIndustryPerformance(portfolio_id={self.portfolio_id}, industry={self.industry})>"
-
-
 class PortfolioHoldingPerformance(Base):
     __tablename__ = "portfolio_holding_performances"
     __table_args__ = (
-        UniqueConstraint("portfolio_id", "holding_symbol", name="uq_portfolio_holding"),
-        Index("ix_holding_portfolio_symbol", "portfolio_id", "holding_symbol"),
+        UniqueConstraint("portfolio_id", "symbol", name="uq_portfolio_holding"),
+        Index("ix_holding_portfolio_symbol", "portfolio_id", "symbol"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     portfolio_id: Mapped[int] = mapped_column(
         ForeignKey("portfolios.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    holding_symbol: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    symbol: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     currency: Mapped[Currency] = mapped_column(nullable=False, default=Currency.USD)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -302,7 +156,7 @@ class PortfolioHoldingPerformance(Base):
         return [
             trade
             for trade in self.portfolio.trading_histories
-            if trade.symbol == self.holding_symbol and trade.trade_type == trade_type
+            if trade.symbol == self.symbol and trade.trade_type == trade_type
         ]
 
     @property
@@ -323,28 +177,47 @@ class PortfolioHoldingPerformance(Base):
         return shares_bought - shares_sold
 
     @property
+    def adjusted_total_cost(self) -> float:
+        """Compute adjusted total cost (average cost method)."""
+        buy_total = sum(trade.net_total for trade in self.buy_trades)
+        buy_shares = sum(trade.shares for trade in self.buy_trades)
+        if buy_shares == 0:
+            return 0.0
+
+        avg_cost = buy_total / buy_shares
+
+        # Subtract the cost basis for sold shares
+        shares_sold = sum(trade.shares for trade in self.sell_trades)
+        cost_sold = shares_sold * avg_cost
+
+        return max(buy_total - cost_sold, 0.0)
+
+    @property
     def average_cost_per_share(self) -> float:
         """Calculate average cost per share from buy transactions."""
-        if not self.buy_trades:
+        total_shares = self.total_shares
+        if total_shares <= 0:
             return 0.0
-
-        total_cost = sum(trade.net_total for trade in self.buy_trades)
-        total_shares_bought = sum(trade.shares for trade in self.buy_trades)
-
-        if total_shares_bought == 0:
-            return 0.0
-
-        return total_cost / total_shares_bought
+        return self.adjusted_total_cost / total_shares
 
     @property
     def total_invested(self) -> float:
-        """Calculate total amount invested in this holding from trading history."""
-        buy_total = sum(trade.net_total for trade in self.buy_trades)
-        sell_proceeds = sum(trade.net_total for trade in self.sell_trades)
-        return buy_total - sell_proceeds
+        """
+        Calculate the current cost basis of held shares using average cost method.
+        This represents the invested capital in currently held shares.
+        """
+        return self.adjusted_total_cost
+
+    def set_current_price(self, price: float) -> None:
+        """Set the current price (pre-loaded to avoid N+1 queries)."""
+        self._current_price = price
 
     def _get_current_price(self) -> float:
         """Fetch the latest stock price from the database."""
+        # Return pre-loaded price if available (set by service for bulk loading)
+        if hasattr(self, "_current_price"):
+            return self._current_price
+
         session = object_session(self)
         if not session:
             return 0.0
@@ -354,7 +227,7 @@ class PortfolioHoldingPerformance(Base):
         # Get the most recent stock price for this symbol
         stmt = (
             select(StockPrice)
-            .where(StockPrice.symbol == self.holding_symbol)
+            .where(StockPrice.symbol == self.symbol)
             .order_by(StockPrice.date.desc())
             .limit(1)
         )
@@ -375,21 +248,46 @@ class PortfolioHoldingPerformance(Base):
         """Calculate current value of this holding based on latest price."""
         price = self.current_price
         if price == 0.0:
-            # If no price data available, return invested amount as fallback
             return self.total_invested
         return self.total_shares * price
 
     @property
+    def realized_gain_loss(self) -> float:
+        """Total realized gain/loss from all sell trades (average cost method)."""
+        buy_total = sum(trade.net_total for trade in self.buy_trades)
+        buy_shares = sum(trade.shares for trade in self.buy_trades)
+        if buy_shares == 0:
+            return 0.0
+
+        avg_cost = buy_total / buy_shares
+        realized_gain = 0.0
+
+        for trade in self.sell_trades:
+            proceeds = trade.net_total
+            cost_basis = trade.shares * avg_cost
+            realized_gain += proceeds - cost_basis
+
+        return realized_gain
+
+    @property
+    def unrealized_gain_loss(self) -> float:
+        """Gain/loss for shares still held (unrealized)."""
+        current_value = self.current_value
+        total_cost = self.adjusted_total_cost
+        return current_value - total_cost
+
+    @property
     def total_gain_loss(self) -> float:
-        """Calculate gain/loss for this holding."""
-        return self.current_value - self.total_invested
+        """Combined realized + unrealized gain/loss."""
+        return self.realized_gain_loss + self.unrealized_gain_loss
 
     @property
     def gain_loss_percentage(self) -> float:
-        """Calculate gain/loss percentage for this holding."""
-        if self.total_invested == 0:
+        """Percentage gain/loss based on total cost invested."""
+        invested = self.adjusted_total_cost
+        if invested == 0:
             return 0.0
-        return (self.total_gain_loss / self.total_invested) * 100
+        return (self.unrealized_gain_loss / invested) * 100
 
     @property
     def allocation_percentage(self) -> float:
@@ -400,7 +298,7 @@ class PortfolioHoldingPerformance(Base):
         return (self.total_invested / portfolio_total) * 100
 
     def __repr__(self):
-        return f"<PortfolioHoldingPerformance(portfolio_id={self.portfolio_id}, holding_symbol={self.holding_symbol})>"
+        return f"<PortfolioHoldingPerformance(portfolio_id={self.portfolio_id}, symbol={self.symbol})>"
 
 
 class PortfolioTradingHistory(Base):

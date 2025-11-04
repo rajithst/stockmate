@@ -19,5 +19,5 @@ from .financial_health import CompanyFinancialHealth
 from .technical_indicators import CompanyTechnicalIndicator
 from .user import User, NotificationPreference
 from .watchlist import Watchlist, WatchlistItem
-from .portfolio import Portfolio, PortfolioSectorPerformance, PortfolioIndustryPerformance, PortfolioHoldingPerformance, PortfolioTradingHistory, PortfolioDividendHistory
+from .portfolio import Portfolio, PortfolioHoldingPerformance, PortfolioTradingHistory, PortfolioDividendHistory
 from .notification import Notification

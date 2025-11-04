@@ -29,12 +29,13 @@ class WatchlistService:
         watchlist_data["user_id"] = user_id
         watchlist_in = WatchlistCreate.model_validate(watchlist_data)
         watchlist = self._repository.create_watchlist(watchlist_in)
+        logger.info(f"Created watchlist {watchlist.id} for user {user_id}")
         return WatchlistRead.model_validate(watchlist)
 
     def update_watchlist(
         self, watchlist_id, watchlist_in: WatchlistUpsertRequest, user_id: int
     ) -> WatchlistRead:
-        """Create or update a watchlist for the authenticated user."""
+        """Update a watchlist for the authenticated user."""
         if not self._repository.verify_watchlist_ownership(watchlist_id, user_id):
             raise ValueError("Watchlist not found or access denied")
 
@@ -43,6 +44,7 @@ class WatchlistService:
         watchlist_data["user_id"] = user_id
         watchlist_in = WatchlistUpdate.model_validate(watchlist_data)
         watchlist = self._repository.update_watchlist(watchlist_in)
+        logger.info(f"Updated watchlist {watchlist.id} for user {user_id}")
         return WatchlistRead.model_validate(watchlist)
 
     def delete_watchlist(self, watchlist_id: int, user_id: int) -> None:
@@ -118,6 +120,16 @@ class WatchListItemService:
 
         watchlist_items = self._repository.get_watchlist_items(watchlist_id)
 
+        # Load all prices, profiles, and ratios in bulk to avoid N+1
+        prices = self._repository.load_current_prices_for_items(watchlist_items)
+        profiles = self._repository.load_company_profiles_for_items(watchlist_items)
+        ratios = self._repository.load_financial_ratios_for_items(watchlist_items)
+
+        for item in watchlist_items:
+            item.set_current_price(prices.get(item.symbol, 0.0))
+            item.set_company_profile(profiles.get(item.symbol))
+            item.set_financial_ratios(ratios.get(item.symbol))
+
         result = []
         for item in watchlist_items:
             company_item = self._watchlist_item_to_company_item(item)
@@ -136,6 +148,17 @@ class WatchListItemService:
 
         watchlist_item = self._repository.get_watchlist_item(watchlist_id, symbol)
         if watchlist_item:
+            # OPTIMIZATION: Load data for single item (small overhead, maintains consistency)
+            prices = self._repository.load_current_prices_for_items([watchlist_item])
+            profiles = self._repository.load_company_profiles_for_items(
+                [watchlist_item]
+            )
+            ratios = self._repository.load_financial_ratios_for_items([watchlist_item])
+
+            watchlist_item.set_current_price(prices.get(watchlist_item.symbol, 0.0))
+            watchlist_item.set_company_profile(profiles.get(watchlist_item.symbol))
+            watchlist_item.set_financial_ratios(ratios.get(watchlist_item.symbol))
+
             return self._watchlist_item_to_company_item(watchlist_item)
 
         return None

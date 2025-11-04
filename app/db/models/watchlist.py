@@ -1,4 +1,5 @@
 from datetime import datetime
+from logging import getLogger
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func, select
@@ -10,6 +11,8 @@ from app.db.models.financial_ratio import CompanyFinancialRatio
 if TYPE_CHECKING:
     from app.db.models.company import Company
     from app.db.models.user import User
+
+logger = getLogger(__name__)
 
 
 class Watchlist(Base):
@@ -77,8 +80,25 @@ class WatchlistItem(Base):
         "Watchlist", back_populates="items", foreign_keys=[watchlist_id], lazy="select"
     )
 
+    def set_current_price(self, price: float) -> None:
+        """Set the current price (pre-loaded to avoid N+1 queries)."""
+        self._current_price = price
+
+    def set_company_profile(self, company: "Company | None") -> None:
+        """Set the company profile (pre-loaded to avoid N+1 queries)."""
+        self._company_profile = company
+
+    def set_financial_ratios(self, ratios: "CompanyFinancialRatio | None") -> None:
+        """Set the financial ratios (pre-loaded to avoid N+1 queries)."""
+        self._financial_ratios = ratios
+
     def _get_company_profile(self) -> "Company | None":
         """Fetch company profile from database."""
+        # Return pre-loaded profile if available
+        if hasattr(self, "_company_profile"):
+            logger.info(f"Using pre-loaded company profile for {self.symbol}")
+            return self._company_profile
+
         session = object_session(self)
         if not session:
             return None
@@ -90,6 +110,12 @@ class WatchlistItem(Base):
 
     def _get_latest_financial_ratios(self) -> "CompanyFinancialRatio | None":
         """Fetch latest financial ratios for this symbol using repository logic."""
+        # Return pre-loaded ratios if available
+        if hasattr(self, "_financial_ratios"):
+            logger.info(f"Using pre-loaded financial ratios for {self.symbol}")
+            return self._financial_ratios
+
+        logger.info(f"Fetching financial ratios for {self.symbol} from DB")
         session = object_session(self)
         if not session:
             return None
@@ -127,6 +153,11 @@ class WatchlistItem(Base):
 
     def _get_current_price(self) -> float:
         """Fetch the latest stock price from the database."""
+        # Return pre-loaded price if available
+        if hasattr(self, "_current_price"):
+            logger.info(f"Using pre-loaded current price for {self.symbol}")
+            return self._current_price
+
         session = object_session(self)
         if not session:
             return 0.0

@@ -5,7 +5,13 @@ from sqlalchemy.orm import Session
 
 from app.dependencies import get_db_session
 from app.dependencies.auth import get_current_user
-from app.schemas.portfolio import PortfolioRead, PortfolioWrite
+from app.schemas.portfolio import (
+    PortfolioDetail,
+    PortfolioRead,
+    PortfolioTradingHistoryRead,
+    PortfolioTradingHistoryUpsertRequest,
+    PortfolioUpsertRequest,
+)
 from app.schemas.user import UserRead
 from app.services.portfolio_service import PortfolioService
 
@@ -43,7 +49,7 @@ async def get_portfolios(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_portfolio(
-    portfolio_in: PortfolioWrite,
+    portfolio_in: PortfolioUpsertRequest,
     current_user: Annotated[UserRead, Depends(get_current_user)],
     service: PortfolioService = Depends(get_portfolio_service),
 ):
@@ -59,13 +65,14 @@ async def create_portfolio(
 
 
 @router.put(
-    "/",
+    "/{portfolio_id}",
     response_model=PortfolioRead,
     summary="Update a portfolio",
     status_code=status.HTTP_200_OK,
 )
 async def update_portfolio(
-    portfolio_in: PortfolioWrite,
+    portfolio_id: int,
+    portfolio_in: PortfolioUpsertRequest,
     current_user: Annotated[UserRead, Depends(get_current_user)],
     service: PortfolioService = Depends(get_portfolio_service),
 ):
@@ -79,7 +86,7 @@ async def update_portfolio(
     Returns:
         PortfolioRead: The created portfolio
     """
-    return service.update_portfolio(portfolio_in, user_id=current_user.id)
+    return service.update_portfolio(portfolio_id, portfolio_in, user_id=current_user.id)
 
 
 @router.delete(
@@ -104,3 +111,75 @@ async def delete_portfolio(
         None
     """
     service.delete_portfolio(portfolio_id, user_id=current_user.id)
+
+
+@router.get(
+    "/{portfolio_id}",
+    response_model=PortfolioDetail,
+    summary="Get portfolio with holdings and trading history",
+)
+async def get_portfolio_details(
+    portfolio_id: int,
+    current_user: Annotated[UserRead, Depends(get_current_user)],
+    service: PortfolioService = Depends(get_portfolio_service),
+):
+    """
+    Retrieve a portfolio along with its holdings and trading history for the authenticated user.
+
+    Args:
+        portfolio_id (int): The ID of the portfolio to retrieve
+        current_user (UserRead): The authenticated user
+        service (PortfolioService): Injected portfolio service
+
+    Returns:
+        PortfolioDetail: The detailed portfolio information
+    """
+    return service.get_portfolio_details(portfolio_id, user_id=current_user.id)
+
+
+@router.post(
+    "/{portfolio_id}/buy",
+    response_model=PortfolioTradingHistoryRead,
+    summary="Buy a holding and update portfolio",
+)
+async def buy_holding(
+    portfolio_id: int,
+    trading: PortfolioTradingHistoryUpsertRequest,
+    current_user: Annotated[UserRead, Depends(get_current_user)],
+    service: PortfolioService = Depends(get_portfolio_service),
+):
+    """
+    Buy a holding and update the portfolio accordingly.
+
+    Args:
+        portfolio_id (int): The ID of the portfolio to update
+        current_user (UserRead): The authenticated user
+        service (PortfolioService): Injected portfolio service
+    Returns:
+        PortfolioDetail: The updated portfolio information
+    """
+    return service.buy_holding(portfolio_id, trading, user_id=current_user.id)
+
+
+@router.post(
+    "/{portfolio_id}/sell",
+    response_model=PortfolioTradingHistoryRead,
+    summary="Sell a holding and update portfolio",
+)
+async def sell_holding(
+    portfolio_id: int,
+    trading: PortfolioTradingHistoryUpsertRequest,
+    current_user: Annotated[UserRead, Depends(get_current_user)],
+    service: PortfolioService = Depends(get_portfolio_service),
+):
+    """
+    Sell a holding and update the portfolio accordingly.
+
+    Args:
+        portfolio_id (int): The ID of the portfolio to update
+        current_user (UserRead): The authenticated user
+        service (PortfolioService): Injected portfolio service
+    Returns:
+        PortfolioDetail: The updated portfolio information
+    """
+    return service.sell_holding(portfolio_id, trading, user_id=current_user.id)

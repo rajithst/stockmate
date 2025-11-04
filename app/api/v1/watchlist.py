@@ -77,7 +77,7 @@ async def update_watchlist(
 
     Args:
         watchlist_id (int): The ID of the watchlist to update
-        watchlist_in (WatchlistWrite): Updated watchlist data
+        watchlist_in (WatchlistUpsertRequest): Updated watchlist data
         current_user (UserRead): The authenticated user
         service (WatchlistService): Injected watchlist service
 

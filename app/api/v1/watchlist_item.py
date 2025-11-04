@@ -12,7 +12,7 @@ from app.schemas.watchlist import (
 )
 from app.services.watchlist_service import WatchListItemService
 
-router = APIRouter(prefix="/{watchlist_id}/items", tags=["watchlist items"])
+router = APIRouter(prefix="/{watchlist_id}/items")
 
 
 def get_watchlist_item_service(
