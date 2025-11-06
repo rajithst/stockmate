@@ -22,6 +22,16 @@ class User(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserCreate(BaseModel):
+    """Schema for user registration."""
+
+    username: str
+    email: EmailStr
+    password: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UserWrite(User):
     hashed_password: str
 

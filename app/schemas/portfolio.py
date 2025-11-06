@@ -157,6 +157,11 @@ class PortfolioDividendHistoryRead(PortfolioDividendHistory):
 
     model_config = ConfigDict(from_attributes=True)
 
+class PortfolioDividendHistoryWrite(PortfolioDividendHistory):
+    portfolio_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 # Composite Response Schemas
 class PortfolioDetail(BaseModel):
@@ -168,3 +173,19 @@ class PortfolioDetail(BaseModel):
     dividend_histories: List[PortfolioDividendHistoryRead] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# Dividend Sync Response Schemas
+class DividendSyncResult(BaseModel):
+    portfolio_id: int
+    processed_count: int
+    skipped_count: int
+    total_dividend_amount: float
+    processed_symbols: List[str] = []
+
+
+class DividendSyncBatchResult(BaseModel):
+    total_processed: int
+    total_skipped: int
+    total_dividend_amount: float
+    portfolio_results: List[DividendSyncResult] = []

@@ -62,7 +62,7 @@ ERROR_MESSAGES: Final = {
     "NOT_FOUND_PRICE_TARGET_NEWS": "Price target news not found for symbol: {symbol}",
     "NOT_FOUND_GRADING_NEWS": "Grading news not found for symbol: {symbol}",
     "NOT_FOUND_PRICE_CHANGES": "Price changes not found for symbol: {symbol}",
-    "NOT_FOUND_DIVIDENDS": "Dividends not found for range: {from_date} to {to_date}",
+    "NOT_FOUND_DIVIDENDS": "Dividends not found",
     "NOT_FOUND_STOCK_SPLITS": "Stock splits not found for symbol: {symbol}",
     "NOT_FOUND_STOCK_PEERS": "Stock peers not found for symbol: {symbol}",
     "INVALID_SYMBOL": "Invalid stock symbol. Must be 1-5 characters",

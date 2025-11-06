@@ -18,6 +18,7 @@ from app.db.models.quote import StockPrice
 from app.repositories.base_repo import BaseRepository
 from app.schemas.portfolio import (
     PortfolioCreate,
+    PortfolioDividendHistoryWrite,
     PortfolioHoldingPerformanceWrite,
     PortfolioTradingHistoryWrite,
     PortfolioUpdate,
@@ -130,15 +131,15 @@ class PortfolioHoldingPerformanceRepository(
     def delete_holding(self, holding_id: int) -> bool:
         """Delete a holding from the portfolio by ID."""
         holding = (
-            self._session.query(PortfolioHoldingPerformance)
+            self._db.query(PortfolioHoldingPerformance)
             .filter(PortfolioHoldingPerformance.id == holding_id)
             .first()
         )
         if not holding:
             logger.warning(f"Holding {holding_id} not found")
             return False
-        self._session.delete(holding)
-        self._session.commit()
+        self._db.delete(holding)
+        self._db.commit()
         logger.info(f"Deleted holding {holding_id}")
         return True
 
@@ -188,7 +189,7 @@ class PortfolioHoldingPerformanceRepository(
                 prices[symbol] = 0.0
 
         return prices
-    
+
     def load_company_sectors_for_holdings(
         self, holdings: list[PortfolioHoldingPerformance]
     ) -> dict[str, str]:
@@ -215,7 +216,7 @@ class PortfolioHoldingPerformanceRepository(
                 sectors_map[symbol] = ""
 
         return sectors_map
-    
+
     def load_company_industries_for_holdings(
         self, holdings: list[PortfolioHoldingPerformance]
     ) -> dict[str, str]:
@@ -258,6 +259,17 @@ class PortfolioTradingHistoryRepository(BaseRepository[PortfolioTradingHistory])
             PortfolioTradingHistory, {"portfolio_id": portfolio_id}
         )
 
+    def get_trades_for_symbol_before_date(
+        self, portfolio_id: int, symbol: str, before_date
+    ) -> list[PortfolioTradingHistory]:
+        """Get all trades for a symbol before a specific date."""
+        stmt = select(PortfolioTradingHistory).where(
+            (PortfolioTradingHistory.portfolio_id == portfolio_id)
+            & (PortfolioTradingHistory.symbol == symbol)
+            & (PortfolioTradingHistory.trade_date < before_date)
+        )
+        return self._db.execute(stmt).scalars().all()
+
     def add_trade(
         self, trade_in: PortfolioTradingHistoryWrite
     ) -> PortfolioTradingHistory:
@@ -288,3 +300,27 @@ class PortfolioDividendHistoryRepository(BaseRepository[PortfolioDividendHistory
             PortfolioDividendHistory, {"portfolio_id": portfolio_id}
         )
 
+    def record_dividend(
+        self, dividend_record: PortfolioDividendHistoryWrite
+    ) -> PortfolioDividendHistory:
+        """Record a dividend for a portfolio holding."""
+        return self._upsert_single(
+            dividend_record,
+            PortfolioDividendHistory,
+            lambda d: {
+                "portfolio_id": d.portfolio_id,
+                "symbol": d.symbol,
+                "payment_date": d.payment_date,
+            },
+            "record_dividend",
+        )
+
+    def dividend_exists(self, portfolio_id: int, symbol: str, payment_date) -> bool:
+        """Check if a dividend record already exists for this portfolio/symbol/date."""
+        stmt = select(PortfolioDividendHistory).where(
+            (PortfolioDividendHistory.portfolio_id == portfolio_id)
+            & (PortfolioDividendHistory.symbol == symbol)
+            & (PortfolioDividendHistory.payment_date == payment_date)
+        )
+        result = self._db.execute(stmt).first()
+        return result is not None

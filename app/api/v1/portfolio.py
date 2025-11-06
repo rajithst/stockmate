@@ -11,9 +11,11 @@ from app.schemas.portfolio import (
     PortfolioTradingHistoryRead,
     PortfolioTradingHistoryUpsertRequest,
     PortfolioUpsertRequest,
+    DividendSyncResult,
 )
 from app.schemas.user import UserRead
 from app.services.portfolio_service import PortfolioService
+from app.services.dividend_service import DividendSyncService
 
 router = APIRouter(prefix="")
 
@@ -22,6 +24,12 @@ def get_portfolio_service(
     session: Session = Depends(get_db_session),
 ) -> PortfolioService:
     return PortfolioService(session=session)
+
+
+def get_dividend_sync_service(
+    session: Session = Depends(get_db_session),
+) -> DividendSyncService:
+    return DividendSyncService(session=session)
 
 
 @router.get("/", response_model=List[PortfolioRead], summary="Get all portfolios")
@@ -183,3 +191,28 @@ async def sell_holding(
         PortfolioDetail: The updated portfolio information
     """
     return service.sell_holding(portfolio_id, trading, user_id=current_user.id)
+
+
+@router.post(
+    "/{portfolio_id}/sync-dividends",
+    response_model=DividendSyncResult,
+    summary="Sync company dividends to portfolio dividend history",
+)
+async def sync_portfolio_dividends(
+    portfolio_id: int,
+    dividend_sync: DividendSyncService = Depends(get_dividend_sync_service),
+):
+    """
+    Sync dividends from CompanyDividend table to PortfolioDividendHistory.
+    Only processes dividends where the portfolio held shares before declaration date.
+
+    Args:
+        portfolio_id (int): The ID of the portfolio to sync dividends for
+        current_user (UserRead): The authenticated user
+        service (PortfolioService): Injected portfolio service
+        dividend_sync (DividendSyncService): Injected dividend sync service
+
+    Returns:
+        dict: Summary of synced dividends including count and total amount
+    """
+    return dividend_sync.sync_dividends_for_portfolio(portfolio_id)

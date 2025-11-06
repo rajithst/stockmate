@@ -19,22 +19,14 @@ get_stock_info_sync_service = create_sync_service_provider(StockInfoSyncService)
     description="Fetches and upserts company's dividend history from the external API into the database.",
 )
 def sync_dividends(
-    from_date: str = Query(
-        ..., description="Start date for dividend calendar in YYYY-MM-DD format"
-    ),
-    to_date: str = Query(
-        ..., description="End date for dividend calendar in YYYY-MM-DD format"
-    ),
     service: StockInfoSyncService = Depends(get_stock_info_sync_service),
 ):
     """Sync company's dividend history from the external API and store in the database."""
-    dividends = service.upsert_dividends(from_date, to_date)
+    dividends = service.upsert_dividend_calendar()
     if not dividends:
         raise HTTPException(
             status_code=404,
-            detail=ERROR_MESSAGES["NOT_FOUND_DIVIDENDS"].format(
-                from_date=from_date, to_date=to_date
-            ),
+            detail=ERROR_MESSAGES["NOT_FOUND_DIVIDENDS"],
         )
     return dividends
 

@@ -1,5 +1,5 @@
 from logging import getLogger
-
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
@@ -21,37 +21,30 @@ class StockInfoSyncService(BaseSyncService):
         super().__init__(market_api_client, session)
         self._repository = StockInfoRepository(session)
 
-    def upsert_dividends(
-        self, from_date: str, to_date: str, symbol: str | None = None, limit: int = 50
-    ) -> list[CompanyDividendRead] | None:
+    def upsert_dividend_calendar(self) -> list[CompanyDividendRead] | None:
         """
         Fetch and upsert dividends for a company.
-
-        Args:
-            symbol: Stock symbol
-            limit: Number of records to fetch
 
         Returns:
             List of upserted dividend records or None if not found
         """
         try:
-            # Explicit control over API call
+            from_date = datetime.now().strftime("%Y-%m-%d")
+            to_date = (datetime.now().replace(day=1) + timedelta(days=90)).strftime("%Y-%m-%d")
             dividends_data = self._market_api_client.get_dividend_calendar(
                 from_date, to_date
             )
 
-            if not self._validate_api_response(dividends_data, "dividends", symbol):
-                return None
-
             # get dividends from dividend data for all available companies in the db
             all_symbols = self._repository.get_all_company_symbols()
+            
             records_to_persist = []
             for sym in all_symbols:
                 sym_dividends = [
                     record for record in dividends_data if record.symbol == sym
                 ]
-                print(
-                    f"Found {len(sym_dividends)} dividends for symbol {sym}: {sym_dividends}"
+                logger.info(
+                    f"Found {len(sym_dividends)} dividend records to upsert for symbol: {sym}"
                 )
                 records_to_persist.extend(
                     CompanyDividendWrite.model_validate(record.model_dump())
@@ -61,11 +54,13 @@ class StockInfoSyncService(BaseSyncService):
             dividends = self._repository.upsert_dividends(records_to_persist)
             result = self._map_schema_list(dividends, CompanyDividendRead)
 
-            self._log_sync_success("dividends", len(result), symbol)
+            logger.info(
+                f"Successfully upserted {len(result)} dividend records for {len(all_symbols)} companies"
+            )
             return result
 
         except Exception as e:
-            self._log_sync_failure("dividends", symbol, e)
+            logger.error(f"Error upserting dividend calendar: {str(e)}", exc_info=True)
             raise
 
     def upsert_stock_splits(
