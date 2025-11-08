@@ -49,3 +49,30 @@ class CompanyRepository(BaseRepository):
         return self._upsert_single(
             company_data, Company, lambda c: {"symbol": c.symbol}, "upsert_company"
         )
+    
+    def get_sector_industry_for_symbols(
+        self, symbols: list[str]
+    ) -> dict[str, tuple[str | None, str | None]]:
+        """Get sector and industry for a list of company symbols.
+
+        Args:
+            symbols: List of stock symbols
+        Returns:
+            Dict mapping symbol to (sector, industry)
+        """
+        if not symbols:
+            return {}
+
+        stmt = select(Company.sector, Company.industry).where(Company.symbol.in_(symbols))
+        results = self._db.execute(stmt).all()
+
+        sector_industry_map = {
+            symbol: (sector, industry) for (sector, industry), symbol in zip(results, symbols)
+        }
+
+        # Fill in missing symbols with (None, None)
+        for symbol in symbols:
+            if symbol not in sector_industry_map:
+                sector_industry_map[symbol] = (None, None)
+
+        return sector_industry_map

@@ -16,11 +16,11 @@ class StockInfoRepository(BaseRepository):
     def __init__(self, session: Session) -> None:
         super().__init__(session)
 
-    def get_all_company_symbols(self) -> list[str]:
-        """Retrieve all company stock symbols."""
-        statement = select(Company.symbol)
-        results = self._db.execute(statement).scalars().all()
-        return results
+    def get_all_company_symbols_with_currency(self) -> dict[str, str]:
+        """Retrieve all company stock symbols with their currency."""
+        statement = select(Company.symbol, Company.currency)
+        results = self._db.execute(statement).all()
+        return {symbol: currency for symbol, currency in results}
 
     def get_dividends_by_symbol(self, symbol: str) -> list[CompanyDividend]:
         """Get all dividends for a symbol."""

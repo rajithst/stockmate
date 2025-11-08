@@ -38,18 +38,19 @@ class StockInfoSyncService(BaseSyncService):
             )
 
             # get dividends from dividend data for all available companies in the db
-            all_symbols = self._repository.get_all_company_symbols()
+            all_symbols_with_currency = self._repository.get_all_company_symbols_with_currency()
 
             records_to_persist = []
-            for sym in all_symbols:
+            for sym, currency in all_symbols_with_currency.items():
                 sym_dividends = [
                     record for record in dividends_data if record.symbol == sym
                 ]
                 logger.info(
                     f"Found {len(sym_dividends)} dividend records to upsert for symbol: {sym}"
                 )
+                # Add currency to each dividend record
                 records_to_persist.extend(
-                    CompanyDividendWrite.model_validate(record.model_dump())
+                    CompanyDividendWrite.model_validate({**record.model_dump(), "currency": currency})
                     for record in sym_dividends
                 )
 
@@ -57,7 +58,7 @@ class StockInfoSyncService(BaseSyncService):
             result = self._map_schema_list(dividends, CompanyDividendRead)
 
             logger.info(
-                f"Successfully upserted {len(result)} dividend records for {len(all_symbols)} companies"
+                f"Successfully upserted {len(result)} dividend records for {len(all_symbols_with_currency)} companies"
             )
             return result
 
@@ -84,7 +85,9 @@ class StockInfoSyncService(BaseSyncService):
             dividends_data = self._market_api_client.get_dividends(symbol, limit)
             if not self._validate_api_response(dividends_data, "dividends", symbol):
                 return None
-
+            #add currency field to dividends_data
+            for record in dividends_data:
+                record.currency = company.currency
             records_to_persist = self._add_company_id_to_records(
                 dividends_data, company.id, CompanyDividendWrite
             )

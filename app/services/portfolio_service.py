@@ -2,8 +2,8 @@ import logging
 
 from sqlalchemy.orm import Session
 
+from app.repositories.company_repo import CompanyRepository
 from app.repositories.portfolio_repo import (
-    PortfolioDividendHistoryRepository,
     PortfolioHoldingPerformanceRepository,
     PortfolioRepository,
     PortfolioTradingHistoryRepository,
@@ -35,7 +35,7 @@ class PortfolioService:
         self._portfolio_repo = PortfolioRepository(session)
         self._holding_repo = PortfolioHoldingPerformanceRepository(session)
         self._trading_repo = PortfolioTradingHistoryRepository(session)
-        self._dividend_repo = PortfolioDividendHistoryRepository(session)
+        self._company_repo = CompanyRepository(session)
 
     @staticmethod
     def _validate_list(items: list, schema_class):
@@ -44,16 +44,25 @@ class PortfolioService:
 
     def _get_verified_portfolio(self, portfolio_id: int, user_id: int):
         """Get portfolio and verify ownership, raising ValueError if not found or unauthorized."""
-        if not self._portfolio_repo.verify_portfolio_ownership(portfolio_id, user_id):
-            raise ValueError("Portfolio not found or access denied")
-
         portfolio = self._portfolio_repo.get_portfolio_by_id(portfolio_id)
-        if not portfolio:
-            raise ValueError("Portfolio not found")
+        if (
+            not portfolio
+            or portfolio.user_id != user_id
+            or portfolio.deleted_at is not None
+        ):
+            raise ValueError("Portfolio not found or access denied")
         return portfolio
 
     def get_all_portfolios(self, user_id: int) -> list[PortfolioRead]:
-        """Get all portfolios for a user."""
+        """
+        Get all portfolios for a user with calculated totals.
+
+        Relations are NOT loaded during query (lightweight), but totals are computed
+        from pre-loaded data without triggering additional database queries.
+
+        For detailed portfolio data with holdings trades, and dividends,
+        use get_portfolio_details() instead.
+        """
         portfolios = self._portfolio_repo.get_all_portfolios(user_id)
         return [PortfolioRead.model_validate(p) for p in portfolios]
 
@@ -61,9 +70,12 @@ class PortfolioService:
         self, portfolio_in: PortfolioUpsertRequest, user_id: int
     ) -> PortfolioRead:
         """Create a new portfolio for a user."""
-        portfolio_data = portfolio_in.model_dump()
-        portfolio_data["user_id"] = user_id
-        portfolio_create = PortfolioCreate.model_validate(portfolio_data)
+        portfolio_create = PortfolioCreate(
+            name=portfolio_in.name,
+            description=portfolio_in.description,
+            currency=portfolio_in.currency,
+            user_id=user_id,
+        )
         portfolio = self._portfolio_repo.create_portfolio(portfolio_create)
         logger.info(f"Created portfolio {portfolio.id} for user {user_id}")
         return PortfolioRead.model_validate(portfolio)
@@ -72,15 +84,18 @@ class PortfolioService:
         self, portfolio_id: int, portfolio_in: PortfolioUpsertRequest, user_id: int
     ) -> PortfolioRead:
         """Update an existing portfolio for a user."""
-        self._get_verified_portfolio(portfolio_id, user_id)
+        portfolio = self._get_verified_portfolio(portfolio_id, user_id)
 
-        portfolio_data = portfolio_in.model_dump()
-        portfolio_data["id"] = portfolio_id
-        portfolio_data["user_id"] = user_id
-        portfolio_update = PortfolioUpdate.model_validate(portfolio_data)
-        portfolio = self._portfolio_repo.update_portfolio(portfolio_update)
-        logger.info(f"Updated portfolio {portfolio.id} for user {user_id}")
-        return PortfolioRead.model_validate(portfolio)
+        portfolio_update = PortfolioUpdate(
+            id=portfolio.id,
+            user_id=portfolio.user_id,
+            name=portfolio_in.name,
+            description=portfolio_in.description,
+            currency=portfolio_in.currency,
+        )
+        updated = self._portfolio_repo.update_portfolio(portfolio_update)
+        logger.info(f"Updated portfolio {updated.id} for user {user_id}")
+        return PortfolioRead.model_validate(updated)
 
     def delete_portfolio(self, portfolio_id: int, user_id: int) -> bool:
         """Delete a portfolio (soft delete), ensuring it belongs to the authenticated user."""
@@ -92,27 +107,43 @@ class PortfolioService:
         return success
 
     def get_portfolio_details(self, portfolio_id: int, user_id: int) -> PortfolioDetail:
-        """Get detailed portfolio information including holdings and trading history."""
-        portfolio = self._get_verified_portfolio(portfolio_id, user_id)
-
-        # Fetch all related data
-        holdings = self._holding_repo.get_holdings_by_portfolio(portfolio_id)
-
-        # OPTIMIZATION: Load all prices in a single query to avoid N+1
-        prices = self._holding_repo.load_current_prices_for_holdings(holdings)
-        for holding in holdings:
-            holding.set_current_price(prices.get(holding.symbol, 0.0))
-
-        trading_history = self._trading_repo.get_trading_history_by_portfolio(
-            portfolio_id
+        """
+        Get detailed portfolio information including holdings, trading history, and dividends.
+        Args:
+            portfolio_id: The portfolio to retrieve details for
+            user_id: The user requesting the portfolio details
+        Returns:
+            PortfolioDetail: Detailed portfolio information
+        """
+        # Fetch portfolio with all relations and verify ownership in one optimized call
+        portfolio = self._portfolio_repo.get_portfolio_with_relations(
+            portfolio_id, user_id
         )
-        dividends = self._dividend_repo.get_dividend_history_by_portfolio(portfolio_id)
+        if not portfolio:
+            raise ValueError("Portfolio not found or access denied")
+
+        # Access relations - already loaded, no additional queries
+        holdings = portfolio.holding_performances
+        trading_history = portfolio.trading_histories
+        dividends = portfolio.dividend_histories
+
+        # Calculate total dividends received
+        dividends_received = sum(d.dividend_amount for d in dividends)
 
         # Bulk load company sectors and industries for calculations
-        company_sectors = self._holding_repo.load_company_sectors_for_holdings(holdings)
-        company_industries = self._holding_repo.load_company_industries_for_holdings(
-            holdings
-        )
+        if holdings:
+            all_symbols = {h.symbol for h in holdings}
+            sectors_and_industries = self._company_repo.get_sector_industry_for_symbols(
+                all_symbols
+            )
+            company_sectors = {}
+            company_industries = {}
+            for symbol, (sector, industry) in sectors_and_industries.items():
+                company_sectors[symbol] = sector
+                company_industries[symbol] = industry
+        else:
+            company_sectors = {}
+            company_industries = {}
 
         # Calculate sector and industry performance on-the-fly
         sector_performances = self._calculate_sector_performances(
@@ -123,7 +154,11 @@ class PortfolioService:
         )
 
         return PortfolioDetail(
-            portfolio=PortfolioRead.model_validate(portfolio),
+            total_value=portfolio.total_value,
+            total_invested=portfolio.total_invested,
+            total_gain_loss=portfolio.total_gain_loss,
+            dividends_received=dividends_received,
+            total_return_percentage=portfolio.total_return_percentage,
             holding_performances=self._validate_list(
                 holdings, PortfolioHoldingPerformanceRead
             ),

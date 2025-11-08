@@ -126,11 +126,6 @@ class PortfolioCreate(Portfolio):
 
 class PortfolioRead(Portfolio):
     id: int
-    total_value: float = 0.0
-    total_invested: float = 0.0
-    total_gain_loss: float = 0.0
-    dividends_received: float = 0.0
-    total_return_percentage: float = 0.0
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -282,12 +277,15 @@ class PortfolioDividendHistoryWrite(PortfolioDividendHistory):
 
 # Composite Response Schemas
 class PortfolioDetail(BaseModel):
-    portfolio: PortfolioRead
+    total_value: float = 0.0
+    total_invested: float = 0.0
+    total_gain_loss: float = 0.0
+    dividends_received: float = 0.0
+    total_return_percentage: float = 0.0
     sector_performances: List[PortfolioSectorPerformanceRead] = []
     industry_performances: List[PortfolioIndustryPerformanceRead] = []
     holding_performances: List[PortfolioHoldingPerformanceRead] = []
     trading_histories: List[PortfolioTradingHistoryRead] = []
-    dividend_histories: List[PortfolioDividendHistoryRead] = []
 
     model_config = ConfigDict(from_attributes=True)
 

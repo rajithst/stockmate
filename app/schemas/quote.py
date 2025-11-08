@@ -134,6 +134,7 @@ class CompanyDividend(BaseModel):
     adj_dividend: Optional[float] = None
     dividend_yield: Optional[float] = None
     frequency: Optional[str] = None
+    currency: Optional[str] = None
 
 
 class CompanyDividendWrite(CompanyDividend):

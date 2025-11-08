@@ -24,7 +24,7 @@ class Config(BaseSettings):
         "c2ec5943cf9a81b1e22f808a958ed1fac22b9f5f1dd92fef4e036e82226a0c18"
     )
     auth_algorithm: str = "HS256"
-    auth_token_expire_minutes: int = 30
+    auth_token_expire_minutes: int = 300
 
     @field_validator("db_user", "db_password", "db_name", "fmp_api_key")
     @classmethod

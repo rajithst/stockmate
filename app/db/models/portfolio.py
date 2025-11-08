@@ -1,5 +1,6 @@
 from datetime import date as date_type, datetime
 from enum import Enum
+import logging
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -210,25 +211,28 @@ class PortfolioHoldingPerformance(Base):
 
     def set_current_price(self, price: float) -> None:
         """Set the current price (pre-loaded to avoid N+1 queries)."""
-        self._current_price = price
+        # Store directly in instance __dict__ to avoid SQLAlchemy attribute tracking
+        self.__dict__["_current_price"] = price
 
     def _get_current_price(self) -> float:
         """Fetch the latest stock price from the database."""
         # Return pre-loaded price if available (set by service for bulk loading)
-        if hasattr(self, "_current_price"):
-            return self._current_price
+        if "_current_price" in self.__dict__:
+            logging.info("Using cached price for %s: %s", self.symbol, self.__dict__["_current_price"])
+            return self.__dict__["_current_price"]
 
         session = object_session(self)
         if not session:
             return 0.0
 
-        from app.db.models.quote import StockPrice
+        from app.db.models.quote import CompanyStockPrice
+        logging.info("Fetching current price for symbol: %s (not cached)", self.symbol)
 
         # Get the most recent stock price for this symbol
         stmt = (
-            select(StockPrice)
-            .where(StockPrice.symbol == self.symbol)
-            .order_by(StockPrice.date.desc())
+            select(CompanyStockPrice)
+            .where(CompanyStockPrice.symbol == self.symbol)
+            .order_by(CompanyStockPrice.date.desc())
             .limit(1)
         )
 

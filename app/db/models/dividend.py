@@ -24,6 +24,7 @@ class CompanyDividend(Base):
     dividend: Mapped[float | None] = mapped_column(nullable=True)
     dividend_yield: Mapped[float | None] = mapped_column(nullable=True)
     frequency: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    currency: Mapped[str | None] = mapped_column(String(10), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

@@ -3,7 +3,6 @@
 import logging
 from datetime import date as date_type
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models.portfolio import PortfolioTradingHistory
@@ -13,13 +12,13 @@ from app.repositories.portfolio_repo import (
     PortfolioRepository,
     PortfolioTradingHistoryRepository,
 )
-from app.schemas.user import PortfolioDividendHistoryWrite
+from app.schemas.user import PortfolioDividendHistoryRead, PortfolioDividendHistoryWrite
 
 logger = logging.getLogger(__name__)
 
 
-class DividendSyncService:
-    """Service for syncing company dividends to portfolio dividend history."""
+class DividendService:
+    """Service for dividend calculations and syncing."""
 
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -40,7 +39,7 @@ class DividendSyncService:
 
     def sync_dividends_for_portfolio(
         self, portfolio_id: int, after_date: date_type | None = None
-    ) -> dict:
+    ) -> list[PortfolioDividendHistoryRead]:
         """
         Sync dividends for a specific portfolio.
 
@@ -52,95 +51,74 @@ class DividendSyncService:
             Dictionary with summary of processed dividends
         """
         # Get all unprocessed company dividends
-        unprocessed_dividends = self._dividend_repo.get_unprocessed_dividends(
-            after_date
-        )
-
-        processed_count = 0
-        skipped_count = 0
-        total_dividend_amount = 0.0
-        processed_symbols = set()
-
-        for company_dividend in unprocessed_dividends:
-            symbol = company_dividend.symbol
-            declaration_date = company_dividend.declaration_date
-            payment_date = company_dividend.payment_date
-            dividend_per_share = (
-                company_dividend.adj_dividend or company_dividend.dividend
+        try:
+            unprocessed_dividends = self._dividend_repo.get_unprocessed_dividends(
+                after_date
             )
+            dividend_created = []
 
-            if not dividend_per_share or dividend_per_share <= 0:
-                logger.warning(
-                    f"Skipping dividend for {symbol} on {declaration_date}: "
-                    "Invalid dividend amount"
+            for company_dividend in unprocessed_dividends:
+                symbol = company_dividend.symbol
+                declaration_date = company_dividend.declaration_date
+                payment_date = company_dividend.payment_date
+                dividend_per_share = (
+                    company_dividend.adj_dividend or company_dividend.dividend
                 )
-                skipped_count += 1
-                continue
+                currency = company_dividend.currency
 
-            # Check if already processed for this portfolio
-            if self._portfolio_dividend_repo.dividend_exists(
-                portfolio_id, symbol, payment_date
-            ):
-                logger.debug(
-                    f"Dividend already processed for portfolio {portfolio_id}, "
-                    f"symbol {symbol}, payment_date {payment_date}"
+                if not dividend_per_share or dividend_per_share <= 0:
+                    logger.warning(
+                        f"Skipping dividend for {symbol} on {declaration_date}: "
+                        "Invalid dividend amount"
+                    )
+                    continue
+
+                # Get all trades for this symbol before declaration date
+                trades = self._trading_repo.get_trades_for_symbol_before_date(
+                    portfolio_id, symbol, declaration_date
                 )
-                skipped_count += 1
-                continue
 
-            # Get all trades for this symbol before declaration date
-            trades = self._trading_repo.get_trades_for_symbol_before_date(
-                portfolio_id, symbol, declaration_date
+                if not trades:
+                    logger.debug(
+                        f"No trades found for {symbol} before {declaration_date} "
+                        f"in portfolio {portfolio_id}"
+                    )
+                    continue
+
+                # Calculate shares held at declaration date
+                shares_held = self._calculate_shares_held(trades)
+
+                if shares_held <= 0:
+                    logger.debug(
+                        f"No shares held for {symbol} at {declaration_date} "
+                        f"in portfolio {portfolio_id}"
+                    )
+                    continue
+
+                # Record the dividend
+                dividend_record = PortfolioDividendHistoryWrite(
+                    portfolio_id=portfolio_id,
+                    symbol=symbol,
+                    shares=shares_held,
+                    dividend_per_share=dividend_per_share,
+                    dividend_amount=shares_held * dividend_per_share,
+                    declaration_date=declaration_date,
+                    payment_date=payment_date,
+                    currency=currency,
+                )
+                result = self._portfolio_dividend_repo.record_dividend(dividend_record)
+                dividend_created.append(result)
+            results = [
+                PortfolioDividendHistoryRead.model_validate(dividend)
+                for dividend in dividend_created
+            ]
+            return results
+        except Exception as e:
+            logger.error(
+                f"Error syncing dividends for portfolio {portfolio_id}: {str(e)}",
+                exc_info=True,
             )
-
-            if not trades:
-                logger.debug(
-                    f"No trades found for {symbol} before {declaration_date} "
-                    f"in portfolio {portfolio_id}"
-                )
-                skipped_count += 1
-                continue
-
-            # Calculate shares held at declaration date
-            shares_held = self._calculate_shares_held(trades)
-
-            if shares_held <= 0:
-                logger.debug(
-                    f"No shares held for {symbol} at {declaration_date} "
-                    f"in portfolio {portfolio_id}"
-                )
-                skipped_count += 1
-                continue
-
-            # Record the dividend
-            dividend_record = PortfolioDividendHistoryWrite(
-                portfolio_id=portfolio_id,
-                symbol=symbol,
-                shares=shares_held,
-                dividend_per_share=dividend_per_share,
-                dividend_amount=shares_held * dividend_per_share,
-                declaration_date=declaration_date,
-                payment_date=payment_date,
-            )
-            self._portfolio_dividend_repo.record_dividend(dividend_record)
-
-            processed_count += 1
-            processed_symbols.add(symbol)
-            total_dividend_amount += shares_held * dividend_per_share
-
-        logger.info(
-            f"Dividend sync for portfolio {portfolio_id}: "
-            f"processed={processed_count}, skipped={skipped_count}, "
-            f"total=${total_dividend_amount:.2f}"
-        )
-
-        return {
-            "portfolio_id": portfolio_id,
-            "processed_count": processed_count,
-            "skipped_count": skipped_count,
-            "total_dividend_amount": total_dividend_amount,
-            "processed_symbols": list(processed_symbols),
-        }
+            raise
 
     def sync_all_portfolios(self, after_date: date_type | None = None) -> dict:
         """
@@ -153,31 +131,53 @@ class DividendSyncService:
             Dictionary with summary of all processed dividends
         """
         # Get all active portfolios
-        stmt = select(PortfolioTradingHistory.portfolio_id).distinct()
-        result = self._session.execute(stmt)
-        portfolio_ids = [row[0] for row in result]
+        try:
+            results = []
+            portfolio_ids = self._portfolio_repo.get_all_portfolios()
+            portfolio_ids = [p.id for p in portfolio_ids]
 
-        total_processed = 0
-        total_skipped = 0
-        total_dividend_amount = 0.0
-        portfolio_results = []
+            for portfolio_id in portfolio_ids:
+                result = self.sync_dividends_for_portfolio(portfolio_id, after_date)
+                results.extend(result)
+            return results
+        except Exception as e:
+            logger.error(
+                f"Error syncing dividends for all portfolios: {str(e)}", exc_info=True
+            )
+            raise
 
-        for portfolio_id in portfolio_ids:
-            result = self.sync_dividends_for_portfolio(portfolio_id, after_date)
-            total_processed += result["processed_count"]
-            total_skipped += result["skipped_count"]
-            total_dividend_amount += result["total_dividend_amount"]
-            portfolio_results.append(result)
+    def get_portfolio_dividend_history(
+        self, portfolio_id: int, user_id: int
+    ) -> list[PortfolioDividendHistoryRead]:
+        """
+        Retrieve dividend history for a specific portfolio.
 
-        logger.info(
-            f"Dividend sync for all portfolios: "
-            f"total_processed={total_processed}, total_skipped={total_skipped}, "
-            f"total=${total_dividend_amount:.2f}"
-        )
-
-        return {
-            "total_processed": total_processed,
-            "total_skipped": total_skipped,
-            "total_dividend_amount": total_dividend_amount,
-            "portfolio_results": portfolio_results,
-        }
+        Args:
+            portfolio_id: The portfolio to retrieve dividend history for
+            user_id: The user requesting the dividend history
+        Returns:
+            List of PortfolioDividendHistoryRead records
+        """
+        try:
+            if not self._portfolio_repo.verify_portfolio_ownership(
+                portfolio_id, user_id
+            ):
+                raise PermissionError(
+                    f"User {user_id} does not have access to portfolio {portfolio_id}"
+                )
+            dividend_histories = (
+                self._portfolio_dividend_repo.get_dividend_history_by_portfolio(
+                    portfolio_id
+                )
+            )
+            results = [
+                PortfolioDividendHistoryRead.model_validate(dividend)
+                for dividend in dividend_histories
+            ]
+            return results
+        except Exception as e:
+            logger.error(
+                f"Error retrieving dividend history for portfolio {portfolio_id}: {str(e)}",
+                exc_info=True,
+            )
+            raise
