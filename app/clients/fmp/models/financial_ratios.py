@@ -11,8 +11,8 @@ class FMPKeyMetrics(BaseModel):
     period: str
     reported_currency: str = Field(alias="reportedCurrency")
 
-    market_cap: int = Field(alias="marketCap")
-    enterprise_value: int = Field(alias="enterpriseValue")
+    market_cap: float = Field(alias="marketCap")
+    enterprise_value: float = Field(alias="enterpriseValue")
 
     ev_to_sales: float = Field(alias="evToSales")
     ev_to_operating_cash_flow: float = Field(alias="evToOperatingCashFlow")
@@ -27,8 +27,8 @@ class FMPKeyMetrics(BaseModel):
     tax_burden: float = Field(alias="taxBurden")
     interest_burden: float = Field(alias="interestBurden")
 
-    working_capital: int = Field(alias="workingCapital")
-    invested_capital: int = Field(alias="investedCapital")
+    working_capital: float = Field(alias="workingCapital")
+    invested_capital: float = Field(alias="investedCapital")
 
     return_on_assets: float = Field(alias="returnOnAssets")
     operating_return_on_assets: float = Field(alias="operatingReturnOnAssets")
@@ -55,9 +55,9 @@ class FMPKeyMetrics(BaseModel):
     )
     intangibles_to_total_assets: float = Field(alias="intangiblesToTotalAssets")
 
-    average_receivables: int = Field(alias="averageReceivables")
-    average_payables: int = Field(alias="averagePayables")
-    average_inventory: int = Field(alias="averageInventory")
+    average_receivables: float = Field(alias="averageReceivables")
+    average_payables: float = Field(alias="averagePayables")
+    average_inventory: float = Field(alias="averageInventory")
 
     days_of_sales_outstanding: float = Field(alias="daysOfSalesOutstanding")
     days_of_payables_outstanding: float = Field(alias="daysOfPayablesOutstanding")
@@ -69,8 +69,8 @@ class FMPKeyMetrics(BaseModel):
     free_cash_flow_to_equity: float = Field(alias="freeCashFlowToEquity")
     free_cash_flow_to_firm: float = Field(alias="freeCashFlowToFirm")
 
-    tangible_asset_value: int = Field(alias="tangibleAssetValue")
-    net_current_asset_value: int = Field(alias="netCurrentAssetValue")
+    tangible_asset_value: float = Field(alias="tangibleAssetValue")
+    net_current_asset_value: float = Field(alias="netCurrentAssetValue")
 
     model_config = ConfigDict(populate_by_name=True)
 

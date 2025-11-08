@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
@@ -15,13 +16,13 @@ class FMPCompanyProfile(BaseModel):
     description: str
     sector: str
     country: str
-    phone: str
-    address: str
-    city: str
-    state: str
-    zip: str
-    image: HttpUrl
-    ipo_date: date = Field(..., alias="ipoDate")
-    default_image: bool = Field(..., alias="defaultImage")
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip: Optional[str] = None
+    image: Optional[HttpUrl] = None
+    ipo_date: Optional[date] = Field(..., alias="ipoDate")
+    default_image: Optional[bool] = Field(..., alias="defaultImage")
 
     model_config = ConfigDict(populate_by_name=True)

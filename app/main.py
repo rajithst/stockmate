@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.internal import (
+    analyst_estimate_sync,
+    company_full_data_sync,
     company_sync,
     dcf_sync,
     financials_sync,
@@ -11,6 +13,7 @@ from app.api.internal import (
     price_target_sync,
     quotes_sync,
     rating_sync,
+    revenue_product_segmentation_sync,
     stock_info_sync,
 )
 from app.api.v1 import auth, company, portfolio, watchlist, watchlist_item
@@ -43,6 +46,11 @@ app.include_router(
     company_sync.router, prefix="/api/internal/company", tags=["company_data"]
 )
 app.include_router(
+    company_full_data_sync.router,
+    prefix="/api/internal/company",
+    tags=["company_data"],
+)
+app.include_router(
     financials_sync.router, prefix="/api/internal/financials", tags=["financial_data"]
 )
 app.include_router(news_sync.router, prefix="/api/internal/news", tags=["news_data"])
@@ -66,4 +74,14 @@ app.include_router(
 app.include_router(dcf_sync.router, prefix="/api/internal/dcf", tags=["dcf_data"])
 app.include_router(
     quotes_sync.router, prefix="/api/internal/quotes", tags=["quotes_data"]
+)
+app.include_router(
+    analyst_estimate_sync.router,
+    prefix="/api/internal/analyst-estimates",
+    tags=["analyst_estimates_data"],
+)
+app.include_router(
+    revenue_product_segmentation_sync.router,
+    prefix="/api/internal/revenue-segmentation",
+    tags=["revenue_segmentation_data"],
 )

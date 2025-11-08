@@ -4,19 +4,19 @@ from sqlalchemy.orm import Session
 
 from app.services.company_service import CompanyService
 from app.schemas.company import CompanyPageResponse, CompanyRead
-from app.schemas.dcf import DiscountedCashFlowRead
-from app.schemas.grading import CompanyGradingSummaryRead
-from app.schemas.news import (
+from app.schemas.company_metrics import CompanyDiscountedCashFlowRead
+from app.schemas.market_data import CompanyGradingSummaryRead
+from app.schemas.market_data import (
     CompanyGeneralNewsRead,
     CompanyGradingNewsRead,
     CompanyPriceTargetNewsRead,
 )
-from app.schemas.price_target import (
+from app.schemas.market_data import (
     CompanyPriceTargetRead,
     CompanyPriceTargetSummaryRead,
 )
 from app.schemas.quote import StockPriceChangeRead
-from app.schemas.rating import CompanyRatingSummaryRead
+from app.schemas.market_data import CompanyRatingSummaryRead
 from tests.common.mock_company_data import MockCompanyDataBuilder
 from tests.common.mock_company_grading_data import MockCompanyGradingDataBuilder
 from tests.common.mock_company_rating_data import MockCompanyRatingSummaryBuilder
@@ -134,7 +134,7 @@ class TestCompanyService:
 
         # Verify related data
         assert isinstance(result.grading_summary, CompanyGradingSummaryRead)
-        assert isinstance(result.dcf, DiscountedCashFlowRead)
+        assert isinstance(result.dcf, CompanyDiscountedCashFlowRead)
         assert isinstance(result.rating_summary, CompanyRatingSummaryRead)
         assert isinstance(result.price_target, CompanyPriceTargetRead)
         assert isinstance(result.price_target_summary, CompanyPriceTargetSummaryRead)
@@ -347,7 +347,7 @@ class TestCompanyService:
         assert isinstance(result, CompanyPageResponse)
         assert isinstance(result.company, CompanyRead)
         assert isinstance(result.grading_summary, CompanyGradingSummaryRead)
-        assert isinstance(result.dcf, DiscountedCashFlowRead)
+        assert isinstance(result.dcf, CompanyDiscountedCashFlowRead)
         assert isinstance(result.rating_summary, CompanyRatingSummaryRead)
         assert isinstance(result.price_target, CompanyPriceTargetRead)
         assert isinstance(result.price_target_summary, CompanyPriceTargetSummaryRead)

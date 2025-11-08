@@ -28,7 +28,7 @@ class FMPStockPeer(BaseModel):
     symbol: str
     company_name: str = Field(..., alias="companyName")
     price: float
-    market_cap: int = Field(..., alias="mktCap")
+    market_cap: float = Field(..., alias="mktCap")
 
     model_config = ConfigDict(populate_by_name=True)
 

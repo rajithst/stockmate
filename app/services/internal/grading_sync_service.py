@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
 from app.repositories.grading_repo import GradingRepository, GradingSummaryRepository
-from app.schemas.grading import (
+from app.schemas.market_data import (
     CompanyGradingRead,
     CompanyGradingSummaryRead,
     CompanyGradingSummaryWrite,

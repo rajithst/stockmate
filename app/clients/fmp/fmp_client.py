@@ -25,6 +25,9 @@ from app.clients.fmp.models.news import (
     FMPStockNews,
 )
 from app.clients.fmp.models.quotes import FMPStockPrice, FMPStockPriceChange
+from app.clients.fmp.models.revenue_product_segmentation import (
+    FMPRevenueProductSegmentation,
+)
 from app.clients.fmp.models.stock import (
     FMPStockGrading,
     FMPStockGradingSummary,
@@ -453,11 +456,33 @@ class FMPClient:
         Returns:
             list: A list of analyst estimates.
         """
+        if IS_DEV:
+            params = {"symbol": symbol, "period": "annual"}
+        else:
+            params = {"symbol": symbol, "period": period, "limit": limit}
         estimates = self.__get_by_url(
             endpoint="analyst-estimates",
-            params={"symbol": symbol, "period": period, "limit": limit},
+            params=params,
         )
         return self._handle_list_response(estimates, FMPAnalystEstimates)
+
+    def get_revenue_product_segmentation(
+        self,
+        symbol: str,
+        period: str = "annual",
+    ) -> list[FMPRevenueProductSegmentation]:
+        """Fetches revenue product segmentation for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the data for.
+            period (int): The period to fetch the data for.
+        Returns:
+            list: A list of revenue product segmentation records.
+        """
+        data = self.__get_by_url(
+            endpoint="revenue-product-segmentation",
+            params={"symbol": symbol, "period": period},
+        )
+        return self._handle_list_response(data, FMPRevenueProductSegmentation)
 
     def get_discounted_cash_flow(self, symbol: str) -> FMPDFCValuation | None:
         """Fetches the discounted cash flow valuation for a given stock symbol.

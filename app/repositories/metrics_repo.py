@@ -1,11 +1,11 @@
 from sqlalchemy.orm import Session
 
-from app.db.models.financial_ratio import CompanyFinancialRatio
+from app.db.models.financial_statements import CompanyFinancialRatio
 from app.db.models.financial_score import CompanyFinancialScore
-from app.db.models.key_metrics import CompanyKeyMetrics
-from app.schemas.financial_ratio import CompanyFinancialRatioWrite
-from app.schemas.financial_score import CompanyFinancialScoresWrite
-from app.schemas.key_metrics import CompanyKeyMetricsWrite
+from app.db.models.company_metrics import CompanyKeyMetrics
+from app.schemas.financial_statements import CompanyFinancialRatioWrite
+from app.schemas.financial_health import CompanyFinancialScoresWrite
+from app.schemas.company_metrics import CompanyKeyMetricsWrite
 from app.repositories.base_repo import BaseRepository
 
 

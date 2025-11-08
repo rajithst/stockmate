@@ -21,6 +21,9 @@ from app.clients.fmp.models.news import (
     FMPStockNews,
 )
 from app.clients.fmp.models.quotes import FMPStockPrice, FMPStockPriceChange
+from app.clients.fmp.models.revenue_product_segmentation import (
+    FMPRevenueProductSegmentation,
+)
 from app.clients.fmp.models.stock import (
     FMPStockGrading,
     FMPStockGradingSummary,
@@ -162,6 +165,14 @@ class FMPClientProtocol(Protocol):
         self, symbol: str, period: str = "quarter", limit: int = 10
     ) -> List[FMPAnalystEstimates]:
         """Fetches analyst estimates for a given stock symbol."""
+        ...
+
+    def get_revenue_product_segmentation(
+        self,
+        symbol: str,
+        period: str = "annual",
+    ) -> List[FMPRevenueProductSegmentation]:
+        """Fetches revenue product segmentation for a given stock symbol."""
         ...
 
     # Valuation

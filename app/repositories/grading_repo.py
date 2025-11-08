@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models.grading import CompanyGrading, CompanyGradingSummary
 from app.repositories.base_repo import BaseRepository
-from app.schemas.grading import CompanyGradingSummaryWrite, CompanyGradingWrite
+from app.schemas.market_data import CompanyGradingSummaryWrite, CompanyGradingWrite
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import config
 from app.dependencies.db import get_db_session
 from app.repositories.user_repo import UserRepository
-from app.schemas.auth import TokenData
+from app.schemas.user import TokenData
 from app.schemas.user import UserRead
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")

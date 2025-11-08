@@ -1,7 +1,7 @@
 from typing import Type, TypeVar, Any, Dict
 from sqlalchemy.orm import Session
 
-from app.schemas.dcf import DiscountedCashFlowRead
+from app.schemas.company_metrics import CompanyDiscountedCashFlowRead
 from app.db.models.dcf import DiscountedCashFlow
 
 T = TypeVar("T")
@@ -127,9 +127,9 @@ class MockDiscountedCashFlowDataBuilder:
         )
 
     @staticmethod
-    def discounted_cash_flow_read(**overrides) -> DiscountedCashFlowRead:
+    def discounted_cash_flow_read(**overrides) -> CompanyDiscountedCashFlowRead:
         """
-        Create a DiscountedCashFlowRead schema instance.
+        Create a CompanyDiscountedCashFlowRead schema instance.
 
         Use for testing API responses that return DCF valuation data.
         Provides intrinsic value calculation compared to current market price.
@@ -141,7 +141,7 @@ class MockDiscountedCashFlowDataBuilder:
                 date (valuation date)
 
         Returns:
-            DiscountedCashFlowRead: Pydantic schema for API output
+            CompanyDiscountedCashFlowRead: Pydantic schema for API output
 
         Examples:
             >>> dcf_read = MockDiscountedCashFlowDataBuilder.discounted_cash_flow_read(
@@ -149,12 +149,12 @@ class MockDiscountedCashFlowDataBuilder:
             ...     dcf=2500.0,
             ...     stock_price=2800.0
             ... )
-            >>> assert isinstance(dcf_read, DiscountedCashFlowRead)
+            >>> assert isinstance(dcf_read, CompanyDiscountedCashFlowRead)
             >>> assert dcf_read.dcf < dcf_read.stock_price  # Stock is overvalued
             >>> assert dcf_read.symbol == "GOOGL"
         """
         return MockDiscountedCashFlowDataBuilder._create_schema(
-            DiscountedCashFlowRead,
+            CompanyDiscountedCashFlowRead,
             MockDiscountedCashFlowDataBuilder._DCF_DEFAULTS,
             overrides,
         )

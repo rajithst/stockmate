@@ -7,10 +7,10 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.db.models.company import Company
-from app.db.models.quote import StockPrice
+from app.db.models.quote import CompanyStockPrice
 from app.db.models.watchlist import Watchlist, WatchlistItem
 from app.repositories.base_repo import BaseRepository
-from app.schemas.watchlist import (
+from app.schemas.user import (
     WatchlistCreate,
     WatchlistItemCreate,
     WatchlistUpdate,
@@ -18,7 +18,7 @@ from app.schemas.watchlist import (
 
 if TYPE_CHECKING:
     from app.db.models.company import Company
-    from app.db.models.financial_ratio import CompanyFinancialRatio
+    from app.db.models.financial_statements import CompanyFinancialRatio
 
 logger = logging.getLogger(__name__)
 
@@ -135,10 +135,11 @@ class WatchlistItemRepository(BaseRepository):
         # Get the most recent price for each symbol in a single query
         stmt = (
             select(
-                StockPrice.symbol, sql_func.max(StockPrice.date).label("latest_date")
+                CompanyStockPrice.symbol,
+                sql_func.max(CompanyStockPrice.date).label("latest_date"),
             )
-            .where(StockPrice.symbol.in_(symbols))
-            .group_by(StockPrice.symbol)
+            .where(CompanyStockPrice.symbol.in_(symbols))
+            .group_by(CompanyStockPrice.symbol)
         )
 
         latest_dates = {row[0]: row[1] for row in self._db.execute(stmt).all()}
@@ -148,9 +149,9 @@ class WatchlistItemRepository(BaseRepository):
 
         # Get the prices for those latest dates
         stmt = (
-            select(StockPrice)
-            .where(StockPrice.symbol.in_(symbols))
-            .order_by(StockPrice.symbol, StockPrice.date.desc())
+            select(CompanyStockPrice)
+            .where(CompanyStockPrice.symbol.in_(symbols))
+            .order_by(CompanyStockPrice.symbol, CompanyStockPrice.date.desc())
         )
 
         results = self._db.execute(stmt).scalars().all()
@@ -203,7 +204,7 @@ class WatchlistItemRepository(BaseRepository):
 
         Returns a dict mapping symbol -> CompanyFinancialRatio
         """
-        from app.db.models.financial_ratio import CompanyFinancialRatio
+        from app.db.models.financial_statements import CompanyFinancialRatio
 
         if not items:
             return {}

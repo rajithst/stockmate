@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.internal.config import DEFAULTS, ERROR_MESSAGES, LIMITS, TAGS
 from app.dependencies.sync_services import create_sync_service_provider
-from app.schemas.dividend import CompanyDividendRead
-from app.schemas.stock import CompanyStockSplitRead, CompanyStockPeerRead
+from app.schemas.quote import CompanyDividendRead
+from app.schemas.quote import CompanyStockSplitRead, CompanyStockPeerRead
 from app.services.internal.stock_info_sync_service import StockInfoSyncService
 
 router = APIRouter(prefix="", tags=[TAGS["stock_info"]["name"]])
@@ -23,6 +23,31 @@ def sync_dividends(
 ):
     """Sync company's dividend history from the external API and store in the database."""
     dividends = service.upsert_dividend_calendar()
+    if not dividends:
+        raise HTTPException(
+            status_code=404,
+            detail=ERROR_MESSAGES["NOT_FOUND_DIVIDENDS"],
+        )
+    return dividends
+
+
+@router.get(
+    "/dividend/{symbol}/sync",
+    response_model=list[CompanyDividendRead],
+    summary="Sync dividends for a specific company from external API",
+    description="Fetches and upserts a specific company's dividend history from the external API into the database.",
+)
+def sync_dividends_for_company(
+    symbol: str,
+    limit: int = Query(
+        default=DEFAULTS["stock_info_limit"],
+        ge=LIMITS["stock_info_limit"]["min"],
+        le=LIMITS["stock_info_limit"]["max"],
+    ),
+    service: StockInfoSyncService = Depends(get_stock_info_sync_service),
+):
+    """Sync a specific company's dividend history from the external API and store in the database."""
+    dividends = service.upsert_dividends(symbol)
     if not dividends:
         raise HTTPException(
             status_code=404,

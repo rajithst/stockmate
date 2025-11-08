@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.internal.config import ERROR_MESSAGES, TAGS
 from app.dependencies.sync_services import create_sync_service_provider
-from app.schemas.rating import CompanyRatingSummaryRead
+from app.schemas.market_data import CompanyRatingSummaryRead
 from app.services.internal.rating_sync_service import RatingSyncService
 
 router = APIRouter(prefix="", tags=[TAGS["rating"]["name"]])

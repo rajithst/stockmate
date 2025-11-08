@@ -6,7 +6,7 @@ from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func, sel
 from sqlalchemy.orm import Mapped, mapped_column, object_session, relationship
 
 from app.db.engine import Base
-from app.db.models.financial_ratio import CompanyFinancialRatio
+from app.db.models.financial_statements import CompanyFinancialRatio
 
 if TYPE_CHECKING:
     from app.db.models.company import Company
@@ -120,7 +120,7 @@ class WatchlistItem(Base):
         if not session:
             return None
 
-        from app.db.models.financial_ratio import CompanyFinancialRatio
+        from app.db.models.financial_statements import CompanyFinancialRatio
 
         # Get the latest fiscal year
         latest_fiscal_year = (
@@ -162,12 +162,12 @@ class WatchlistItem(Base):
         if not session:
             return 0.0
 
-        from app.db.models.quote import StockPrice
+        from app.db.models.quote import CompanyStockPrice
 
         stmt = (
-            select(StockPrice)
-            .where(StockPrice.symbol == self.symbol)
-            .order_by(StockPrice.date.desc())
+            select(CompanyStockPrice)
+            .where(CompanyStockPrice.symbol == self.symbol)
+            .order_by(CompanyStockPrice.date.desc())
             .limit(1)
         )
 

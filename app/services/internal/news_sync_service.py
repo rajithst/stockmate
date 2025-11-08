@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
 from app.repositories.news_repo import CompanyNewsRepository
-from app.schemas.news import (
+from app.schemas.market_data import (
     CompanyGeneralNewsRead,
     CompanyGeneralNewsWrite,
     CompanyGradingNewsRead,

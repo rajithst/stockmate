@@ -10,33 +10,33 @@ from app.repositories.metrics_repo import MetricsRepository
 from app.repositories.news_repo import CompanyNewsRepository
 from app.repositories.stock_info_repo import StockInfoRepository
 from app.repositories.technical_indicator_repo import TechnicalIndicatorRepository
-from app.schemas.balance_sheet import CompanyBalanceSheetRead
-from app.schemas.cashflow import CompanyCashFlowStatementRead
+from app.schemas.financial_statements import CompanyBalanceSheetRead
+from app.schemas.financial_statements import CompanyCashFlowStatementRead
 from app.schemas.company import (
     CompanyFinancialHealthResponse,
     CompanyFinancialResponse,
     CompanyPageResponse,
     CompanyRead,
 )
-from app.schemas.dcf import DiscountedCashFlowRead
-from app.schemas.dividend import CompanyDividendRead
+from app.schemas.company_metrics import CompanyDiscountedCashFlowRead
+from app.schemas.quote import CompanyDividendRead
 from app.schemas.financial_health import CompanyFinancialHealthRead
-from app.schemas.financial_ratio import CompanyFinancialRatioRead
-from app.schemas.grading import CompanyGradingRead, CompanyGradingSummaryRead
-from app.schemas.income_statement import CompanyIncomeStatementRead
-from app.schemas.key_metrics import CompanyKeyMetricsRead
-from app.schemas.news import (
+from app.schemas.financial_statements import CompanyFinancialRatioRead
+from app.schemas.market_data import CompanyGradingRead, CompanyGradingSummaryRead
+from app.schemas.financial_statements import CompanyIncomeStatementRead
+from app.schemas.company_metrics import CompanyKeyMetricsRead
+from app.schemas.market_data import (
     CompanyGeneralNewsRead,
     CompanyGradingNewsRead,
     CompanyPriceTargetNewsRead,
 )
-from app.schemas.price_target import (
+from app.schemas.market_data import (
     CompanyPriceTargetRead,
     CompanyPriceTargetSummaryRead,
 )
 from app.schemas.quote import StockPriceChangeRead
-from app.schemas.rating import CompanyRatingSummaryRead
-from app.schemas.technical_indicator import CompanyTechnicalIndicatorRead
+from app.schemas.market_data import CompanyRatingSummaryRead
+from app.schemas.quote import CompanyTechnicalIndicatorRead
 
 logger = getLogger(__name__)
 
@@ -101,7 +101,7 @@ class CompanyService:
             CompanyGradingSummaryRead, response.grading_summary
         )
         dcf_read = self._validate_single(
-            DiscountedCashFlowRead, response.discounted_cash_flow
+            CompanyDiscountedCashFlowRead, response.discounted_cash_flow
         )
         rating_summary_read = self._validate_single(
             CompanyRatingSummaryRead, response.rating_summary
@@ -218,20 +218,35 @@ class CompanyService:
 
             return CompanyFinancialHealthResponse(
                 company=company_read,
-                profitability=grouped[FinancialHealthSectorsEnum.PROFITABILITY.value],
-                efficiency=grouped[FinancialHealthSectorsEnum.EFFICIENCY.value],
-                liquidity_and_solvency=grouped[
-                    FinancialHealthSectorsEnum.LIQUIDITY_AND_SOLVENCY.value
+                profitability_analysis=grouped[
+                    FinancialHealthSectorsEnum.PROFITABILITY_ANALYSIS.value
+                ],
+                efficiency_analysis=grouped[
+                    FinancialHealthSectorsEnum.EFFICIENCY_ANALYSIS.value
+                ],
+                liquidity_and_short_term_solvency=grouped[
+                    FinancialHealthSectorsEnum.LIQUIDITY_AND_SHORT_TERM_SOLVENCY.value
+                ],
+                leverage_and_capital_structure=grouped[
+                    FinancialHealthSectorsEnum.LEVERAGE_AND_CAPITAL_STRUCTURE.value
+                ],
+                valuation_and_market_multiples=grouped[
+                    FinancialHealthSectorsEnum.VALUATION_AND_MARKET_MULTIPLES.value
                 ],
                 cashflow_strength=grouped[
                     FinancialHealthSectorsEnum.CASHFLOW_STRENGTH.value
                 ],
-                valuation=grouped[FinancialHealthSectorsEnum.VALUATION.value],
-                growth_and_investment=grouped[
-                    FinancialHealthSectorsEnum.GROWTH_AND_INVESTMENT.value
+                asset_quality_and_capital_efficiency=grouped[
+                    FinancialHealthSectorsEnum.ASSET_QUALITY_AND_CAPITAL_EFFICIENCY.value
                 ],
-                dividend_and_shareholder_return=grouped[
-                    FinancialHealthSectorsEnum.DIVIDEND_AND_SHAREHOLDER_RETURN.value
+                dividend_and_shareholder_returns=grouped[
+                    FinancialHealthSectorsEnum.DIVIDEND_AND_SHAREHOLDER_RETURNS.value
+                ],
+                per_share_performance=grouped[
+                    FinancialHealthSectorsEnum.PER_SHARE_PERFORMANCE.value
+                ],
+                tax_and_cost_structure=grouped[
+                    FinancialHealthSectorsEnum.TAX_AND_COST_STRUCTURE.value
                 ],
             )
         except Exception as e:

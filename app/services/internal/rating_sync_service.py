@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
 from app.repositories.rating_repo import CompanyRatingRepository
-from app.schemas.rating import CompanyRatingSummaryRead, CompanyRatingSummaryWrite
+from app.schemas.market_data import CompanyRatingSummaryRead, CompanyRatingSummaryWrite
 from app.services.internal.base_sync_service import BaseSyncService
 
 logger = getLogger(__name__)

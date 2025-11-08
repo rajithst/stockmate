@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.internal.config import DEFAULTS, ERROR_MESSAGES, LIMITS, TAGS
 from app.dependencies.sync_services import create_sync_service_provider
-from app.schemas.news import (
+from app.schemas.market_data import (
     CompanyGeneralNewsRead,
     CompanyGradingNewsRead,
     CompanyPriceTargetNewsRead,

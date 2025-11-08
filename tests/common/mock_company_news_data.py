@@ -1,7 +1,7 @@
 from typing import Type, TypeVar, Any, Dict
 from sqlalchemy.orm import Session
 
-from app.schemas.news import (
+from app.schemas.market_data import (
     CompanyGeneralNewsRead,
     CompanyGradingNewsRead,
     CompanyPriceTargetNewsRead,

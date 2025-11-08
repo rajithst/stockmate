@@ -3,26 +3,26 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from app.schemas.balance_sheet import CompanyBalanceSheetRead
-from app.schemas.cashflow import CompanyCashFlowStatementRead
-from app.schemas.dcf import DiscountedCashFlowRead
-from app.schemas.dividend import CompanyDividendRead
+from app.schemas.financial_statements import CompanyBalanceSheetRead
+from app.schemas.financial_statements import CompanyCashFlowStatementRead
+from app.schemas.company_metrics import CompanyDiscountedCashFlowRead
+from app.schemas.quote import CompanyDividendRead
 from app.schemas.financial_health import CompanyFinancialHealthRead
-from app.schemas.financial_ratio import CompanyFinancialRatioRead
-from app.schemas.grading import CompanyGradingRead, CompanyGradingSummaryRead
-from app.schemas.income_statement import CompanyIncomeStatementRead
-from app.schemas.key_metrics import CompanyKeyMetricsRead
-from app.schemas.news import (
+from app.schemas.financial_statements import CompanyFinancialRatioRead
+from app.schemas.market_data import CompanyGradingRead, CompanyGradingSummaryRead
+from app.schemas.financial_statements import CompanyIncomeStatementRead
+from app.schemas.company_metrics import CompanyKeyMetricsRead
+from app.schemas.market_data import (
     CompanyGeneralNewsRead,
     CompanyGradingNewsRead,
     CompanyPriceTargetNewsRead,
 )
-from app.schemas.price_target import (
+from app.schemas.market_data import (
     CompanyPriceTargetRead,
     CompanyPriceTargetSummaryRead,
 )
 from app.schemas.quote import StockPriceChangeRead
-from app.schemas.rating import CompanyRatingSummaryRead
+from app.schemas.market_data import CompanyRatingSummaryRead
 
 
 class Company(BaseModel):
@@ -55,7 +55,6 @@ class Company(BaseModel):
 
 
 class CompanyRead(Company):
-    id: int
     price: Optional[float] = None
     daily_price_change: Optional[float] = None
     daily_price_change_percent: Optional[float] = None
@@ -76,7 +75,7 @@ class CompanyPageResponse(BaseModel):
     company: CompanyRead
     grading_summary: Optional[CompanyGradingSummaryRead]
     rating_summary: Optional[CompanyRatingSummaryRead]
-    dcf: Optional[DiscountedCashFlowRead]
+    dcf: Optional[CompanyDiscountedCashFlowRead]
     price_target: Optional[CompanyPriceTargetRead]
     price_change: Optional[StockPriceChangeRead]
     price_target_summary: Optional[CompanyPriceTargetSummaryRead]
@@ -101,12 +100,14 @@ class CompanyFinancialResponse(BaseModel):
 
 class CompanyFinancialHealthResponse(BaseModel):
     company: CompanyRead
-    profitability: List[CompanyFinancialHealthRead] = []
-    efficiency: List[CompanyFinancialHealthRead] = []
-    liquidity_and_solvency: List[CompanyFinancialHealthRead] = []
+    profitability_analysis: List[CompanyFinancialHealthRead] = []
+    efficiency_analysis: List[CompanyFinancialHealthRead] = []
+    liquidity_and_short_term_solvency: List[CompanyFinancialHealthRead] = []
+    leverage_and_capital_structure: List[CompanyFinancialHealthRead] = []
+    valuation_and_market_multiples: List[CompanyFinancialHealthRead] = []
     cashflow_strength: List[CompanyFinancialHealthRead] = []
-    valuation: List[CompanyFinancialHealthRead] = []
-    growth_and_investment: List[CompanyFinancialHealthRead] = []
-    dividend_and_shareholder_return: List[CompanyFinancialHealthRead] = []
-
+    asset_quality_and_capital_efficiency: List[CompanyFinancialHealthRead] = []
+    dividend_and_shareholder_returns: List[CompanyFinancialHealthRead] = []
+    per_share_performance: List[CompanyFinancialHealthRead] = []
+    tax_and_cost_structure: List[CompanyFinancialHealthRead] = []
     model_config = ConfigDict(from_attributes=True)

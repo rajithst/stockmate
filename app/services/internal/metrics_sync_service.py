@@ -4,15 +4,15 @@ from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
 from app.repositories.metrics_repo import MetricsRepository
-from app.schemas.financial_ratio import (
+from app.schemas.financial_statements import (
     CompanyFinancialRatioRead,
     CompanyFinancialRatioWrite,
 )
-from app.schemas.financial_score import (
+from app.schemas.financial_health import (
     CompanyFinancialScoresRead,
     CompanyFinancialScoresWrite,
 )
-from app.schemas.key_metrics import CompanyKeyMetricsRead, CompanyKeyMetricsWrite
+from app.schemas.company_metrics import CompanyKeyMetricsRead, CompanyKeyMetricsWrite
 from app.services.internal.base_sync_service import BaseSyncService
 
 logger = getLogger(__name__)

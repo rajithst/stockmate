@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.dependencies import get_db_session
 from app.dependencies.auth import get_current_user
 from app.schemas.user import UserRead
-from app.schemas.watchlist import (
+from app.schemas.user import (
     WatchlistCompanyItem,
     WatchlistItemWrite,
 )

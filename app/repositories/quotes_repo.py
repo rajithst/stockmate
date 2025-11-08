@@ -1,7 +1,7 @@
 import logging
 from sqlalchemy.orm import Session
 
-from app.db.models.quote import StockPrice, StockPriceChange
+from app.db.models.quote import CompanyStockPrice, CompanyStockPriceChange
 from app.schemas.quote import StockPriceChangeWrite, StockPriceWrite
 from app.repositories.base_repo import BaseRepository
 
@@ -14,20 +14,22 @@ class QuotesRepository(BaseRepository):
 
     def upsert_price_change(
         self, price_change: StockPriceChangeWrite
-    ) -> StockPriceChange:
+    ) -> CompanyStockPriceChange:
         """Upsert price change record by symbol."""
         return self._upsert_single(
             price_change,
-            StockPriceChange,
+            CompanyStockPriceChange,
             lambda pc: {"symbol": pc.symbol},
             "upsert_price_change",
         )
 
-    def upsert_daily_price(self, daily_price: list[StockPriceWrite]) -> StockPrice:
+    def upsert_daily_price(
+        self, daily_price: list[StockPriceWrite]
+    ) -> CompanyStockPrice:
         """Upsert daily price records by symbol and date."""
         return self._upsert_single(
             daily_price,
-            StockPrice,
+            CompanyStockPrice,
             lambda dp: {"symbol": dp.symbol, "date": dp.date},
             "upsert_daily_price",
         )

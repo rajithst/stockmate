@@ -1,7 +1,16 @@
 from datetime import datetime, date as date_type
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, func, UniqueConstraint, Index, Date
+from sqlalchemy import (
+    DateTime,
+    Float,
+    ForeignKey,
+    String,
+    func,
+    UniqueConstraint,
+    Index,
+    Date,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
@@ -57,8 +66,8 @@ class CompanyStockPeer(Base):
     )
     symbol: Mapped[str] = mapped_column(String(12), index=True)
     company_name: Mapped[str] = mapped_column(String(255))
-    price: Mapped[float]
-    market_cap: Mapped[int]
+    price: Mapped[float] = mapped_column(Float, nullable=True)
+    market_cap: Mapped[float] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

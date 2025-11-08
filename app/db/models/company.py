@@ -7,15 +7,16 @@ from sqlalchemy.orm import Mapped, mapped_column, object_session, relationship
 from app.db.engine import Base
 
 if TYPE_CHECKING:
-    from app.db.models.balance_sheet import CompanyBalanceSheet
-    from app.db.models.cashflow import CompanyCashFlowStatement
-    from app.db.models.dcf import DiscountedCashFlow
+    from app.db.models.company_metrics import CompanyAnalystEstimate
+    from app.db.models.financial_statements import CompanyBalanceSheet
+    from app.db.models.financial_statements import CompanyCashFlowStatement
+    from app.db.models.company_metrics import CompanyDiscountedCashFlow
     from app.db.models.financial_health import CompanyFinancialHealth
-    from app.db.models.financial_ratio import CompanyFinancialRatio
+    from app.db.models.financial_statements import CompanyFinancialRatio
     from app.db.models.financial_score import CompanyFinancialScore
     from app.db.models.grading import CompanyGrading, CompanyGradingSummary
-    from app.db.models.income_statement import CompanyIncomeStatement
-    from app.db.models.key_metrics import CompanyKeyMetrics
+    from app.db.models.financial_statements import CompanyIncomeStatement
+    from app.db.models.company_metrics import CompanyKeyMetrics
     from app.db.models.news import (
         CompanyGeneralNews,
         CompanyGradingNews,
@@ -23,8 +24,11 @@ if TYPE_CHECKING:
         CompanyStockNews,
     )
     from app.db.models.price_target import CompanyPriceTarget, CompanyPriceTargetSummary
-    from app.db.models.quote import StockPrice, StockPriceChange
+    from app.db.models.quote import CompanyStockPrice, CompanyStockPriceChange
     from app.db.models.ratings import CompanyRatingSummary
+    from app.db.models.company_metrics import (
+        CompanyRevenueProductSegmentation,
+    )
     from app.db.models.stock import CompanyStockPeer, CompanyStockSplit
     from app.db.models.technical_indicators import CompanyTechnicalIndicator
 
@@ -79,6 +83,14 @@ class Company(Base):
         onupdate=func.now(),
     )
     # Relationships - Collections (use selectin for better performance)
+    analyst_estimates: Mapped[list["CompanyAnalystEstimate"]] = relationship(
+        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+    )
+    revenue_product_segmentations: Mapped[list["CompanyRevenueProductSegmentation"]] = (
+        relationship(
+            back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        )
+    )
     stock_splits: Mapped[list["CompanyStockSplit"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="selectin"
     )
@@ -103,7 +115,7 @@ class Company(Base):
     stock_peers: Mapped[list["CompanyStockPeer"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="selectin"
     )
-    stock_prices: Mapped[list["StockPrice"]] = relationship(
+    stock_prices: Mapped[list["CompanyStockPrice"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     financial_health: Mapped[list["CompanyFinancialHealth"]] = relationship(
@@ -144,7 +156,7 @@ class Company(Base):
         cascade="all, delete-orphan",
         lazy="joined",
     )
-    discounted_cash_flow: Mapped["DiscountedCashFlow | None"] = relationship(
+    discounted_cash_flow: Mapped["CompanyDiscountedCashFlow | None"] = relationship(
         back_populates="company",
         uselist=False,
         cascade="all, delete-orphan",
@@ -156,7 +168,7 @@ class Company(Base):
         cascade="all, delete-orphan",
         lazy="joined",
     )
-    stock_price_change: Mapped["StockPriceChange | None"] = relationship(
+    stock_price_change: Mapped["CompanyStockPriceChange | None"] = relationship(
         back_populates="company",
         uselist=False,
         cascade="all, delete-orphan",
@@ -170,25 +182,25 @@ class Company(Base):
     )
 
     @property
-    def latest_stock_price(self) -> "StockPrice | None":
+    def latest_stock_price(self) -> "CompanyStockPrice | None":
         """
         Efficiently fetch only the most recent stock price without loading all prices.
 
         Note: This executes a query each time but only fetches one record.
         Since stock prices are accessed frequently together (price, change, volume),
         the single query is more efficient than loading all historical prices.
-        SQLAlchemy's session-level identity map will cache the StockPrice instance.
+        SQLAlchemy's session-level identity map will cache the CompanyStockPrice instance.
         """
         session = object_session(self)
         if not session:
             return None
 
-        from app.db.models.quote import StockPrice
+        from app.db.models.quote import CompanyStockPrice
 
         return (
-            session.query(StockPrice)
-            .filter(StockPrice.company_id == self.id)
-            .order_by(StockPrice.date.desc())
+            session.query(CompanyStockPrice)
+            .filter(CompanyStockPrice.company_id == self.id)
+            .order_by(CompanyStockPrice.date.desc())
             .limit(1)
             .first()
         )

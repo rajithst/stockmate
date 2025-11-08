@@ -6,25 +6,25 @@ class FMPAnalystEstimates(BaseModel):
     symbol: str
     date: date_type = Field(..., description="Date of the estimate")
 
-    revenue_low: int = Field(..., alias="revenueLow")
-    revenue_high: int = Field(..., alias="revenueHigh")
-    revenue_avg: int = Field(..., alias="revenueAvg")
+    revenue_low: float = Field(..., alias="revenueLow")
+    revenue_high: float = Field(..., alias="revenueHigh")
+    revenue_avg: float = Field(..., alias="revenueAvg")
 
-    ebitda_low: int = Field(..., alias="ebitdaLow")
-    ebitda_high: int = Field(..., alias="ebitdaHigh")
-    ebitda_avg: int = Field(..., alias="ebitdaAvg")
+    ebitda_low: float = Field(..., alias="ebitdaLow")
+    ebitda_high: float = Field(..., alias="ebitdaHigh")
+    ebitda_avg: float = Field(..., alias="ebitdaAvg")
 
-    ebit_low: int = Field(..., alias="ebitLow")
-    ebit_high: int = Field(..., alias="ebitHigh")
-    ebit_avg: int = Field(..., alias="ebitAvg")
+    ebit_low: float = Field(..., alias="ebitLow")
+    ebit_high: float = Field(..., alias="ebitHigh")
+    ebit_avg: float = Field(..., alias="ebitAvg")
 
-    net_income_low: int = Field(..., alias="netIncomeLow")
-    net_income_high: int = Field(..., alias="netIncomeHigh")
-    net_income_avg: int = Field(..., alias="netIncomeAvg")
+    net_income_low: float = Field(..., alias="netIncomeLow")
+    net_income_high: float = Field(..., alias="netIncomeHigh")
+    net_income_avg: float = Field(..., alias="netIncomeAvg")
 
-    sga_expense_low: int = Field(..., alias="sgaExpenseLow")
-    sga_expense_high: int = Field(..., alias="sgaExpenseHigh")
-    sga_expense_avg: int = Field(..., alias="sgaExpenseAvg")
+    sga_expense_low: float = Field(..., alias="sgaExpenseLow")
+    sga_expense_high: float = Field(..., alias="sgaExpenseHigh")
+    sga_expense_avg: float = Field(..., alias="sgaExpenseAvg")
 
     eps_avg: float = Field(..., alias="epsAvg")
     eps_high: float = Field(..., alias="epsHigh")

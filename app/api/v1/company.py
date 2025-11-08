@@ -7,7 +7,7 @@ from app.schemas.company import (
     CompanyFinancialResponse,
     CompanyPageResponse,
 )
-from app.schemas.technical_indicator import CompanyTechnicalIndicatorRead
+from app.schemas.quote import CompanyTechnicalIndicatorRead
 from app.services.company_service import CompanyService
 
 router = APIRouter(prefix="")

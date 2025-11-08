@@ -1,15 +1,15 @@
 import logging
 from sqlalchemy.orm import Session
 
-from app.db.models.balance_sheet import CompanyBalanceSheet
-from app.db.models.cashflow import CompanyCashFlowStatement
+from app.db.models.financial_statements import CompanyBalanceSheet
+from app.db.models.financial_statements import CompanyCashFlowStatement
 from app.db.models.financial_health import CompanyFinancialHealth
-from app.db.models.income_statement import CompanyIncomeStatement
+from app.db.models.financial_statements import CompanyIncomeStatement
 from app.repositories.base_repo import BaseRepository
-from app.schemas.balance_sheet import CompanyBalanceSheetWrite
-from app.schemas.cashflow import CompanyCashFlowStatementWrite
+from app.schemas.financial_statements import CompanyBalanceSheetWrite
+from app.schemas.financial_statements import CompanyCashFlowStatementWrite
 from app.schemas.financial_health import CompanyFinancialHealthWrite
-from app.schemas.income_statement import CompanyIncomeStatementWrite
+from app.schemas.financial_statements import CompanyIncomeStatementWrite
 
 logger = logging.getLogger(__name__)
 

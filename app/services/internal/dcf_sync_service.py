@@ -4,7 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
 from app.repositories.dcf_repo import DiscountedCashFlowRepository
-from app.schemas.dcf import DiscountedCashFlowRead, DiscountedCashFlowWrite
+from app.schemas.company_metrics import (
+    CompanyDiscountedCashFlowRead,
+    CompanyDiscountedCashFlowWrite,
+)
 from app.services.internal.base_sync_service import BaseSyncService
 
 logger = getLogger(__name__)
@@ -15,7 +18,9 @@ class DiscountedCashFlowSyncService(BaseSyncService):
         super().__init__(market_api_client, session)
         self._repository = DiscountedCashFlowRepository(session)
 
-    def upsert_discounted_cash_flow(self, symbol: str) -> DiscountedCashFlowRead | None:
+    def upsert_discounted_cash_flow(
+        self, symbol: str
+    ) -> CompanyDiscountedCashFlowRead | None:
         """
         Fetch and upsert discounted cash flow valuation for a company.
 
@@ -36,10 +41,10 @@ class DiscountedCashFlowSyncService(BaseSyncService):
                 return None
 
             dcf_in = self._add_company_id_to_record(
-                dcf_data, company.id, DiscountedCashFlowWrite
+                dcf_data, company.id, CompanyDiscountedCashFlowWrite
             )
             dcf = self._repository.upsert_discounted_cash_flow(dcf_in)
-            result = self._map_schema_single(dcf, DiscountedCashFlowRead)
+            result = self._map_schema_single(dcf, CompanyDiscountedCashFlowRead)
 
             self._log_sync_success("dcf_valuation", 1, symbol)
             return result

@@ -2,7 +2,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from app.db.models.ratings import CompanyRatingSummary
-from app.schemas.rating import CompanyRatingSummaryWrite
+from app.schemas.market_data import CompanyRatingSummaryWrite
 from app.repositories.base_repo import BaseRepository
 
 logger = logging.getLogger(__name__)

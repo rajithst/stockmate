@@ -7,8 +7,11 @@ from sqlalchemy.orm import Session
 from app.clients.fmp.protocol import FMPClientProtocol
 from app.repositories.financial_repo import FinancialRepository
 from app.repositories.metrics_repo import MetricsRepository
-from app.schemas.balance_sheet import CompanyBalanceSheetRead, CompanyBalanceSheetWrite
-from app.schemas.cashflow import (
+from app.schemas.financial_statements import (
+    CompanyBalanceSheetRead,
+    CompanyBalanceSheetWrite,
+)
+from app.schemas.financial_statements import (
     CompanyCashFlowStatementRead,
     CompanyCashFlowStatementWrite,
 )
@@ -20,7 +23,7 @@ from app.schemas.financial_health_config import (
     BENCHMARKS_INSIGHTS,
     SECTION_METRIC_MAP,
 )
-from app.schemas.income_statement import (
+from app.schemas.financial_statements import (
     CompanyIncomeStatementRead,
     CompanyIncomeStatementWrite,
 )

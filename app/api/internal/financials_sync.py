@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.internal.config import DEFAULTS, ERROR_MESSAGES, LIMITS, PERIOD_TYPES, TAGS
 from app.dependencies.sync_services import create_sync_service_provider
-from app.schemas.balance_sheet import CompanyBalanceSheetRead
-from app.schemas.cashflow import CompanyCashFlowStatementRead
+from app.schemas.financial_statements import CompanyBalanceSheetRead
+from app.schemas.financial_statements import CompanyCashFlowStatementRead
 from app.schemas.financial_health import CompanyFinancialHealthRead
-from app.schemas.income_statement import CompanyIncomeStatementRead
+from app.schemas.financial_statements import CompanyIncomeStatementRead
 from app.services.internal.financial_sync_service import FinancialSyncService
 
 router = APIRouter(prefix="", tags=[TAGS["financial"]["name"]])

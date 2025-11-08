@@ -8,7 +8,7 @@ from app.repositories.portfolio_repo import (
     PortfolioRepository,
     PortfolioTradingHistoryRepository,
 )
-from app.schemas.portfolio import (
+from app.schemas.user import (
     PortfolioCreate,
     PortfolioDetail,
     PortfolioDividendHistoryRead,

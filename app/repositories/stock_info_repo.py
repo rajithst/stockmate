@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from app.db.models.company import Company
 from app.db.models.dividend import CompanyDividend
 from app.db.models.stock import CompanyStockPeer, CompanyStockSplit
-from app.schemas.dividend import CompanyDividendWrite
-from app.schemas.stock import CompanyStockPeerWrite, CompanyStockSplitWrite
+from app.schemas.quote import CompanyDividendWrite
+from app.schemas.quote import CompanyStockPeerWrite, CompanyStockSplitWrite
 from app.repositories.base_repo import BaseRepository
 
 logger = logging.getLogger(__name__)

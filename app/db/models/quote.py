@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from app.db.models.company import Company
 
 
-class StockPriceChange(Base):
+class CompanyStockPriceChange(Base):
     __tablename__ = "stock_price_changes"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -63,7 +63,7 @@ class StockPriceChange(Base):
     )
 
 
-class StockPrice(Base):
+class CompanyStockPrice(Base):
     __tablename__ = "stock_prices"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

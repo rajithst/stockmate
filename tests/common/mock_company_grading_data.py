@@ -1,7 +1,7 @@
 from typing import Type, TypeVar, Any, Dict
 from sqlalchemy.orm import Session
 
-from app.schemas.grading import CompanyGradingRead, CompanyGradingSummaryRead
+from app.schemas.market_data import CompanyGradingRead, CompanyGradingSummaryRead
 from app.db.models.grading import CompanyGrading, CompanyGradingSummary
 
 T = TypeVar("T")

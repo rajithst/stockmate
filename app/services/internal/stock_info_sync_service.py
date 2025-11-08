@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
 from app.repositories.stock_info_repo import StockInfoRepository
-from app.schemas.dividend import CompanyDividendRead, CompanyDividendWrite
-from app.schemas.stock import (
+from app.schemas.quote import CompanyDividendRead, CompanyDividendWrite
+from app.schemas.quote import (
     CompanyStockPeerRead,
     CompanyStockPeerWrite,
     CompanyStockSplitRead,
@@ -30,14 +30,16 @@ class StockInfoSyncService(BaseSyncService):
         """
         try:
             from_date = datetime.now().strftime("%Y-%m-%d")
-            to_date = (datetime.now().replace(day=1) + timedelta(days=90)).strftime("%Y-%m-%d")
+            to_date = (datetime.now().replace(day=1) + timedelta(days=90)).strftime(
+                "%Y-%m-%d"
+            )
             dividends_data = self._market_api_client.get_dividend_calendar(
                 from_date, to_date
             )
 
             # get dividends from dividend data for all available companies in the db
             all_symbols = self._repository.get_all_company_symbols()
-            
+
             records_to_persist = []
             for sym in all_symbols:
                 sym_dividends = [
@@ -61,6 +63,39 @@ class StockInfoSyncService(BaseSyncService):
 
         except Exception as e:
             logger.error(f"Error upserting dividend calendar: {str(e)}", exc_info=True)
+            raise
+
+    def upsert_dividends(
+        self, symbol: str, limit: int = 50
+    ) -> list[CompanyDividendRead] | None:
+        """
+        Fetch and upsert dividends for a company.
+
+        Args:
+            symbol: Stock symbol
+            limit: Number of records to fetch
+        """
+        try:
+            company = self._get_company_or_fail(symbol)
+            if not company:
+                return None
+
+            # Explicit control over API call
+            dividends_data = self._market_api_client.get_dividends(symbol, limit)
+            if not self._validate_api_response(dividends_data, "dividends", symbol):
+                return None
+
+            records_to_persist = self._add_company_id_to_records(
+                dividends_data, company.id, CompanyDividendWrite
+            )
+            dividends = self._repository.upsert_dividends(records_to_persist)
+            result = self._map_schema_list(dividends, CompanyDividendRead)
+
+            self._log_sync_success("dividends", len(result), symbol)
+            return result
+
+        except Exception as e:
+            logger.error(f"Error upserting dividends: {str(e)}", exc_info=True)
             raise
 
     def upsert_stock_splits(

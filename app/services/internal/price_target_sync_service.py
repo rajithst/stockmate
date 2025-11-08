@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
 from app.repositories.price_target_repo import CompanyPriceTargetRepository
-from app.schemas.price_target import (
+from app.schemas.market_data import (
     CompanyPriceTargetRead,
     CompanyPriceTargetSummaryRead,
     CompanyPriceTargetSummaryWrite,

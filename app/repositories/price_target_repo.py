@@ -2,7 +2,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from app.db.models.price_target import CompanyPriceTarget, CompanyPriceTargetSummary
-from app.schemas.price_target import (
+from app.schemas.market_data import (
     CompanyPriceTargetSummaryWrite,
     CompanyPriceTargetWrite,
 )

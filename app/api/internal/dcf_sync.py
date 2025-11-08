@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.internal.config import ERROR_MESSAGES, TAGS
 from app.dependencies.sync_services import create_sync_service_provider
-from app.schemas.dcf import DiscountedCashFlowRead
+from app.schemas.company_metrics import CompanyDiscountedCashFlowRead
 from app.services.internal.dcf_sync_service import DiscountedCashFlowSyncService
 
 router = APIRouter(prefix="", tags=[TAGS["dcf"]["name"]])
@@ -13,7 +13,7 @@ get_dcf_sync_service = create_sync_service_provider(DiscountedCashFlowSyncServic
 
 @router.get(
     "/{symbol}/sync",
-    response_model=DiscountedCashFlowRead,
+    response_model=CompanyDiscountedCashFlowRead,
     summary="Sync company DCF valuation from external API",
     description="Fetches and upserts company's discounted cash flow valuation from the external API into the database.",
 )
@@ -28,7 +28,7 @@ def sync_company_dcf(
         service: DiscountedCashFlowSyncService instance (injected)
 
     Returns:
-        DiscountedCashFlowRead: Synced DCF valuation data
+        CompanyDiscountedCashFlowRead: Synced DCF valuation data
 
     Raises:
         HTTPException: 404 if DCF data not found

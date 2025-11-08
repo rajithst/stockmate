@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.dependencies import get_db_session
 from app.dependencies.auth import get_current_user
-from app.schemas.portfolio import (
+from app.schemas.user import (
     PortfolioDetail,
     PortfolioRead,
     PortfolioTradingHistoryRead,

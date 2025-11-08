@@ -14,9 +14,9 @@ from app.db.models.portfolio import (
     PortfolioHoldingPerformance,
     PortfolioTradingHistory,
 )
-from app.db.models.quote import StockPrice
+from app.db.models.quote import CompanyStockPrice
 from app.repositories.base_repo import BaseRepository
-from app.schemas.portfolio import (
+from app.schemas.user import (
     PortfolioCreate,
     PortfolioDividendHistoryWrite,
     PortfolioHoldingPerformanceWrite,
@@ -160,10 +160,11 @@ class PortfolioHoldingPerformanceRepository(
         # Get the most recent price for each symbol in a single query
         stmt = (
             select(
-                StockPrice.symbol, sql_func.max(StockPrice.date).label("latest_date")
+                CompanyStockPrice.symbol,
+                sql_func.max(CompanyStockPrice.date).label("latest_date"),
             )
-            .where(StockPrice.symbol.in_(symbols))
-            .group_by(StockPrice.symbol)
+            .where(CompanyStockPrice.symbol.in_(symbols))
+            .group_by(CompanyStockPrice.symbol)
         )
 
         latest_dates = {row[0]: row[1] for row in self._db.execute(stmt).all()}
@@ -172,11 +173,11 @@ class PortfolioHoldingPerformanceRepository(
             return {symbol: 0.0 for symbol in symbols}
 
         # Get the prices for those latest dates
-        stmt = select(StockPrice).where(
-            (StockPrice.symbol.in_(symbols))
+        stmt = select(CompanyStockPrice).where(
+            (CompanyStockPrice.symbol.in_(symbols))
             & (
-                (StockPrice.symbol == StockPrice.symbol)
-                & (StockPrice.date.in_(latest_dates.values()))
+                (CompanyStockPrice.symbol == CompanyStockPrice.symbol)
+                & (CompanyStockPrice.date.in_(latest_dates.values()))
             )
         )
 

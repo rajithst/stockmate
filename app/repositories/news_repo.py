@@ -9,7 +9,7 @@ from app.db.models.news import (
     CompanyPriceTargetNews,
     CompanyStockNews,
 )
-from app.schemas.news import (
+from app.schemas.market_data import (
     CompanyGeneralNewsWrite,
     CompanyGradingNewsWrite,
     CompanyPriceTargetNewsWrite,

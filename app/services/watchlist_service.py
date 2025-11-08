@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models.watchlist import WatchlistItem
 from app.repositories.watchlist_repo import WatchlistItemRepository, WatchlistRepository
-from app.schemas.watchlist import (
+from app.schemas.user import (
     WatchlistCompanyItem,
     WatchlistCreate,
     WatchlistItemCreate,

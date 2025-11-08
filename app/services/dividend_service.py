@@ -13,7 +13,7 @@ from app.repositories.portfolio_repo import (
     PortfolioRepository,
     PortfolioTradingHistoryRepository,
 )
-from app.schemas.portfolio import PortfolioDividendHistoryWrite
+from app.schemas.user import PortfolioDividendHistoryWrite
 
 logger = logging.getLogger(__name__)
 

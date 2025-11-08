@@ -18,6 +18,7 @@ DEFAULTS: Final = {
     "grading_limit": 50,  # gradings
     "price_target_limit": 50,  # price targets
     "stock_info_limit": 50,  # dividends, splits, peers
+    "segmentation_limit": 10,  # revenue product segmentation
 }
 
 # ========== API CONSTRAINTS ==========
@@ -30,6 +31,7 @@ LIMITS: Final = {
     "grading_limit": {"min": 1, "max": 500},
     "price_target_limit": {"min": 1, "max": 500},
     "stock_info_limit": {"min": 1, "max": 500},
+    "segmentation_limit": {"min": 1, "max": 100},
 }
 
 # ========== PERIOD ENUMS ==========
@@ -65,8 +67,10 @@ ERROR_MESSAGES: Final = {
     "NOT_FOUND_DIVIDENDS": "Dividends not found",
     "NOT_FOUND_STOCK_SPLITS": "Stock splits not found for symbol: {symbol}",
     "NOT_FOUND_STOCK_PEERS": "Stock peers not found for symbol: {symbol}",
+    "NOT_FOUND_REVENUE_SEGMENTATION": "Revenue product segmentation not found for symbol: {symbol}",
     "INVALID_SYMBOL": "Invalid stock symbol. Must be 1-5 characters",
     "NOT_FOUND_DAILY_PRICES": "Daily prices not found for symbol: {symbol}",
+    "NOT_FOUND_ANALYST_ESTIMATES": "Analyst estimates not found for symbol: {symbol}",
 }
 
 # ========== SUCCESS MESSAGES ==========
@@ -113,5 +117,9 @@ TAGS: Final = {
     "dcf": {
         "name": "dcf_data",
         "description": "Discounted cash flow valuation",
+    },
+    "revenue_segmentation": {
+        "name": "revenue_segmentation_data",
+        "description": "Revenue product segmentation",
     },
 }

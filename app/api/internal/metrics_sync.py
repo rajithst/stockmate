@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.internal.config import DEFAULTS, ERROR_MESSAGES, LIMITS, PERIOD_TYPES, TAGS
 from app.dependencies.sync_services import create_sync_service_provider
-from app.schemas.financial_ratio import CompanyFinancialRatioRead
-from app.schemas.financial_score import CompanyFinancialScoresRead
-from app.schemas.key_metrics import CompanyKeyMetricsRead
+from app.schemas.financial_statements import CompanyFinancialRatioRead
+from app.schemas.financial_health import CompanyFinancialScoresRead
+from app.schemas.company_metrics import CompanyKeyMetricsRead
 from app.services.internal.metrics_sync_service import MetricsSyncService
 
 router = APIRouter(prefix="", tags=[TAGS["metrics"]["name"]])
