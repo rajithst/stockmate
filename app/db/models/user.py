@@ -55,26 +55,26 @@ class User(Base):
         "Portfolio",
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="select",
     )
     watchlists: Mapped[list["Watchlist"]] = relationship(
         "Watchlist",
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="select",
     )
     notification_preferences: Mapped["NotificationPreference | None"] = relationship(
         "NotificationPreference",
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="select",
         uselist=False,
     )
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification",
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="select",
     )
 
     def __repr__(self):

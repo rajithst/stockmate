@@ -84,101 +84,101 @@ class Company(Base):
     )
     # Relationships - Collections (use selectin for better performance)
     analyst_estimates: Mapped[list["CompanyAnalystEstimate"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     revenue_product_segmentations: Mapped[list["CompanyRevenueProductSegmentation"]] = (
         relationship(
-            back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+            back_populates="company", cascade="all, delete-orphan", lazy="select"
         )
     )
     stock_splits: Mapped[list["CompanyStockSplit"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     income_statements: Mapped[list["CompanyIncomeStatement"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     balance_sheets: Mapped[list["CompanyBalanceSheet"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     cash_flow_statements: Mapped[list["CompanyCashFlowStatement"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     gradings: Mapped[list["CompanyGrading"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     key_metrics: Mapped[list["CompanyKeyMetrics"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     financial_ratios: Mapped[list["CompanyFinancialRatio"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     stock_peers: Mapped[list["CompanyStockPeer"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     stock_prices: Mapped[list["CompanyStockPrice"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     financial_health: Mapped[list["CompanyFinancialHealth"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     technical_indicators: Mapped[list["CompanyTechnicalIndicator"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     general_news: Mapped[list["CompanyGeneralNews"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     price_target_news: Mapped[list["CompanyPriceTargetNews"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     grading_news: Mapped[list["CompanyGradingNews"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     stock_news: Mapped[list["CompanyStockNews"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
+    
 
-    # Relationships - One-to-One (use joined for immediate loading)
     grading_summary: Mapped["CompanyGradingSummary | None"] = relationship(
         back_populates="company",
         uselist=False,
         cascade="all, delete-orphan",
-        lazy="joined",
+        lazy="select",  # Don't join by default
     )
     rating_summary: Mapped["CompanyRatingSummary | None"] = relationship(
         back_populates="company",
         uselist=False,
         cascade="all, delete-orphan",
-        lazy="joined",
+        lazy="select",  # Don't join by default
     )
     price_target_summary: Mapped["CompanyPriceTargetSummary | None"] = relationship(
         back_populates="company",
         uselist=False,
         cascade="all, delete-orphan",
-        lazy="joined",
+        lazy="select",  # Don't join by default
     )
     discounted_cash_flow: Mapped["CompanyDiscountedCashFlow | None"] = relationship(
         back_populates="company",
         uselist=False,
         cascade="all, delete-orphan",
-        lazy="joined",
+        lazy="select",  # Don't join by default
     )
     price_target: Mapped["CompanyPriceTarget | None"] = relationship(
         back_populates="company",
         uselist=False,
         cascade="all, delete-orphan",
-        lazy="joined",
+        lazy="select",  # Don't join by default
     )
     stock_price_change: Mapped["CompanyStockPriceChange | None"] = relationship(
         back_populates="company",
         uselist=False,
         cascade="all, delete-orphan",
-        lazy="joined",
+        lazy="select",  # Don't join by default
     )
     financial_score: Mapped["CompanyFinancialScore | None"] = relationship(
         back_populates="company",
         uselist=False,
         cascade="all, delete-orphan",
-        lazy="joined",
+        lazy="select",  # Don't join by default
     )
 
     @property
@@ -246,29 +246,6 @@ class Company(Base):
         """Get today's trading volume."""
         latest = self.latest_stock_price
         return latest.volume if latest else None
-
-    @property
-    def latest_key_metrics(self) -> "CompanyKeyMetrics | None":
-        """
-        Get the latest key metrics with fiscal year priority.
-
-        Uses already-loaded key_metrics relationship (no additional queries).
-        Priority: FY > Q4 > Q3 > Q2 > Q1 for the most recent fiscal year.
-        """
-        if not self.key_metrics:
-            return None
-
-        # Get the latest fiscal year from in-memory data
-        latest_fiscal_year = max(metric.fiscal_year for metric in self.key_metrics)
-
-        # Priority: FY > Q4 > Q3 > Q2 > Q1
-        periods = ["FY", "Q4", "Q3", "Q2", "Q1"]
-        for period in periods:
-            for metric in self.key_metrics:
-                if metric.fiscal_year == latest_fiscal_year and metric.period == period:
-                    return metric
-
-        return None
 
     def __repr__(self) -> str:
         return f"<Company(symbol={self.symbol}, name={self.company_name})>"

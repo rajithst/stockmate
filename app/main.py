@@ -16,7 +16,7 @@ from app.api.internal import (
     revenue_product_segmentation_sync,
     stock_info_sync,
 )
-from app.api.v1 import auth, company, portfolio, watchlist, watchlist_item
+from app.api.v1 import auth, company, portfolio, watchlist
 from app.core.config import config
 from app.core.logs import setup_logging
 
@@ -36,9 +36,6 @@ app.add_middleware(
 
 app.include_router(company.router, prefix="/api/v1/company", tags=["company"])
 app.include_router(watchlist.router, prefix="/api/v1/watchlist", tags=["watchlist"])
-app.include_router(
-    watchlist_item.router, prefix="/api/v1/watchlist-items", tags=["watchlist-items"]
-)
 
 app.include_router(portfolio.router, prefix="/api/v1/portfolio", tags=["portfolio"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])

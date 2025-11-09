@@ -1,13 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Body, Depends
 from sqlalchemy.orm import Session
 
 from app.dependencies.auth import get_current_user
 from app.dependencies.db import get_db_session
-from app.schemas.user import Token
-from app.schemas.user import UserCreate, UserRead
+from app.schemas.user import LoginRequest, Token, UserCreate, UserRead
 from app.services.auth_service import AuthService
 
 router = APIRouter()
@@ -20,15 +18,25 @@ def get_auth_service(db: Session = Depends(get_db_session)) -> AuthService:
     return AuthService(db)
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=Token, tags=["Authentication"])
 def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    credentials: Annotated[LoginRequest, Body(embed=False)],
     auth_service: AuthService = Depends(get_auth_service),
 ):
     """
     Authenticate user and return an access token.
+
+    **Request body** - Send as JSON:
+    ```json
+    {
+        "username": "your_username",
+        "password": "your_password"
+    }
+    ```
+
+    **Returns:** Access token for authenticated requests
     """
-    user = auth_service.authenticate_user(form_data.username, form_data.password)
+    user = auth_service.authenticate_user(credentials.username, credentials.password)
     return auth_service.create_user_access_token(user)
 
 

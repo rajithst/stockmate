@@ -2,8 +2,7 @@ from logging import getLogger
 
 from sqlalchemy.orm import Session
 
-from app.db.models.watchlist import WatchlistItem
-from app.repositories.watchlist_repo import WatchlistItemRepository, WatchlistRepository
+from app.repositories.watchlist_repo import WatchlistRepository
 from app.schemas.user import (
     WatchlistCompanyItem,
     WatchlistCreate,
@@ -21,13 +20,21 @@ class WatchlistService:
     def __init__(self, session: Session) -> None:
         self._repository = WatchlistRepository(session)
 
+    def get_user_watchlists(self, user_id: int) -> list[WatchlistRead]:
+        """Get all watchlists for a specific user."""
+        watchlists = self._repository.get_all_watchlists(user_id)
+        return [WatchlistRead.model_validate(watchlist) for watchlist in watchlists]
+
     def create_watchlist(
         self, watchlist_in: WatchlistUpsertRequest, user_id: int
     ) -> WatchlistRead:
         """Create a new watchlist for the authenticated user."""
-        watchlist_data = watchlist_in.model_dump()
-        watchlist_data["user_id"] = user_id
-        watchlist_in = WatchlistCreate.model_validate(watchlist_data)
+        watchlist_in = WatchlistCreate(
+            name=watchlist_in.name,
+            currency=watchlist_in.currency,
+            description=watchlist_in.description,
+            user_id=user_id,
+        )
         watchlist = self._repository.create_watchlist(watchlist_in)
         logger.info(f"Created watchlist {watchlist.id} for user {user_id}")
         return WatchlistRead.model_validate(watchlist)
@@ -39,11 +46,13 @@ class WatchlistService:
         if not self._repository.verify_watchlist_ownership(watchlist_id, user_id):
             raise ValueError("Watchlist not found or access denied")
 
-        watchlist_data = watchlist_in.model_dump()
-        watchlist_data["id"] = watchlist_id
-        watchlist_data["user_id"] = user_id
-        watchlist_in = WatchlistUpdate.model_validate(watchlist_data)
-        watchlist = self._repository.update_watchlist(watchlist_in)
+        watchlist = WatchlistUpdate(
+            id=watchlist_id,
+            name=watchlist_in.name,
+            currency=watchlist_in.currency,
+            description=watchlist_in.description,
+            user_id=user_id,
+        )
         logger.info(f"Updated watchlist {watchlist.id} for user {user_id}")
         return WatchlistRead.model_validate(watchlist)
 
@@ -55,39 +64,24 @@ class WatchlistService:
         self._repository.delete_watchlist(watchlist_id, user_id)
         logger.info(f"Deleted watchlist with ID: {watchlist_id}")
 
-
-class WatchListItemService:
-    def __init__(self, session: Session) -> None:
-        self._repository = WatchlistItemRepository(session)
-
-    @staticmethod
-    def _watchlist_item_to_company_item(
-        item: WatchlistItem,
+    def convert_watchlist_item_to_company_item(
+        self, item: any
     ) -> WatchlistCompanyItem | None:
-        """Convert a WatchlistItem to a WatchlistCompanyItem schema."""
-        company = item.company_profile
-        if not company:
-            return WatchlistCompanyItem(
-                symbol=item.symbol,
-                company_name="",
-                price=item.current_price,
-                currency=getattr(company, "currency", "USD"),
-                price_change=0.0,
-                price_change_percent=0.0,
-                market_cap=0.0,
-            )
+        """Convert a WatchlistItem to WatchlistCompanyItem with company details."""
+        if not item or not item.company_profile:
+            return None
 
-        # Safely extract metrics with fallback to defaults
+        # Safely extract financial ratio fields with None defaults
         financial_ratios = item.financial_ratios or {}
 
-        return WatchlistCompanyItem(
-            symbol=company.symbol,
-            company_name=company.company_name,
+        item_in = WatchlistCompanyItem(
+            symbol=item.symbol,
+            company_name=item.company_profile.company_name,
             price=item.current_price,
-            currency=company.currency,
-            price_change=company.daily_price_change or 0.0,
-            price_change_percent=company.daily_price_change_percent or 0.0,
-            market_cap=company.market_cap,
+            currency=item.company_profile.currency,
+            price_change=item.price_change,
+            price_change_percent=item.price_change_percent,
+            market_cap=item.company_profile.market_cap,
             price_to_earnings_ratio=getattr(
                 financial_ratios, "price_to_earnings_ratio", None
             ),
@@ -107,8 +101,9 @@ class WatchListItemService:
             price_to_operating_cash_flow_ratio=getattr(
                 financial_ratios, "price_to_operating_cash_flow_ratio", None
             ),
-            image=company.image,
+            image=item.company_profile.image if item.company_profile else None,
         )
+        return item_in
 
     def get_watchlist_items(
         self, watchlist_id: int, user_id: int
@@ -118,64 +113,35 @@ class WatchListItemService:
         if not self._repository.verify_watchlist_ownership(watchlist_id, user_id):
             raise ValueError("Watchlist not found or access denied")
 
-        watchlist_items = self._repository.get_watchlist_items(watchlist_id)
-
-        # Load all prices, profiles, and ratios in bulk to avoid N+1
-        prices = self._repository.load_current_prices_for_items(watchlist_items)
-        profiles = self._repository.load_company_profiles_for_items(watchlist_items)
-        ratios = self._repository.load_financial_ratios_for_items(watchlist_items)
-
-        for item in watchlist_items:
-            item.set_current_price(prices.get(item.symbol, 0.0))
-            item.set_company_profile(profiles.get(item.symbol))
-            item.set_financial_ratios(ratios.get(item.symbol))
+        watchlist = self._repository.get_watchlist_with_relations(watchlist_id, user_id)
+        if not watchlist:
+            return []
 
         result = []
-        for item in watchlist_items:
-            company_item = self._watchlist_item_to_company_item(item)
-            if company_item:
-                result.append(company_item)
-
+        for item in watchlist.items:
+            if not item.company_profile:
+                continue
+            result.append(self.convert_watchlist_item_to_company_item(item))
         return result
-
-    def get_watchlist_item(
-        self, watchlist_id: int, symbol: str, user_id: int
-    ) -> WatchlistCompanyItem | None:
-        """Get a specific item from a watchlist by symbol, ensuring it belongs to the authenticated user."""
-        # Verify the user owns the watchlist
-        if not self._repository.verify_watchlist_ownership(watchlist_id, user_id):
-            raise ValueError("Watchlist not found or access denied")
-
-        watchlist_item = self._repository.get_watchlist_item(watchlist_id, symbol)
-        if watchlist_item:
-            # OPTIMIZATION: Load data for single item (small overhead, maintains consistency)
-            prices = self._repository.load_current_prices_for_items([watchlist_item])
-            profiles = self._repository.load_company_profiles_for_items(
-                [watchlist_item]
-            )
-            ratios = self._repository.load_financial_ratios_for_items([watchlist_item])
-
-            watchlist_item.set_current_price(prices.get(watchlist_item.symbol, 0.0))
-            watchlist_item.set_company_profile(profiles.get(watchlist_item.symbol))
-            watchlist_item.set_financial_ratios(ratios.get(watchlist_item.symbol))
-
-            return self._watchlist_item_to_company_item(watchlist_item)
-
-        return None
 
     def add_watchlist_item(
         self, watchlist_id: int, watchlist_item_in: WatchlistItemWrite, user_id: int
-    ) -> WatchlistCompanyItem:
+    ) -> WatchlistCompanyItem | None:
         """Add an item to a watchlist, ensuring it belongs to the authenticated user."""
         if not self._repository.verify_watchlist_ownership(watchlist_id, user_id):
             logger.error("Watchlist not found or access denied")
             raise ValueError("Watchlist not found or access denied")
-        watchlist_item_data = watchlist_item_in.model_dump()
-        watchlist_item_data["watchlist_id"] = watchlist_id
-        watchlist_item_in = WatchlistItemCreate.model_validate(watchlist_item_data)
+        watchlist_item_in = WatchlistItemCreate(
+            watchlist_id=watchlist_id,
+            symbol=watchlist_item_in.symbol,
+        )
         watchlist_item = self._repository.add_watchlist_item(watchlist_item_in)
         if watchlist_item:
-            return self._watchlist_item_to_company_item(watchlist_item)
+            # Load the item with all relations pre-loaded
+            result = self._repository.get_watchlist_item_with_relations(
+                watchlist_id, watchlist_item.id, user_id
+            )
+            return self.convert_watchlist_item_to_company_item(result)
         return None
 
     def delete_watchlist_item(

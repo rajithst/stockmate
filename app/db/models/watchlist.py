@@ -1,11 +1,12 @@
 from datetime import datetime
 from logging import getLogger
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func, select
-from sqlalchemy.orm import Mapped, mapped_column, object_session, relationship
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
+from app.db.models.company_metrics import CompanyKeyMetrics
 from app.db.models.financial_statements import CompanyFinancialRatio
 
 if TYPE_CHECKING:
@@ -80,17 +81,18 @@ class WatchlistItem(Base):
         "Watchlist", back_populates="items", foreign_keys=[watchlist_id], lazy="select"
     )
 
-    def set_current_price(self, price: float) -> None:
-        """Set the current price (pre-loaded to avoid N+1 queries)."""
-        self._current_price = price
-
-    def set_company_profile(self, company: "Company | None") -> None:
+    def set_company_profile(self, company: "Any") -> None:
         """Set the company profile (pre-loaded to avoid N+1 queries)."""
         self._company_profile = company
-
-    def set_financial_ratios(self, ratios: "CompanyFinancialRatio | None") -> None:
-        """Set the financial ratios (pre-loaded to avoid N+1 queries)."""
-        self._financial_ratios = ratios
+        # Extract price from pre-loaded stock_prices list (avoid triggering DB query)
+        self._current_price = (
+            company.stock_prices[0].close_price if company.stock_prices else 0.0
+        )
+        self._price_change = company.stock_prices[0].change if company.stock_prices else 0.0
+        self._price_change_percent = company.stock_prices[0].change_percent if company.stock_prices else 0.0
+        # Extract latest metrics and ratios from pre-loaded lists
+        self._key_metrics = company.key_metrics[0] if company.key_metrics else None
+        self._financial_ratios = company.financial_ratios[0] if company.financial_ratios else None
 
     def _get_company_profile(self) -> "Company | None":
         """Fetch company profile from database."""
@@ -99,14 +101,10 @@ class WatchlistItem(Base):
             logger.info(f"Using pre-loaded company profile for {self.symbol}")
             return self._company_profile
 
-        session = object_session(self)
-        if not session:
-            return None
-
-        from app.db.models.company import Company
-
-        stmt = select(Company).where(Company.symbol == self.symbol)
-        return session.execute(stmt).scalar_one_or_none()
+        logger.info(
+            f"cannot fetch company profile for {self.symbol} from cache - pre load data to avoid n+1 queries"
+        )
+        return None
 
     def _get_latest_financial_ratios(self) -> "CompanyFinancialRatio | None":
         """Fetch latest financial ratios for this symbol using repository logic."""
@@ -115,40 +113,21 @@ class WatchlistItem(Base):
             logger.info(f"Using pre-loaded financial ratios for {self.symbol}")
             return self._financial_ratios
 
-        logger.info(f"Fetching financial ratios for {self.symbol} from DB")
-        session = object_session(self)
-        if not session:
-            return None
-
-        from app.db.models.financial_statements import CompanyFinancialRatio
-
-        # Get the latest fiscal year
-        latest_fiscal_year = (
-            session.query(CompanyFinancialRatio.fiscal_year)
-            .filter(CompanyFinancialRatio.symbol == self.symbol)
-            .order_by(CompanyFinancialRatio.fiscal_year.desc())
-            .first()
+        logger.info(
+            f"cannot fetch financial ratios for {self.symbol} from cache - pre load data to avoid n+1 queries"
         )
+        return None
 
-        if not latest_fiscal_year:
-            return None
+    def _get_key_metrics(self) -> "CompanyKeyMetrics | None":
+        """Fetch latest key metrics for this symbol using repository logic."""
+        # Return pre-loaded key metrics if available
+        if hasattr(self, "_key_metrics"):
+            logger.info(f"Using pre-loaded key metrics for {self.symbol}")
+            return self._key_metrics
 
-        # Priority: FY > Q4 > Q3 > Q2 > Q1
-        periods = ["FY", "Q4", "Q3", "Q2", "Q1"]
-        for period in periods:
-            record = (
-                session.query(CompanyFinancialRatio)
-                .filter(
-                    CompanyFinancialRatio.symbol == self.symbol,
-                    CompanyFinancialRatio.fiscal_year == latest_fiscal_year[0],
-                    CompanyFinancialRatio.period == period,
-                )
-                .order_by(CompanyFinancialRatio.date.desc())
-                .first()
-            )
-            if record:
-                return record
-
+        logger.info(
+            f"cannot fetch key metrics for {self.symbol} from cache - pre load data to avoid n+1 queries"
+        )
         return None
 
     def _get_current_price(self) -> float:
@@ -158,23 +137,33 @@ class WatchlistItem(Base):
             logger.info(f"Using pre-loaded current price for {self.symbol}")
             return self._current_price
 
-        session = object_session(self)
-        if not session:
-            return 0.0
-
-        from app.db.models.quote import CompanyStockPrice
-
-        stmt = (
-            select(CompanyStockPrice)
-            .where(CompanyStockPrice.symbol == self.symbol)
-            .order_by(CompanyStockPrice.date.desc())
-            .limit(1)
+        logger.info(
+            f"cannot fetch current price for {self.symbol} from cache - pre load data to avoid n+1 queries"
         )
+        return 0.0
 
-        result = session.execute(stmt).scalar_one_or_none()
+    def _get_price_change(self) -> float:
+        """Fetch the latest price change from the database."""
+        # Return pre-loaded price change if available
+        if hasattr(self, "_price_change"):
+            logger.info(f"Using pre-loaded price change for {self.symbol}")
+            return self._price_change
 
-        if result:
-            return result.close_price
+        logger.info(
+            f"cannot fetch price change for {self.symbol} from cache - pre load data to avoid n+1 queries"
+        )
+        return 0.0
+    
+    def _get_price_change_percent(self) -> float:
+        """Fetch the latest price change percent from the database."""
+        # Return pre-loaded price change percent if available
+        if hasattr(self, "_price_change_percent"):
+            logger.info(f"Using pre-loaded price change percent for {self.symbol}")
+            return self._price_change_percent
+
+        logger.info(
+            f"cannot fetch price change percent for {self.symbol} from cache - pre load data to avoid n+1 queries"
+        )
         return 0.0
 
     @property
@@ -188,9 +177,24 @@ class WatchlistItem(Base):
         return self._get_latest_financial_ratios()
 
     @property
+    def key_metrics(self) -> "CompanyKeyMetrics | None":
+        """Get the latest key metrics for this watchlist item."""
+        return self._get_key_metrics()
+
+    @property
     def current_price(self) -> float:
         """Get the current price for this symbol."""
         return self._get_current_price()
+    
+    @property
+    def price_change(self) -> float:
+        """Get the latest price change for this symbol."""
+        return self._get_price_change()
+
+    @property
+    def price_change_percent(self) -> float:
+        """Get the latest price change percent for this symbol."""
+        return self._get_price_change_percent()
 
     def __repr__(self):
         return (

@@ -48,6 +48,12 @@ class UserCreate(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class LoginRequest(BaseModel):
+    """Login request with username and password."""
+    username: str
+    password: str
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class UserWrite(User):
     hashed_password: str
@@ -262,7 +268,6 @@ class PortfolioDividendHistory(BaseModel):
 
 
 class PortfolioDividendHistoryRead(PortfolioDividendHistory):
-    id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

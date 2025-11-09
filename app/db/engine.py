@@ -17,6 +17,7 @@ engine = create_engine(
     config.db_url,
     pool_pre_ping=True,  # ✅ avoids stale connections in MySQL
     connect_args=connect_args,
+    echo=False,  # ✅ Disable echo - use logging instead
 )
 
 # ---------------------------------------------------------
