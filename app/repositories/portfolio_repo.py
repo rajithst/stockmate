@@ -3,9 +3,10 @@
 import logging
 from datetime import datetime, timezone
 
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session, lazyload
 
+from app.db.models.company import Company
 from app.db.models.portfolio import (
     Portfolio,
     PortfolioDividendHistory,
@@ -49,8 +50,6 @@ class PortfolioRepository:
 
         Use get_portfolio_with_relations() if you need detailed portfolio data.
         """
-        from sqlalchemy.orm import lazyload
-
         # Direct query overriding lazy="selectin" to prevent relation loading
         stmt = (
             select(Portfolio)
@@ -94,14 +93,14 @@ class PortfolioRepository:
         # Query portfolio - model's lazy="selectin" auto-loads all relations
         portfolio = self._db.query(Portfolio).filter_by(**filters).first()
 
+        holding_performances = list(portfolio.holding_performances)
         # Immediately pre-load and cache prices for all holdings
-        if portfolio and portfolio.holding_performances:
-            prices = self._load_current_prices_for_holdings(
-                portfolio.holding_performances
-            )
-            for holding in portfolio.holding_performances:
-                price = prices.get(holding.symbol, 0.0)
-                holding.set_current_price(price)
+        if holding_performances:
+            profile_map = self._load_company_profiles_for_items(holding_performances)
+            for holding in holding_performances:
+                target = profile_map.get(holding.symbol, None)
+                if target:
+                    holding.set_company_profile(target)
 
         return portfolio
 
@@ -150,50 +149,81 @@ class PortfolioRepository:
         logger.info(f"Soft deleted portfolio {portfolio_id}")
         return True
 
-    def _load_current_prices_for_holdings(
+    def _load_company_profiles_for_items(
         self, holdings: list[PortfolioHoldingPerformance]
-    ) -> dict[str, float]:
+    ) -> dict[str, dict]:
         """
-        Bulk load latest prices for all holdings in a single query.
+        Bulk load company data for all holdings without triggering lazy-loads.
 
-        Returns a dict mapping symbol -> current_price
+        Returns a dict mapping symbol -> dict with pre-loaded data (no ORM objects).
+        This prevents Pydantic from accessing lazy-loaded relationships.
         """
         if not holdings:
             return {}
 
         symbols = list({holding.symbol for holding in holdings})
 
-        # Single query: get latest price for each symbol using window function
-        # Subquery to rank prices by date (most recent first)
-        subquery = (
-            select(
-                CompanyStockPrice.symbol,
-                CompanyStockPrice.close_price,
-                func.row_number()
-                .over(
-                    partition_by=CompanyStockPrice.symbol,
-                    order_by=CompanyStockPrice.date.desc(),
-                )
-                .label("rn"),
+        # Query companies - we only need basic fields, not relationships
+        stmt = select(Company).where(Company.symbol.in_(symbols))
+        companies = self._db.execute(stmt).scalars().all()
+
+        if not companies:
+            return {symbol: None for symbol in symbols}
+
+        company_ids = [c.id for c in companies]
+
+        # Get latest price per company
+        latest_prices = (
+            self._db.query(CompanyStockPrice)
+            .filter(CompanyStockPrice.company_id.in_(company_ids))
+            .order_by(
+                CompanyStockPrice.company_id,
+                CompanyStockPrice.date.desc(),
             )
-            .where(CompanyStockPrice.symbol.in_(symbols))
-            .subquery()
+            .distinct(CompanyStockPrice.company_id)
+            .all()
         )
 
-        # Get only the latest price for each symbol (rn = 1)
-        stmt = select(subquery.c.symbol, subquery.c.close_price).where(
-            subquery.c.rn == 1
-        )
+        # Build result dict with plain data (not ORM objects)
+        profiles = {}
+        for company in companies:
+            price_obj = next(
+                (p for p in latest_prices if p.company_id == company.id), None
+            )
 
-        results = self._db.execute(stmt).all()
-        prices = {row[0]: row[1] for row in results}
+            # Create dict with only needed fields (no relationships)
+            profiles[company.symbol] = {
+                "id": company.id,
+                "symbol": company.symbol,
+                "company_name": company.company_name,
+                "market_cap": company.market_cap,
+                "currency": company.currency,
+                "industry": company.industry,
+                "sector": company.sector,
+                "image": company.image,
+                "stock_prices": [
+                    {
+                        "company_id": price_obj.company_id,
+                        "symbol": price_obj.symbol,
+                        "date": price_obj.date,
+                        "open_price": price_obj.open_price,
+                        "close_price": price_obj.close_price,
+                        "high_price": price_obj.high_price,
+                        "low_price": price_obj.low_price,
+                        "change": price_obj.change,
+                        "change_percent": price_obj.change_percent,
+                    }
+                ]
+                if price_obj
+                else [],
+            }
 
-        # Fill in missing symbols with 0.0
+        # Fill in missing symbols with None
         for symbol in symbols:
-            if symbol not in prices:
-                prices[symbol] = 0.0
+            if symbol not in profiles:
+                profiles[symbol] = None
 
-        return prices
+        return profiles
 
 
 class PortfolioHoldingPerformanceRepository:

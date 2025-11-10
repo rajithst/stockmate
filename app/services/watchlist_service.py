@@ -73,35 +73,36 @@ class WatchlistService:
 
         # Safely extract financial ratio fields with None defaults
         financial_ratios = item.financial_ratios or {}
+        company_profile = item.company_profile or {}
+        logger.info(f"Company profile for {item.symbol}: {company_profile}")
+        logger.info(f"Financial ratios for {item.symbol}: {financial_ratios}")
 
         item_in = WatchlistCompanyItem(
             symbol=item.symbol,
-            company_name=item.company_profile.company_name,
+            company_name=company_profile.get("company_name", None),
             price=item.current_price,
-            currency=item.company_profile.currency,
+            currency=company_profile.get("currency", None),
             price_change=item.price_change,
             price_change_percent=item.price_change_percent,
-            market_cap=item.company_profile.market_cap,
-            price_to_earnings_ratio=getattr(
-                financial_ratios, "price_to_earnings_ratio", None
+            market_cap=company_profile.get("market_cap", None),
+            price_to_earnings_ratio=financial_ratios.get(
+                "price_to_earnings_ratio", None
             ),
-            price_to_earnings_growth_ratio=getattr(
-                financial_ratios, "price_to_earnings_growth_ratio", None
+            price_to_earnings_growth_ratio=financial_ratios.get(
+                "price_to_earnings_growth_ratio", None
             ),
-            forward_price_to_earnings_growth_ratio=getattr(
-                financial_ratios, "forward_price_to_earnings_growth_ratio", None
+            forward_price_to_earnings_growth_ratio=financial_ratios.get(
+                "forward_price_to_earnings_growth_ratio", None
             ),
-            price_to_book_ratio=getattr(financial_ratios, "price_to_book_ratio", None),
-            price_to_sales_ratio=getattr(
-                financial_ratios, "price_to_sales_ratio", None
+            price_to_book_ratio=financial_ratios.get("price_to_book_ratio", None),
+            price_to_sales_ratio=financial_ratios.get("price_to_sales_ratio", None),
+            price_to_free_cash_flow_ratio=financial_ratios.get(
+                "price_to_free_cash_flow_ratio", None
             ),
-            price_to_free_cash_flow_ratio=getattr(
-                financial_ratios, "price_to_free_cash_flow_ratio", None
+            price_to_operating_cash_flow_ratio=financial_ratios.get(
+                "price_to_operating_cash_flow_ratio", None
             ),
-            price_to_operating_cash_flow_ratio=getattr(
-                financial_ratios, "price_to_operating_cash_flow_ratio", None
-            ),
-            image=item.company_profile.image if item.company_profile else None,
+            image=company_profile.get("image", None),
         )
         return item_in
 

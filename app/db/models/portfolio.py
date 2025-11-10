@@ -1,6 +1,8 @@
-from datetime import date as date_type, datetime
-from enum import Enum
 import logging
+from asyncio.log import logger
+from datetime import date as date_type
+from datetime import datetime
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -12,9 +14,8 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     func,
-    select,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship, object_session
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
 
@@ -209,38 +210,62 @@ class PortfolioHoldingPerformance(Base):
         """
         return self.adjusted_total_cost
 
-    def set_current_price(self, price: float) -> None:
-        """Set the current price (pre-loaded to avoid N+1 queries)."""
-        # Store directly in instance __dict__ to avoid SQLAlchemy attribute tracking
-        self.__dict__["_current_price"] = price
+    def set_company_profile(self, profile: dict) -> None:
+        """Set the company profile (pre-loaded to avoid N+1 queries).
+
+        Profile can be a dict or an ORM object.
+        """
+
+        # Handle both dict and ORM object formats
+        if isinstance(profile, dict):
+            self._company_profile = profile
+            stock_prices = profile.get("stock_prices", [])
+            self._current_price = (
+                stock_prices[0].get("close_price") if stock_prices else 0.0
+            )
+            self._industry = profile.get("industry", "Unknown") or "Unknown"
+            self._sector = profile.get("sector", "Unknown") or "Unknown"
+        else:
+            logging.info(
+                "Please provide company profile as a dict to avoid N+1 queries."
+            )
 
     def _get_current_price(self) -> float:
         """Fetch the latest stock price from the database."""
-        # Return pre-loaded price if available (set by service for bulk loading)
-        if "_current_price" in self.__dict__:
-            logging.info("Using cached price for %s: %s", self.symbol, self.__dict__["_current_price"])
-            return self.__dict__["_current_price"]
+        if hasattr(self, "_current_price"):
+            logging.info(
+                "Using cached price for %s: %s", self.symbol, self._current_price
+            )
+            return self._current_price
 
-        session = object_session(self)
-        if not session:
-            return 0.0
-
-        from app.db.models.quote import CompanyStockPrice
-        logging.info("Fetching current price for symbol: %s (not cached)", self.symbol)
-
-        # Get the most recent stock price for this symbol
-        stmt = (
-            select(CompanyStockPrice)
-            .where(CompanyStockPrice.symbol == self.symbol)
-            .order_by(CompanyStockPrice.date.desc())
-            .limit(1)
+        logger.info(
+            f"cannot fetch current price for {self.symbol} from cache - pre load data to avoid n+1 queries"
         )
+        return None
 
-        result = session.execute(stmt).scalar_one_or_none()
+    def _get_industry(self) -> str:
+        """Fetch the industry from the pre-loaded company profile."""
+        if hasattr(self, "_industry"):
+            logging.info(
+                "Using cached industry for %s: %s", self.symbol, self._industry
+            )
+            return self._industry
 
-        if result:
-            return result.close_price
-        return 0.0
+        logger.info(
+            f"cannot fetch industry for {self.symbol} from cache - pre load data to avoid n+1 queries"
+        )
+        return "Unknown"
+
+    def _get_sector(self) -> str:
+        """Fetch the sector from the pre-loaded company profile."""
+        if hasattr(self, "_sector"):
+            logging.info("Using cached sector for %s: %s", self.symbol, self._sector)
+            return self._sector
+
+        logger.info(
+            f"cannot fetch sector for {self.symbol} from cache - pre load data to avoid n+1 queries"
+        )
+        return "Unknown"
 
     @property
     def current_price(self) -> float:
@@ -300,6 +325,16 @@ class PortfolioHoldingPerformance(Base):
         if portfolio_total == 0:
             return 0.0
         return (self.total_invested / portfolio_total) * 100
+
+    @property
+    def industry(self) -> str:
+        """Get the industry for this holding."""
+        return self._get_industry()
+
+    @property
+    def sector(self) -> str:
+        """Get the sector for this holding."""
+        return self._get_sector()
 
     def __repr__(self):
         return f"<PortfolioHoldingPerformance(portfolio_id={self.portfolio_id}, symbol={self.symbol})>"

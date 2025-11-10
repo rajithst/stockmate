@@ -130,20 +130,8 @@ class PortfolioService:
         # Calculate total dividends received
         dividends_received = sum(d.dividend_amount for d in dividends)
 
-        # Bulk load company sectors and industries for calculations
-        if holdings:
-            all_symbols = {h.symbol for h in holdings}
-            sectors_and_industries = self._company_repo.get_sector_industry_for_symbols(
-                all_symbols
-            )
-            company_sectors = {}
-            company_industries = {}
-            for symbol, (sector, industry) in sectors_and_industries.items():
-                company_sectors[symbol] = sector
-                company_industries[symbol] = industry
-        else:
-            company_sectors = {}
-            company_industries = {}
+        company_sectors = {h.symbol: h.sector for h in holdings}
+        company_industries = {h.symbol: h.industry for h in holdings}
 
         # Calculate sector and industry performance on-the-fly
         sector_performances = self._calculate_sector_performances(

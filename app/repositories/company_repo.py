@@ -56,7 +56,7 @@ class CompanyRepository:
         try:
             if not symbols:
                 return []
-            
+
             statement = select(Company).where(Company.symbol.in_(symbols))
             return self._db.execute(statement).scalars().all()
         except SQLAlchemyError as e:
@@ -67,8 +67,10 @@ class CompanyRepository:
         """Insert or update a company record based on the provided data."""
         try:
             # Check if company exists by symbol
-            existing = self._db.query(Company).filter_by(symbol=company_data.symbol).first()
-            
+            existing = (
+                self._db.query(Company).filter_by(symbol=company_data.symbol).first()
+            )
+
             if existing:
                 # Update existing company
                 map_model(existing, company_data)
@@ -78,44 +80,11 @@ class CompanyRepository:
                 existing = Company(**company_data.model_dump(exclude_unset=True))
                 self._db.add(existing)
                 logger.info(f"Created new company {company_data.symbol}")
-            
+
             self._db.commit()
             self._db.refresh(existing)
             return existing
         except SQLAlchemyError as e:
             self._db.rollback()
             logger.error(f"Error upserting company {company_data.symbol}: {e}")
-            raise
-    
-    def get_sector_industry_for_symbols(
-        self, symbols: list[str]
-    ) -> dict[str, tuple[str | None, str | None]]:
-        """Get sector and industry for a list of company symbols.
-
-        Args:
-            symbols: List of stock symbols
-        Returns:
-            Dict mapping symbol to (sector, industry)
-        """
-        try:
-            if not symbols:
-                return {}
-
-            stmt = select(Company.symbol, Company.sector, Company.industry).where(
-                Company.symbol.in_(symbols)
-            )
-            results = self._db.execute(stmt).all()
-
-            sector_industry_map = {
-                row[0]: (row[1], row[2]) for row in results
-            }
-
-            # Fill in missing symbols with (None, None)
-            for symbol in symbols:
-                if symbol not in sector_industry_map:
-                    sector_industry_map[symbol] = (None, None)
-
-            return sector_industry_map
-        except SQLAlchemyError as e:
-            logger.error(f"Error getting sector/industry for symbols {symbols}: {e}")
             raise

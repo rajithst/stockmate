@@ -82,7 +82,7 @@ class Company(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
-    # Relationships - Collections (use selectin for better performance)
+    # Relationships - Collections of related objects
     analyst_estimates: Mapped[list["CompanyAnalystEstimate"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
@@ -136,7 +136,6 @@ class Company(Base):
     stock_news: Mapped[list["CompanyStockNews"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
-    
 
     grading_summary: Mapped["CompanyGradingSummary | None"] = relationship(
         back_populates="company",

@@ -38,7 +38,9 @@ class StockInfoSyncService(BaseSyncService):
             )
 
             # get dividends from dividend data for all available companies in the db
-            all_symbols_with_currency = self._repository.get_all_company_symbols_with_currency()
+            all_symbols_with_currency = (
+                self._repository.get_all_company_symbols_with_currency()
+            )
 
             records_to_persist = []
             for sym, currency in all_symbols_with_currency.items():
@@ -50,7 +52,9 @@ class StockInfoSyncService(BaseSyncService):
                 )
                 # Add currency to each dividend record
                 records_to_persist.extend(
-                    CompanyDividendWrite.model_validate({**record.model_dump(), "currency": currency})
+                    CompanyDividendWrite.model_validate(
+                        {**record.model_dump(), "currency": currency}
+                    )
                     for record in sym_dividends
                 )
 
@@ -85,7 +89,7 @@ class StockInfoSyncService(BaseSyncService):
             dividends_data = self._market_api_client.get_dividends(symbol, limit)
             if not self._validate_api_response(dividends_data, "dividends", symbol):
                 return None
-            #add currency field to dividends_data
+            # add currency field to dividends_data
             for record in dividends_data:
                 record.currency = company.currency
             records_to_persist = self._add_company_id_to_records(

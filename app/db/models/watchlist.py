@@ -1,12 +1,11 @@
 from datetime import datetime
 from logging import getLogger
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.engine import Base
-from app.db.models.company_metrics import CompanyKeyMetrics
 from app.db.models.financial_statements import CompanyFinancialRatio
 
 if TYPE_CHECKING:
@@ -81,18 +80,20 @@ class WatchlistItem(Base):
         "Watchlist", back_populates="items", foreign_keys=[watchlist_id], lazy="select"
     )
 
-    def set_company_profile(self, company: "Any") -> None:
+    def set_company_profile(self, company: dict) -> None:
         """Set the company profile (pre-loaded to avoid N+1 queries)."""
-        self._company_profile = company
-        # Extract price from pre-loaded stock_prices list (avoid triggering DB query)
-        self._current_price = (
-            company.stock_prices[0].close_price if company.stock_prices else 0.0
-        )
-        self._price_change = company.stock_prices[0].change if company.stock_prices else 0.0
-        self._price_change_percent = company.stock_prices[0].change_percent if company.stock_prices else 0.0
-        # Extract latest metrics and ratios from pre-loaded lists
-        self._key_metrics = company.key_metrics[0] if company.key_metrics else None
-        self._financial_ratios = company.financial_ratios[0] if company.financial_ratios else None
+        if isinstance(company, dict):
+            self._company_profile = company
+            stock_prices = company.get("stock_prices", [])
+            financial_ratios = company.get("financial_ratios", [])
+            self._current_price = (
+                stock_prices[0].get("close_price") if stock_prices else 0.0
+            )
+            self._price_change = stock_prices[0].get("change") if stock_prices else 0.0
+            self._price_change_percent = (
+                stock_prices[0].get("change_percent") if stock_prices else 0.0
+            )
+            self._financial_ratios = financial_ratios[0] if financial_ratios else None
 
     def _get_company_profile(self) -> "Company | None":
         """Fetch company profile from database."""
@@ -115,18 +116,6 @@ class WatchlistItem(Base):
 
         logger.info(
             f"cannot fetch financial ratios for {self.symbol} from cache - pre load data to avoid n+1 queries"
-        )
-        return None
-
-    def _get_key_metrics(self) -> "CompanyKeyMetrics | None":
-        """Fetch latest key metrics for this symbol using repository logic."""
-        # Return pre-loaded key metrics if available
-        if hasattr(self, "_key_metrics"):
-            logger.info(f"Using pre-loaded key metrics for {self.symbol}")
-            return self._key_metrics
-
-        logger.info(
-            f"cannot fetch key metrics for {self.symbol} from cache - pre load data to avoid n+1 queries"
         )
         return None
 
@@ -153,7 +142,7 @@ class WatchlistItem(Base):
             f"cannot fetch price change for {self.symbol} from cache - pre load data to avoid n+1 queries"
         )
         return 0.0
-    
+
     def _get_price_change_percent(self) -> float:
         """Fetch the latest price change percent from the database."""
         # Return pre-loaded price change percent if available
@@ -167,25 +156,20 @@ class WatchlistItem(Base):
         return 0.0
 
     @property
-    def company_profile(self) -> "Company | None":
+    def company_profile(self) -> dict | None:
         """Get the company profile for this watchlist item."""
         return self._get_company_profile()
 
     @property
-    def financial_ratios(self) -> "CompanyFinancialRatio | None":
+    def financial_ratios(self) -> dict | None:
         """Get the latest financial ratios for this watchlist item."""
         return self._get_latest_financial_ratios()
-
-    @property
-    def key_metrics(self) -> "CompanyKeyMetrics | None":
-        """Get the latest key metrics for this watchlist item."""
-        return self._get_key_metrics()
 
     @property
     def current_price(self) -> float:
         """Get the current price for this symbol."""
         return self._get_current_price()
-    
+
     @property
     def price_change(self) -> float:
         """Get the latest price change for this symbol."""
