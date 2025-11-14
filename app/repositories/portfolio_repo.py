@@ -1,12 +1,14 @@
 """Portfolio repository for managing portfolio data access."""
 
 import logging
+from datetime import date as date_type
 from datetime import datetime, timezone
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session, lazyload
+from sqlalchemy.orm import Session, selectinload
 
 from app.db.models.company import Company
+from app.db.models.dividend import CompanyDividend
 from app.db.models.portfolio import (
     Portfolio,
     PortfolioDividendHistory,
@@ -14,6 +16,7 @@ from app.db.models.portfolio import (
     PortfolioTradingHistory,
 )
 from app.db.models.quote import CompanyStockPrice
+from app.repositories.dto import PortfolioCreateDTO, PortfolioUpdateDTO
 from app.schemas.user import (
     PortfolioCreate,
     PortfolioDividendHistoryWrite,
@@ -46,19 +49,12 @@ class PortfolioRepository:
         Get all portfolios for a user (lightweight).
 
         Returns only basic portfolio info (id, name, description, currency, created_at, updated_at).
-        Relations are NOT loaded to avoid unnecessary queries for list endpoints.
+        Relations are NOT loaded since they use lazy="select".
 
         Use get_portfolio_with_relations() if you need detailed portfolio data.
         """
-        # Direct query overriding lazy="selectin" to prevent relation loading
-        stmt = (
-            select(Portfolio)
-            .where((Portfolio.user_id == user_id) & (Portfolio.deleted_at.is_(None)))
-            .options(
-                lazyload(Portfolio.holding_performances),
-                lazyload(Portfolio.trading_histories),
-                lazyload(Portfolio.dividend_histories),
-            )
+        stmt = select(Portfolio).where(
+            (Portfolio.user_id == user_id) & (Portfolio.deleted_at.is_(None))
         )
         return self._db.execute(stmt).scalars().all()
 
@@ -80,18 +76,30 @@ class PortfolioRepository:
             portfolio_id: The portfolio ID to fetch
             user_id: Optional user ID to verify ownership
 
-        Relations are auto-loaded via model's lazy="selectin" configuration.
+        Explicitly loads all relations using selectinload.
         Prices are pre-loaded and cached to avoid future DB queries.
 
         Returns Portfolio with all relations + prices pre-loaded and cached.
         """
-        # Build filter conditions
-        filters = {"id": portfolio_id, "deleted_at": None}
+        # Build WHERE conditions
+        conditions = [Portfolio.id == portfolio_id, Portfolio.deleted_at.is_(None)]
         if user_id is not None:
-            filters["user_id"] = user_id
+            conditions.append(Portfolio.user_id == user_id)
 
-        # Query portfolio - model's lazy="selectin" auto-loads all relations
-        portfolio = self._db.query(Portfolio).filter_by(**filters).first()
+        # Explicitly load all relations with selectinload
+        stmt = (
+            select(Portfolio)
+            .where(*conditions)
+            .options(
+                selectinload(Portfolio.holding_performances),
+                selectinload(Portfolio.trading_histories),
+                selectinload(Portfolio.dividend_histories),
+            )
+        )
+        portfolio = self._db.execute(stmt).scalar_one_or_none()
+
+        if not portfolio:
+            return None
 
         holding_performances = list(portfolio.holding_performances)
         # Immediately pre-load and cache prices for all holdings
@@ -104,17 +112,72 @@ class PortfolioRepository:
 
         return portfolio
 
-    def create_portfolio(self, portfolio_in: PortfolioCreate) -> Portfolio:
-        """Create a new portfolio."""
+    def get_dividend_history(self, portfolio_id: int) -> list[PortfolioDividendHistory]:
+        """Get all dividend history for a portfolio."""
+        return (
+            self._db.query(PortfolioDividendHistory)
+            .filter_by(portfolio_id=portfolio_id)
+            .all()
+        )
+
+    def get_trading_history_before_date(
+        self, portfolio_id: int, symbol: str, before_date
+    ) -> list[PortfolioTradingHistory]:
+        """Get all trades for a symbol before a specific date."""
+        stmt = select(PortfolioTradingHistory).where(
+            (PortfolioTradingHistory.portfolio_id == portfolio_id)
+            & (PortfolioTradingHistory.symbol == symbol)
+            & (PortfolioTradingHistory.trade_date < before_date)
+        )
+        return self._db.execute(stmt).scalars().all()
+
+    def get_unprocessed_dividends(
+        self, after_date: date_type | None = None
+    ) -> list[CompanyDividend]:
+        """Get all company dividends that haven't been processed yet."""
+        # Unprocessed means: has declaration_date and payment_date but not processed yet
+        stmt = select(CompanyDividend).where(
+            CompanyDividend.declaration_date.is_not(None)
+            & CompanyDividend.payment_date.is_not(None)
+        )
+        if after_date:
+            stmt = stmt.where(CompanyDividend.declaration_date >= after_date)
+
+        # Order by declaration date to process chronologically
+        stmt = stmt.order_by(CompanyDividend.declaration_date)
+        return self._db.execute(stmt).scalars().all()
+
+    def create_portfolio(self, portfolio_in: PortfolioCreate) -> PortfolioCreateDTO:
+        """Create a new portfolio. Returns DTO with portfolio data."""
         portfolio = Portfolio(**portfolio_in.model_dump(exclude_unset=True))
         self._db.add(portfolio)
-        self._db.commit()
-        self._db.refresh(portfolio)
-        logger.info(f"Created portfolio {portfolio.id} for user {portfolio.user_id}")
-        return portfolio
+        self._db.flush()  # Get the ID without committing
 
-    def update_portfolio(self, portfolio_in: PortfolioUpdate) -> Portfolio:
-        """Update an existing portfolio."""
+        # Extract all values while still in session
+        portfolio_id = portfolio.id
+        portfolio_user_id = portfolio.user_id
+        portfolio_name = portfolio.name
+        portfolio_description = portfolio.description
+        portfolio_currency = portfolio.currency
+        portfolio_created_at = portfolio.created_at
+        portfolio_updated_at = portfolio.updated_at
+
+        self._db.commit()
+        logger.info(f"Created portfolio {portfolio_id} for user {portfolio_user_id}")
+
+        # Return DTO with extracted values
+        return PortfolioCreateDTO(
+            id=portfolio_id,
+            user_id=portfolio_user_id,
+            name=portfolio_name,
+            description=portfolio_description,
+            currency=portfolio_currency,
+            created_at=portfolio_created_at,
+            updated_at=portfolio_updated_at,
+        )
+
+    def update_portfolio(self, portfolio_in: PortfolioUpdate) -> PortfolioUpdateDTO:
+        """Update an existing portfolio. Returns DTO with updated portfolio data."""
         portfolio = (
             self._db.query(Portfolio)
             .filter_by(id=portfolio_in.id, user_id=portfolio_in.user_id)
@@ -127,10 +190,30 @@ class PortfolioRepository:
 
         # Map fields from schema to model
         map_model(portfolio, portfolio_in)
+        self._db.flush()
+
+        # Extract all values while still in session
+        portfolio_id = portfolio.id
+        portfolio_user_id = portfolio.user_id
+        portfolio_name = portfolio.name
+        portfolio_description = portfolio.description
+        portfolio_currency = portfolio.currency
+        portfolio_created_at = portfolio.created_at
+        portfolio_updated_at = portfolio.updated_at
+
         self._db.commit()
-        self._db.refresh(portfolio)
-        logger.info(f"Updated portfolio {portfolio.id}")
-        return portfolio
+        logger.info(f"Updated portfolio {portfolio_id}")
+
+        # Return DTO with extracted values
+        return PortfolioUpdateDTO(
+            id=portfolio_id,
+            user_id=portfolio_user_id,
+            name=portfolio_name,
+            description=portfolio_description,
+            currency=portfolio_currency,
+            created_at=portfolio_created_at,
+            updated_at=portfolio_updated_at,
+        )
 
     def soft_delete_portfolio(self, portfolio_id: int, user_id: int) -> bool:
         """Soft delete a portfolio."""
@@ -148,6 +231,103 @@ class PortfolioRepository:
         self._db.commit()
         logger.info(f"Soft deleted portfolio {portfolio_id}")
         return True
+
+    def get_holding(
+        self, portfolio_id: int, symbol: str
+    ) -> PortfolioHoldingPerformance | None:
+        """Get a specific holding by portfolio and symbol."""
+        return (
+            self._db.query(PortfolioHoldingPerformance)
+            .filter_by(portfolio_id=portfolio_id, symbol=symbol)
+            .first()
+        )
+
+    def add_holding(
+        self, holding_in: PortfolioHoldingPerformanceWrite
+    ) -> PortfolioHoldingPerformance:
+        """Add or update a holding in the portfolio."""
+        # Find existing holding
+        existing = (
+            self._db.query(PortfolioHoldingPerformance)
+            .filter_by(portfolio_id=holding_in.portfolio_id, symbol=holding_in.symbol)
+            .first()
+        )
+
+        if existing:
+            # Update existing
+            map_model(existing, holding_in)
+            holding = existing
+        else:
+            # Create new
+            holding = PortfolioHoldingPerformance(
+                **holding_in.model_dump(exclude_unset=True)
+            )
+            self._db.add(holding)
+
+        self._db.commit()
+        logger.info(
+            f"Added/Updated holding {holding.symbol} in portfolio {holding.portfolio_id}"
+        )
+        return holding
+
+    def delete_holding(self, holding_id: int) -> bool:
+        """Delete a holding from the portfolio by ID."""
+        holding = (
+            self._db.query(PortfolioHoldingPerformance).filter_by(id=holding_id).first()
+        )
+
+        if not holding:
+            logger.warning(f"Holding {holding_id} not found")
+            return False
+
+        self._db.delete(holding)
+        self._db.commit()
+        logger.info(f"Deleted holding {holding_id}")
+        return True
+
+    def add_trade(
+        self, trade_in: PortfolioTradingHistoryWrite
+    ) -> PortfolioTradingHistory:
+        """Add a buy or sell trade to the trading history."""
+        trade = PortfolioTradingHistory(**trade_in.model_dump(exclude_unset=True))
+        self._db.add(trade)
+        self._db.commit()
+        logger.info(
+            f"Added {trade.trade_type} trade for {trade.symbol} in portfolio {trade.portfolio_id}"
+        )
+        return trade
+
+    def add_dividend(
+        self, dividend_record: PortfolioDividendHistoryWrite
+    ) -> PortfolioDividendHistory:
+        """Record a dividend for a portfolio holding."""
+        # Find existing dividend record
+        existing = (
+            self._db.query(PortfolioDividendHistory)
+            .filter_by(
+                portfolio_id=dividend_record.portfolio_id,
+                symbol=dividend_record.symbol,
+                payment_date=dividend_record.payment_date,
+            )
+            .first()
+        )
+
+        if existing:
+            # Update existing
+            map_model(existing, dividend_record)
+            record = existing
+        else:
+            # Create new
+            record = PortfolioDividendHistory(
+                **dividend_record.model_dump(exclude_unset=True)
+            )
+            self._db.add(record)
+
+        self._db.commit()
+        logger.info(
+            f"Recorded dividend for {record.symbol} in portfolio {record.portfolio_id}"
+        )
+        return record
 
     def _load_company_profiles_for_items(
         self, holdings: list[PortfolioHoldingPerformance]
@@ -224,145 +404,3 @@ class PortfolioRepository:
                 profiles[symbol] = None
 
         return profiles
-
-
-class PortfolioHoldingPerformanceRepository:
-    """Repository for PortfolioHoldingPerformance operations."""
-
-    def __init__(self, session: Session) -> None:
-        self._db = session
-
-    def get_holding(
-        self, portfolio_id: int, symbol: str
-    ) -> PortfolioHoldingPerformance | None:
-        """Get a specific holding by portfolio and symbol."""
-        return (
-            self._db.query(PortfolioHoldingPerformance)
-            .filter_by(portfolio_id=portfolio_id, symbol=symbol)
-            .first()
-        )
-
-    def add_holding(
-        self, holding_in: PortfolioHoldingPerformanceWrite
-    ) -> PortfolioHoldingPerformance:
-        """Add or update a holding in the portfolio."""
-        # Find existing holding
-        existing = (
-            self._db.query(PortfolioHoldingPerformance)
-            .filter_by(portfolio_id=holding_in.portfolio_id, symbol=holding_in.symbol)
-            .first()
-        )
-
-        if existing:
-            # Update existing
-            map_model(existing, holding_in)
-            holding = existing
-        else:
-            # Create new
-            holding = PortfolioHoldingPerformance(
-                **holding_in.model_dump(exclude_unset=True)
-            )
-            self._db.add(holding)
-
-        self._db.commit()
-        self._db.refresh(holding)
-        logger.info(
-            f"Added/Updated holding {holding.symbol} in portfolio {holding.portfolio_id}"
-        )
-        return holding
-
-    def delete_holding(self, holding_id: int) -> bool:
-        """Delete a holding from the portfolio by ID."""
-        holding = (
-            self._db.query(PortfolioHoldingPerformance).filter_by(id=holding_id).first()
-        )
-
-        if not holding:
-            logger.warning(f"Holding {holding_id} not found")
-            return False
-
-        self._db.delete(holding)
-        self._db.commit()
-        logger.info(f"Deleted holding {holding_id}")
-        return True
-
-
-class PortfolioTradingHistoryRepository:
-    """Repository for PortfolioTradingHistory operations."""
-
-    def __init__(self, session: Session) -> None:
-        self._db = session
-
-    def get_trades_for_symbol_before_date(
-        self, portfolio_id: int, symbol: str, before_date
-    ) -> list[PortfolioTradingHistory]:
-        """Get all trades for a symbol before a specific date."""
-        stmt = select(PortfolioTradingHistory).where(
-            (PortfolioTradingHistory.portfolio_id == portfolio_id)
-            & (PortfolioTradingHistory.symbol == symbol)
-            & (PortfolioTradingHistory.trade_date < before_date)
-        )
-        return self._db.execute(stmt).scalars().all()
-
-    def add_trade(
-        self, trade_in: PortfolioTradingHistoryWrite
-    ) -> PortfolioTradingHistory:
-        """Add a buy or sell trade to the trading history."""
-        trade = PortfolioTradingHistory(**trade_in.model_dump(exclude_unset=True))
-        self._db.add(trade)
-        self._db.commit()
-        self._db.refresh(trade)
-        logger.info(
-            f"Added {trade.trade_type} trade for {trade.symbol} in portfolio {trade.portfolio_id}"
-        )
-        return trade
-
-
-class PortfolioDividendHistoryRepository:
-    """Repository for PortfolioDividendHistory operations."""
-
-    def __init__(self, session: Session) -> None:
-        self._db = session
-
-    def get_dividend_history_by_portfolio(
-        self, portfolio_id: int
-    ) -> list[PortfolioDividendHistory]:
-        """Get all dividend history for a portfolio."""
-        return (
-            self._db.query(PortfolioDividendHistory)
-            .filter_by(portfolio_id=portfolio_id)
-            .all()
-        )
-
-    def record_dividend(
-        self, dividend_record: PortfolioDividendHistoryWrite
-    ) -> PortfolioDividendHistory:
-        """Record a dividend for a portfolio holding."""
-        # Find existing dividend record
-        existing = (
-            self._db.query(PortfolioDividendHistory)
-            .filter_by(
-                portfolio_id=dividend_record.portfolio_id,
-                symbol=dividend_record.symbol,
-                payment_date=dividend_record.payment_date,
-            )
-            .first()
-        )
-
-        if existing:
-            # Update existing
-            map_model(existing, dividend_record)
-            record = existing
-        else:
-            # Create new
-            record = PortfolioDividendHistory(
-                **dividend_record.model_dump(exclude_unset=True)
-            )
-            self._db.add(record)
-
-        self._db.commit()
-        self._db.refresh(record)
-        logger.info(
-            f"Recorded dividend for {record.symbol} in portfolio {record.portfolio_id}"
-        )
-        return record

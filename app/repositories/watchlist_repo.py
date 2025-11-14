@@ -3,11 +3,12 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session, lazyload
+from sqlalchemy.orm import Session
 
 from app.db.models.company import Company
 from app.db.models.quote import CompanyStockPrice
 from app.db.models.watchlist import Watchlist, WatchlistItem
+from app.repositories.dto import WatchlistCreateDTO, WatchlistUpdateDTO
 from app.schemas.user import (
     WatchlistCreate,
     WatchlistItemCreate,
@@ -28,10 +29,8 @@ class WatchlistRepository:
     def verify_watchlist_ownership(self, watchlist_id: int, user_id: int) -> bool:
         """Verify that a watchlist belongs to a specific user."""
         try:
-            stmt = (
-                select(Watchlist)
-                .where(Watchlist.id == watchlist_id, Watchlist.user_id == user_id)
-                .options(lazyload(Watchlist.items))
+            stmt = select(Watchlist).where(
+                Watchlist.id == watchlist_id, Watchlist.user_id == user_id
             )
             watchlist = self._db.execute(stmt).scalar_one_or_none()
             return watchlist is not None
@@ -39,30 +38,38 @@ class WatchlistRepository:
             logger.error(f"Error verifying watchlist ownership: {e}")
             raise
 
+    def check_watchlist_item_exists(self, watchlist_id: int, symbol: str) -> bool:
+        """Check if a watchlist item with the given symbol already exists in the watchlist."""
+        try:
+            stmt = select(WatchlistItem).where(
+                WatchlistItem.watchlist_id == watchlist_id,
+                WatchlistItem.symbol == symbol,
+            )
+            item = self._db.execute(stmt).scalar_one_or_none()
+            return item is not None
+        except SQLAlchemyError as e:
+            logger.error(f"Error checking watchlist item existence: {e}")
+            raise
+
     def get_all_watchlists(self, user_id: int) -> list[Watchlist]:
         """Get all watchlists for a specific user (lightweight)."""
-        stmt = (
-            select(Watchlist)
-            .where(Watchlist.user_id == user_id)
-            .options(lazyload(Watchlist.items))
-        )
+        stmt = select(Watchlist).where(Watchlist.user_id == user_id)
         return self._db.execute(stmt).scalars().all()
 
     def get_watchlist_with_relations(
         self, watchlist_id: int, user_id: int
     ) -> Watchlist | None:
         """Get a watchlist by its ID, loading related items with pre-loaded company data."""
-        watchlist = (
-            self._db.query(Watchlist)
-            .filter_by(id=watchlist_id, user_id=user_id)
-            .first()
+        stmt = select(Watchlist).where(
+            Watchlist.id == watchlist_id, Watchlist.user_id == user_id
         )
+        watchlist = self._db.execute(stmt).scalar_one_or_none()
 
         if not watchlist:
             return None
 
         # Store items in a local variable to avoid re-accessing the relationship
-        items = list(watchlist.items)  # ✅ Materialize once here
+        items = list(watchlist.items)
 
         if items:
             # Pre-load all company data (prices, metrics, ratios) in bulk
@@ -104,35 +111,74 @@ class WatchlistRepository:
 
         return item
 
-    def create_watchlist(self, watchlist_in: WatchlistCreate) -> Watchlist:
-        """Create a new watchlist."""
+    def create_watchlist(self, watchlist_in: WatchlistCreate) -> WatchlistCreateDTO:
+        """Create a new watchlist. Returns DTO with watchlist data."""
         watchlist = Watchlist(**watchlist_in.model_dump(exclude_unset=True))
         self._db.add(watchlist)
+        self._db.flush()  # Get the ID
+
+        # Extract all values while still in session
+        watchlist_id = watchlist.id
+        watchlist_user_id = watchlist.user_id
+        watchlist_name = watchlist.name
+        watchlist_currency = watchlist.currency
+        watchlist_description = watchlist.description
+        watchlist_created_at = watchlist.created_at
+        watchlist_updated_at = watchlist.updated_at
+
         self._db.commit()
-        self._db.refresh(watchlist)
-        logger.info(f"Created watchlist {watchlist.id} for user {watchlist.user_id}")
-        return watchlist
+        logger.info(f"Created watchlist {watchlist_id} for user {watchlist_user_id}")
+
+        # Return DTO with extracted values
+        return WatchlistCreateDTO(
+            id=watchlist_id,
+            user_id=watchlist_user_id,
+            name=watchlist_name,
+            currency=watchlist_currency,
+            description=watchlist_description,
+            created_at=watchlist_created_at,
+            updated_at=watchlist_updated_at,
+        )
 
     def update_watchlist(
         self, watchlist_in: WatchlistUpdate, user_id: int
-    ) -> Watchlist | None:
-        """Create or update a watchlist."""
-        watchlist = (
+    ) -> WatchlistUpdateDTO | None:
+        """Update a watchlist. Returns DTO with updated watchlist data."""
+        watchlist_exist = (
             self._db.query(Watchlist)
             .filter_by(id=watchlist_in.id, user_id=user_id)
             .first()
         )
 
-        if not watchlist:
+        if not watchlist_exist:
             logger.warning(f"Watchlist {watchlist_in.id} not found for user {user_id}")
             return None
 
-        map_model(watchlist_in, watchlist)
+        map_model(watchlist_exist, watchlist_in)
+        self._db.flush()
+
+        # Extract all values while still in session
+        watchlist_id = watchlist_exist.id
+        watchlist_user_id = watchlist_exist.user_id
+        watchlist_name = watchlist_exist.name
+        watchlist_currency = watchlist_exist.currency
+        watchlist_description = watchlist_exist.description
+        watchlist_created_at = watchlist_exist.created_at
+        watchlist_updated_at = watchlist_exist.updated_at
 
         self._db.commit()
-        self._db.refresh(watchlist)
-        logger.info(f"Updated watchlist {watchlist.id}")
-        return watchlist
+        logger.info(f"Updated watchlist {watchlist_id}")
+
+        # Return DTO with extracted values
+        return WatchlistUpdateDTO(
+            id=watchlist_id,
+            user_id=watchlist_user_id,
+            name=watchlist_name,
+            currency=watchlist_currency,
+            description=watchlist_description,
+            created_at=watchlist_created_at,
+            updated_at=watchlist_updated_at,
+        )
 
     def delete_watchlist(self, watchlist_id: int, user_id: int) -> bool:
         """Delete a watchlist, ensuring it belongs to the user."""
@@ -289,7 +335,10 @@ class WatchlistRepository:
         item = WatchlistItem(**watchlist_item_in.model_dump(exclude_unset=True))
         self._db.add(item)
         self._db.commit()
-        self._db.refresh(item)
+
+        # Refresh only to get the generated ID, without loading relationships
+        stmt = select(WatchlistItem).where(WatchlistItem.id == item.id)
+        item = self._db.execute(stmt).scalar_one()
         logger.info(f"Added {item.symbol} to watchlist {item.watchlist_id}")
         return item
 

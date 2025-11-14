@@ -3,7 +3,7 @@ from logging import getLogger
 from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
-from app.repositories.company_repo import CompanyRepository
+from app.repositories.internal.company_sync_repo import CompanySyncRepository
 from app.schemas.company import CompanyRead, CompanyWrite
 
 logger = getLogger(__name__)
@@ -26,7 +26,7 @@ class CompanySyncService:
             session: Database session for persistence operations
         """
         self._market_api_client = market_api_client
-        self._repository = CompanyRepository(session)
+        self._repository = CompanySyncRepository(session)
 
     def upsert_company(self, symbol: str) -> CompanyRead | None:
         """

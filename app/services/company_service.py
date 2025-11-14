@@ -3,40 +3,49 @@ from logging import getLogger
 
 from sqlalchemy.orm import Session
 
+from app.repositories.company_metrics_repo import CompanyMetricsRepository
 from app.repositories.company_repo import CompanyRepository
-from app.repositories.financial_repo import FinancialRepository
-from app.repositories.grading_repo import GradingRepository
-from app.repositories.metrics_repo import MetricsRepository
-from app.repositories.news_repo import CompanyNewsRepository
-from app.repositories.stock_info_repo import StockInfoRepository
-from app.repositories.technical_indicator_repo import TechnicalIndicatorRepository
-from app.schemas.financial_statements import CompanyBalanceSheetRead
-from app.schemas.financial_statements import CompanyCashFlowStatementRead
+from app.repositories.financial_health_repo import CompanyFinancialHealthRepository
+from app.repositories.financial_statements_repo import (
+    CompanyFinancialStatementsRepository,
+)
+from app.repositories.market_data_repo import (
+    CompanyMarketDataRepository,
+    CompanyNewsType,
+)
+from app.repositories.quotes_repo import CompanyQuotesRepository
 from app.schemas.company import (
     CompanyFinancialHealthResponse,
     CompanyFinancialResponse,
     CompanyPageResponse,
     CompanyRead,
 )
-from app.schemas.company_metrics import CompanyDiscountedCashFlowRead
-from app.schemas.quote import CompanyDividendRead
+from app.schemas.company_metrics import (
+    CompanyDiscountedCashFlowRead,
+    CompanyKeyMetricsRead,
+)
 from app.schemas.financial_health import CompanyFinancialHealthRead
-from app.schemas.financial_statements import CompanyFinancialRatioRead
-from app.schemas.market_data import CompanyGradingRead, CompanyGradingSummaryRead
-from app.schemas.financial_statements import CompanyIncomeStatementRead
-from app.schemas.company_metrics import CompanyKeyMetricsRead
+from app.schemas.financial_statements import (
+    CompanyBalanceSheetRead,
+    CompanyCashFlowStatementRead,
+    CompanyFinancialRatioRead,
+    CompanyIncomeStatementRead,
+)
 from app.schemas.market_data import (
     CompanyGeneralNewsRead,
     CompanyGradingNewsRead,
+    CompanyGradingRead,
+    CompanyGradingSummaryRead,
     CompanyPriceTargetNewsRead,
-)
-from app.schemas.market_data import (
     CompanyPriceTargetRead,
     CompanyPriceTargetSummaryRead,
+    CompanyRatingSummaryRead,
 )
-from app.schemas.quote import StockPriceChangeRead
-from app.schemas.market_data import CompanyRatingSummaryRead
-from app.schemas.quote import CompanyTechnicalIndicatorRead
+from app.schemas.quote import (
+    CompanyDividendRead,
+    CompanyTechnicalIndicatorRead,
+    StockPriceChangeRead,
+)
 
 logger = getLogger(__name__)
 
@@ -57,6 +66,14 @@ class FinancialHealthSectorsEnum(Enum):
 class CompanyService:
     def __init__(self, session: Session):
         self._db = session
+        self._company_repository = CompanyRepository(session)
+        self._market_data_repository = CompanyMarketDataRepository(session)
+        self._financial_statements_repository = CompanyFinancialStatementsRepository(
+            session
+        )
+        self._metrics_repository = CompanyMetricsRepository(session)
+        self._financial_health_repository = CompanyFinancialHealthRepository(session)
+        self._quotes_repository = CompanyQuotesRepository(session)
 
     @staticmethod
     def _validate_models(schema_class, items):
@@ -89,8 +106,7 @@ class CompanyService:
 
     def get_company_page(self, symbol: str) -> CompanyPageResponse | None:
         """Retrieve a company's profile by its stock symbol."""
-        page_repo = CompanyRepository(self._db)
-        response = page_repo.get_company_snapshot_by_symbol(symbol)
+        response = self._company_repository.get_company_snapshot_by_symbol(symbol)
         if not response:
             return None
 
@@ -117,24 +133,28 @@ class CompanyService:
         )
 
         # Use repository methods for collections
-        grading_repo = GradingRepository(self._db)
         latest_gradings = self._validate_models(
             CompanyGradingRead,
-            grading_repo.get_gradings_by_symbol(symbol, limit=6),
+            self._market_data_repository.get_gradings(symbol, limit=6),
         )
 
-        news_repo = CompanyNewsRepository(self._db)
         general_news_read = self._validate_models(
             CompanyGeneralNewsRead,
-            news_repo.get_general_news_by_symbol(symbol),
+            self._market_data_repository.get_company_news(
+                symbol, CompanyNewsType.GENERAL
+            ),
         )
         price_target_news_read = self._validate_models(
             CompanyPriceTargetNewsRead,
-            news_repo.get_price_target_news_by_symbol(symbol),
+            self._market_data_repository.get_company_news(
+                symbol, CompanyNewsType.PRICE_TARGET
+            ),
         )
         grading_news_read = self._validate_models(
             CompanyGradingNewsRead,
-            news_repo.get_grading_news_by_symbol(symbol),
+            self._market_data_repository.get_company_news(
+                symbol, CompanyNewsType.GRADING
+            ),
         )
 
         return CompanyPageResponse(
@@ -154,33 +174,30 @@ class CompanyService:
     def get_company_financials(self, symbol: str) -> CompanyFinancialResponse | None:
         """Retrieve a company's financials by its stock symbol."""
         try:
-            financials_repo = FinancialRepository(self._db)
-            metrics_repo = MetricsRepository(self._db)
-            stock_info_repo = StockInfoRepository(self._db)
-
             balance_sheets_read = self._validate_models(
                 CompanyBalanceSheetRead,
-                financials_repo.get_balance_sheets_by_symbol(symbol),
+                self._financial_statements_repository.get_balance_sheets(symbol),
             )
             income_statements_read = self._validate_models(
                 CompanyIncomeStatementRead,
-                financials_repo.get_income_statements_by_symbol(symbol),
+                self._financial_statements_repository.get_income_statements(symbol),
             )
             cash_flow_statements_read = self._validate_models(
                 CompanyCashFlowStatementRead,
-                financials_repo.get_cash_flow_statements_by_symbol(symbol),
-            )
-            key_metrics_read = self._validate_models(
-                CompanyKeyMetricsRead,
-                metrics_repo.get_key_metrics_by_symbol(symbol),
+                self._financial_statements_repository.get_cash_flow_statements(symbol),
             )
             financial_ratios_read = self._validate_models(
                 CompanyFinancialRatioRead,
-                metrics_repo.get_financial_ratios_by_symbol(symbol),
+                self._financial_statements_repository.get_financial_ratios(symbol),
             )
+            key_metrics_read = self._validate_models(
+                CompanyKeyMetricsRead,
+                self._metrics_repository.get_key_metrics(symbol),
+            )
+
             dividends_read = self._validate_models(
                 CompanyDividendRead,
-                stock_info_repo.get_dividends_by_symbol(symbol),
+                self._quotes_repository.get_dividends(symbol),
             )
 
             return CompanyFinancialResponse(
@@ -200,17 +217,15 @@ class CompanyService:
     ) -> CompanyFinancialHealthResponse | None:
         """Retrieve a company's financial health data by its stock symbol."""
         try:
-            financials_repo = FinancialRepository(self._db)
-            company_repo = CompanyRepository(self._db)
-            company = company_repo.get_company_by_symbol(symbol)
+            company = self._company_repository.get_company_by_symbol(symbol)
 
             if not company:
                 logger.warning(f"Company not found for symbol: {symbol}")
                 return None
 
             company_read = CompanyRead.model_validate(company)
-            financial_health_items = financials_repo.get_financial_health_by_symbol(
-                symbol
+            financial_health_items = (
+                self._financial_health_repository.get_financial_health(symbol)
             )
 
             # Group financial health metrics by section with single iteration
@@ -258,17 +273,13 @@ class CompanyService:
     ) -> list[CompanyTechnicalIndicatorRead] | None:
         """Retrieve a company's technical indicators by its stock symbol."""
         try:
-            company_repo = CompanyRepository(self._db)
-            company = company_repo.get_company_by_symbol(symbol)
+            company = self._company_repository.get_company_by_symbol(symbol)
 
             if not company:
                 logger.warning(f"Company not found for symbol: {symbol}")
                 return None
 
-            technical_indicator_repo = TechnicalIndicatorRepository(self._db)
-            indicators = technical_indicator_repo.get_technical_indicators_by_symbol(
-                symbol
-            )
+            indicators = self._quotes_repository.get_technical_indicators(symbol)
 
             if not indicators:
                 logger.info(f"No technical indicators found for symbol: {symbol}")

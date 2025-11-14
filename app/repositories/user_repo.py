@@ -4,15 +4,14 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.models.user import User
 from app.schemas.user import UserWrite
-from app.repositories.base_repo import BaseRepository
 from app.util.model_mapper import map_model
 
 logger = logging.getLogger(__name__)
 
 
-class UserRepository(BaseRepository):
+class UserRepository:
     def __init__(self, session: Session):
-        super().__init__(session)
+        self._db = session
 
     def get_user_by_username(self, username: str) -> User | None:
         """Get a user by username."""

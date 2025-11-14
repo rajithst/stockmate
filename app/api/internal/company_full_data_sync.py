@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.api.internal.config import TAGS
 from app.dependencies.sync_services import create_sync_service_provider
 from app.services.internal.company_full_data_sync_service import (
     CompanyFullDataSyncService,
 )
 
-router = APIRouter(prefix="", tags=[TAGS["company"]["name"]])
+router = APIRouter(prefix="")
 
 # Create dependency provider for CompanyFullDataSyncService
 get_company_full_sync_service = create_sync_service_provider(CompanyFullDataSyncService)

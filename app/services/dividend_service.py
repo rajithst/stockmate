@@ -6,11 +6,8 @@ from datetime import date as date_type
 from sqlalchemy.orm import Session
 
 from app.db.models.portfolio import PortfolioTradingHistory
-from app.repositories.dividend_repo import CompanyDividendRepository
 from app.repositories.portfolio_repo import (
-    PortfolioDividendHistoryRepository,
     PortfolioRepository,
-    PortfolioTradingHistoryRepository,
 )
 from app.schemas.user import PortfolioDividendHistoryRead, PortfolioDividendHistoryWrite
 
@@ -22,10 +19,7 @@ class DividendService:
 
     def __init__(self, session: Session) -> None:
         self._session = session
-        self._dividend_repo = CompanyDividendRepository(session)
-        self._portfolio_dividend_repo = PortfolioDividendHistoryRepository(session)
         self._portfolio_repo = PortfolioRepository(session)
-        self._trading_repo = PortfolioTradingHistoryRepository(session)
 
     def _calculate_shares_held(self, trades: list[PortfolioTradingHistory]) -> float:
         """Calculate total shares held based on buy and sell trades."""
@@ -52,7 +46,7 @@ class DividendService:
         """
         # Get all unprocessed company dividends
         try:
-            unprocessed_dividends = self._dividend_repo.get_unprocessed_dividends(
+            unprocessed_dividends = self._portfolio_repo.get_unprocessed_dividends(
                 after_date
             )
             dividend_created = []
@@ -74,7 +68,7 @@ class DividendService:
                     continue
 
                 # Get all trades for this symbol before declaration date
-                trades = self._trading_repo.get_trades_for_symbol_before_date(
+                trades = self._portfolio_repo.get_trades_for_symbol_before_date(
                     portfolio_id, symbol, declaration_date
                 )
 
@@ -106,7 +100,7 @@ class DividendService:
                     payment_date=payment_date,
                     currency=currency,
                 )
-                result = self._portfolio_dividend_repo.record_dividend(dividend_record)
+                result = self._portfolio_repo.add_dividend(dividend_record)
                 dividend_created.append(result)
             results = [
                 PortfolioDividendHistoryRead.model_validate(dividend)
@@ -143,41 +137,5 @@ class DividendService:
         except Exception as e:
             logger.error(
                 f"Error syncing dividends for all portfolios: {str(e)}", exc_info=True
-            )
-            raise
-
-    def get_portfolio_dividend_history(
-        self, portfolio_id: int, user_id: int
-    ) -> list[PortfolioDividendHistoryRead]:
-        """
-        Retrieve dividend history for a specific portfolio.
-
-        Args:
-            portfolio_id: The portfolio to retrieve dividend history for
-            user_id: The user requesting the dividend history
-        Returns:
-            List of PortfolioDividendHistoryRead records
-        """
-        try:
-            if not self._portfolio_repo.verify_portfolio_ownership(
-                portfolio_id, user_id
-            ):
-                raise PermissionError(
-                    f"User {user_id} does not have access to portfolio {portfolio_id}"
-                )
-            dividend_histories = (
-                self._portfolio_dividend_repo.get_dividend_history_by_portfolio(
-                    portfolio_id
-                )
-            )
-            results = [
-                PortfolioDividendHistoryRead.model_validate(dividend)
-                for dividend in dividend_histories
-            ]
-            return results
-        except Exception as e:
-            logger.error(
-                f"Error retrieving dividend history for portfolio {portfolio_id}: {str(e)}",
-                exc_info=True,
             )
             raise

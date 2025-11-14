@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.internal.config import ERROR_MESSAGES, TAGS
 from app.dependencies.sync_services import create_sync_service_provider
 from app.schemas.company import CompanyRead
 from app.services.internal.company_sync_service import CompanySyncService
 
-router = APIRouter(prefix="", tags=[TAGS["company"]["name"]])
+router = APIRouter(prefix="")
 
 # Create dependency provider for CompanySyncService
 get_company_sync_service = create_sync_service_provider(CompanySyncService)
@@ -37,6 +36,6 @@ def sync_company_profile(
     if not company:
         raise HTTPException(
             status_code=404,
-            detail=ERROR_MESSAGES["NOT_FOUND_GENERIC"].format(symbol=symbol),
+            detail="Company not found for symbol: {}".format(symbol),
         )
     return company

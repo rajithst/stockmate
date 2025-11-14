@@ -1,171 +1,32 @@
-from logging import getLogger
+import logging
 import re
 from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
-from app.repositories.financial_repo import FinancialRepository
-from app.repositories.metrics_repo import MetricsRepository
-from app.schemas.financial_statements import (
-    CompanyBalanceSheetRead,
-    CompanyBalanceSheetWrite,
-)
-from app.schemas.financial_statements import (
-    CompanyCashFlowStatementRead,
-    CompanyCashFlowStatementWrite,
+from app.repositories.internal.financial_health_sync_repo import (
+    CompanyFinancialHealthSyncRepository,
 )
 from app.schemas.financial_health import (
     CompanyFinancialHealthRead,
     CompanyFinancialHealthWrite,
+    CompanyFinancialScoresRead,
+    CompanyFinancialScoresWrite,
 )
-from app.schemas.financial_health_config import (
-    BENCHMARKS_INSIGHTS,
-    SECTION_METRIC_MAP,
-)
-from app.schemas.financial_statements import (
-    CompanyIncomeStatementRead,
-    CompanyIncomeStatementWrite,
-)
+from app.schemas.financial_health_config import BENCHMARKS_INSIGHTS, SECTION_METRIC_MAP
 from app.services.internal.base_sync_service import BaseSyncService
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
-class FinancialSyncService(BaseSyncService):
-    def __init__(self, market_api_client: FMPClientProtocol, session: Session) -> None:
-        super().__init__(market_api_client, session)
-        self._repository = FinancialRepository(session)
-        self._metrics_repository = MetricsRepository(session)
+class CompanyFinancialHealthSyncService(BaseSyncService):
+    """Service for syncing company financial health data from FMP API."""
 
-    def upsert_balance_sheets(
-        self, symbol: str, limit: int, period: str = "annual"
-    ) -> list[CompanyBalanceSheetRead] | None:
-        """
-        Fetch and upsert balance sheets for a company.
-
-        Args:
-            symbol: Stock symbol
-            limit: Number of records to fetch
-            period: Period type (annual/quarter)
-
-        Returns:
-            List of upserted balance sheet records or None if not found
-        """
-        try:
-            company = self._get_company_or_fail(symbol)
-            if not company:
-                return None
-
-            # Explicit control over API call with known parameters
-            api_data = self._market_api_client.get_balance_sheets(
-                symbol, period=period, limit=limit
-            )
-            if not self._validate_api_response(api_data, "balance_sheets", symbol):
-                return None
-
-            records_to_persist = self._add_company_id_to_records(
-                api_data, company.id, CompanyBalanceSheetWrite
-            )
-            persisted_records = self._repository.upsert_balance_sheets(
-                records_to_persist
-            )
-            result = self._map_schema_list(persisted_records, CompanyBalanceSheetRead)
-
-            self._log_sync_success("balance_sheets", len(result), symbol)
-            return result
-
-        except Exception as e:
-            self._log_sync_failure("balance_sheets", symbol, e)
-            raise
-
-    def upsert_income_statements(
-        self, symbol: str, limit: int, period: str = "annual"
-    ) -> list[CompanyIncomeStatementRead] | None:
-        """
-        Fetch and upsert income statements for a company.
-
-        Args:
-            symbol: Stock symbol
-            limit: Number of records to fetch
-            period: Period type (annual/quarter)
-
-        Returns:
-            List of upserted income statement records or None if not found
-        """
-        try:
-            company = self._get_company_or_fail(symbol)
-            if not company:
-                return None
-
-            # Explicit control over API call with known parameters
-            api_data = self._market_api_client.get_income_statements(
-                symbol, period=period, limit=limit
-            )
-            if not self._validate_api_response(api_data, "income_statements", symbol):
-                return None
-
-            records_to_persist = self._add_company_id_to_records(
-                api_data, company.id, CompanyIncomeStatementWrite
-            )
-            persisted_records = self._repository.upsert_income_statements(
-                records_to_persist
-            )
-            result = self._map_schema_list(
-                persisted_records, CompanyIncomeStatementRead
-            )
-
-            self._log_sync_success("income_statements", len(result), symbol)
-            return result
-
-        except Exception as e:
-            self._log_sync_failure("income_statements", symbol, e)
-            raise
-
-    def upsert_cash_flow_statements(
-        self, symbol: str, limit: int, period: str = "annual"
-    ) -> list[CompanyCashFlowStatementRead] | None:
-        """
-        Fetch and upsert cash flow statements for a company.
-
-        Args:
-            symbol: Stock symbol
-            limit: Number of records to fetch
-            period: Period type (annual/quarter)
-
-        Returns:
-            List of upserted cash flow statement records or None if not found
-        """
-        try:
-            company = self._get_company_or_fail(symbol)
-            if not company:
-                return None
-
-            # Explicit control over API call with known parameters
-            api_data = self._market_api_client.get_cash_flow_statements(
-                symbol, period=period, limit=limit
-            )
-            if not self._validate_api_response(
-                api_data, "cash_flow_statements", symbol
-            ):
-                return None
-
-            records_to_persist = self._add_company_id_to_records(
-                api_data, company.id, CompanyCashFlowStatementWrite
-            )
-            persisted_records = self._repository.upsert_cash_flow_statements(
-                records_to_persist
-            )
-            result = self._map_schema_list(
-                persisted_records, CompanyCashFlowStatementRead
-            )
-
-            self._log_sync_success("cash_flow_statements", len(result), symbol)
-            return result
-
-        except Exception as e:
-            self._log_sync_failure("cash_flow_statements", symbol, e)
-            raise
+    def __init__(self, market_api_client: FMPClientProtocol, session: Session):
+        super().__init__(session)
+        self._market_api_client = market_api_client
+        self._repository = CompanyFinancialHealthSyncRepository(session)
 
     def upsert_financial_health(
         self, symbol: str
@@ -201,7 +62,7 @@ class FinancialSyncService(BaseSyncService):
                 return None
 
             # Map metrics to sections
-            records = self.map_metrics_to_sections(
+            records = self._map_metrics_to_sections(
                 key_metrics=key_metrics_data.to_dict(),
                 financial_ratios=financial_ratios_data.to_dict(),
                 company_id=company.id,
@@ -212,26 +73,16 @@ class FinancialSyncService(BaseSyncService):
             response = self._repository.upsert_financial_health(records)
             result = self._map_schema_list(response, CompanyFinancialHealthRead)
 
-            self._log_sync_success("financial_health", len(result), symbol)
+            logger.info(
+                f"Upserted financial health for {symbol}, records: {len(result)}"
+            )
             return result
 
         except Exception as e:
-            self._log_sync_failure("financial_health", symbol, e)
+            logger.error(f"Failed to upsert financial health for {symbol}: {e}")
             raise
 
-    def delete_balance_sheet(self, symbol: str, year: int) -> bool:
-        """Delete a balance sheet by symbol and year."""
-        return self._repository.delete_balance_sheet(symbol, year)
-
-    def delete_income_statement(self, symbol: str, year: int) -> bool:
-        """Delete an income statement by symbol and year."""
-        return self._repository.delete_income_statement(symbol, year)
-
-    def delete_cash_flow_statement(self, symbol: str, year: int) -> bool:
-        """Delete a cash flow statement by symbol and year."""
-        return self._repository.delete_cash_flow_statement(symbol, year)
-
-    def map_metrics_to_sections(
+    def _map_metrics_to_sections(
         self,
         key_metrics: dict[str, Any],
         financial_ratios: dict[str, Any],
@@ -259,7 +110,7 @@ class FinancialSyncService(BaseSyncService):
                 value = data.get(key)
                 benchmark_info = BENCHMARKS_INSIGHTS.get(metric_name)
                 insight = benchmark_info["insight"] if benchmark_info else ""
-                status = self.compare_value_to_benchmark(value, benchmark_info)
+                status = self._compare_value_to_benchmark(value, benchmark_info)
 
                 # Format benchmark for display
                 if benchmark_info:
@@ -290,7 +141,7 @@ class FinancialSyncService(BaseSyncService):
                 )
         return records
 
-    def compare_value_to_benchmark(self, value: Any, benchmark: dict) -> str:
+    def _compare_value_to_benchmark(self, value: Any, benchmark: dict) -> str:
         """
         Compare a value to a structured benchmark dict and return status.
         Supports >, <, >=, <=, ~, range, and custom.
@@ -346,3 +197,42 @@ class FinancialSyncService(BaseSyncService):
             # Always neutral for custom, or implement your own logic
             return "neutral"
         return "neutral"
+
+    def upsert_financial_scores(self, symbol: str) -> CompanyFinancialScoresRead | None:
+        """
+        Fetch and upsert financial scores for a company.
+
+        Args:
+            symbol: Stock symbol
+
+        Returns:
+            Upserted financial scores record or None if not found
+        """
+        try:
+            company = self._get_company_or_fail(symbol)
+            if not company:
+                return None
+
+            financial_scores_data = self._market_api_client.get_financial_scores(symbol)
+            if not financial_scores_data:
+                logger.error(f"No data returned for financial scores of {symbol}")
+                return None
+
+            financial_scores_in = self._add_company_id_to_record(
+                financial_scores_data, company.id, CompanyFinancialScoresWrite
+            )
+            financial_scores = self._repository.upsert_financial_scores(
+                financial_scores_in
+            )
+            result = self._map_schema_single(
+                financial_scores, CompanyFinancialScoresRead
+            )
+
+            logger.info(f"Successfully synced financial scores for {symbol}")
+            return result
+
+        except Exception as e:
+            logger.error(
+                f"Failed to sync financial scores for {symbol}: {str(e)}", exc_info=True
+            )
+            raise

@@ -43,7 +43,7 @@ class Watchlist(Base):
         "WatchlistItem",
         back_populates="watchlist",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="select",
     )
 
     @property

@@ -71,19 +71,19 @@ class Portfolio(Base):
         "PortfolioHoldingPerformance",
         back_populates="portfolio",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="select",
     )
     trading_histories: Mapped[list["PortfolioTradingHistory"]] = relationship(
         "PortfolioTradingHistory",
         back_populates="portfolio",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="select",
     )
     dividend_histories: Mapped[list["PortfolioDividendHistory"]] = relationship(
         "PortfolioDividendHistory",
         back_populates="portfolio",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="select",
     )
 
     @property

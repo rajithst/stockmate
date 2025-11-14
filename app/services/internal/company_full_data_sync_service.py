@@ -9,14 +9,14 @@ from sqlalchemy.orm import Session
 from app.clients.fmp.protocol import FMPClientProtocol
 from app.repositories.company_repo import CompanyRepository
 from app.services.internal.company_sync_service import CompanySyncService
-from app.services.internal.dcf_sync_service import DiscountedCashFlowSyncService
-from app.services.internal.financial_sync_service import FinancialSyncService
-from app.services.internal.grading_sync_service import GradingSyncService
-from app.services.internal.metrics_sync_service import MetricsSyncService
-from app.services.internal.price_target_sync_service import PriceTargetSyncService
-from app.services.internal.quotes_sync_service import QuotesSyncService
-from app.services.internal.rating_sync_service import RatingSyncService
-from app.services.internal.stock_info_sync_service import StockInfoSyncService
+# from app.services.internal.dcf_sync_service import DiscountedCashFlowSyncService
+# from app.services.internal.financial_sync_service import FinancialSyncService
+# from app.services.internal.grading_sync_service import GradingSyncService
+# from app.services.internal.metrics_sync_service import MetricsSyncService
+# from app.services.internal.price_target_sync_service import PriceTargetSyncService
+# from app.services.internal.quotes_sync_service import QuotesSyncService
+# from app.services.internal.rating_sync_service import RatingSyncService
+# from app.services.internal.stock_info_sync_service import StockInfoSyncService
 
 logger = logging.getLogger(__name__)
 
@@ -39,14 +39,14 @@ class CompanyFullDataSyncService:
 
         # Initialize all sync services
         self._company_sync = CompanySyncService(market_api_client, session)
-        self._quotes_sync = QuotesSyncService(market_api_client, session)
-        self._price_target_sync = PriceTargetSyncService(market_api_client, session)
-        self._rating_sync = RatingSyncService(market_api_client, session)
-        self._grading_sync = GradingSyncService(market_api_client, session)
-        self._dcf_sync = DiscountedCashFlowSyncService(market_api_client, session)
-        self._metrics_sync = MetricsSyncService(market_api_client, session)
-        self._financials_sync = FinancialSyncService(market_api_client, session)
-        self._stock_info_sync = StockInfoSyncService(market_api_client, session)
+        # self._quotes_sync = QuotesSyncService(market_api_client, session)
+        # self._price_target_sync = PriceTargetSyncService(market_api_client, session)
+        # self._rating_sync = RatingSyncService(market_api_client, session)
+        # self._grading_sync = GradingSyncService(market_api_client, session)
+        # self._dcf_sync = DiscountedCashFlowSyncService(market_api_client, session)
+        # self._metrics_sync = MetricsSyncService(market_api_client, session)
+        # self._financials_sync = FinancialSyncService(market_api_client, session)
+        # self._stock_info_sync = StockInfoSyncService(market_api_client, session)
 
     def _sleep(self, reason: str = "") -> None:
         """Sleep to respect API rate limits."""

@@ -18,7 +18,7 @@ def get_auth_service(db: Session = Depends(get_db_session)) -> AuthService:
     return AuthService(db)
 
 
-@router.post("/login", response_model=Token, tags=["Authentication"])
+@router.post("/login", response_model=Token)
 def login_for_access_token(
     credentials: Annotated[LoginRequest, Body(embed=False)],
     auth_service: AuthService = Depends(get_auth_service),

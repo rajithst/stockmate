@@ -35,9 +35,16 @@ class WatchlistService:
             description=watchlist_in.description,
             user_id=user_id,
         )
-        watchlist = self._repository.create_watchlist(watchlist_in)
-        logger.info(f"Created watchlist {watchlist.id} for user {user_id}")
-        return WatchlistRead.model_validate(watchlist)
+        watchlist_dto = self._repository.create_watchlist(watchlist_in)
+        logger.info(f"Created watchlist {watchlist_dto.id} for user {user_id}")
+        return WatchlistRead(
+            id=watchlist_dto.id,
+            name=watchlist_dto.name,
+            currency=watchlist_dto.currency,
+            description=watchlist_dto.description,
+            created_at=watchlist_dto.created_at,
+            updated_at=watchlist_dto.updated_at,
+        )
 
     def update_watchlist(
         self, watchlist_id, watchlist_in: WatchlistUpsertRequest, user_id: int
@@ -53,8 +60,16 @@ class WatchlistService:
             description=watchlist_in.description,
             user_id=user_id,
         )
-        logger.info(f"Updated watchlist {watchlist.id} for user {user_id}")
-        return WatchlistRead.model_validate(watchlist)
+        watchlist_dto = self._repository.update_watchlist(watchlist, user_id)
+        logger.info(f"Updated watchlist {watchlist_dto.id} for user {user_id}")
+        return WatchlistRead(
+            id=watchlist_dto.id,
+            name=watchlist_dto.name,
+            currency=watchlist_dto.currency,
+            description=watchlist_dto.description,
+            created_at=watchlist_dto.created_at,
+            updated_at=watchlist_dto.updated_at,
+        )
 
     def delete_watchlist(self, watchlist_id: int, user_id: int) -> None:
         """Delete a watchlist, ensuring it belongs to the authenticated user."""
@@ -64,7 +79,7 @@ class WatchlistService:
         self._repository.delete_watchlist(watchlist_id, user_id)
         logger.info(f"Deleted watchlist with ID: {watchlist_id}")
 
-    def convert_watchlist_item_to_company_item(
+    def _convert_watchlist_item_to_company_item(
         self, item: any
     ) -> WatchlistCompanyItem | None:
         """Convert a WatchlistItem to WatchlistCompanyItem with company details."""
@@ -78,6 +93,7 @@ class WatchlistService:
         logger.info(f"Financial ratios for {item.symbol}: {financial_ratios}")
 
         item_in = WatchlistCompanyItem(
+            id=item.id,
             symbol=item.symbol,
             company_name=company_profile.get("company_name", None),
             price=item.current_price,
@@ -119,10 +135,11 @@ class WatchlistService:
             return []
 
         result = []
-        for item in watchlist.items:
+        watchlist_items = list(watchlist.items)
+        for item in watchlist_items:
             if not item.company_profile:
                 continue
-            result.append(self.convert_watchlist_item_to_company_item(item))
+            result.append(self._convert_watchlist_item_to_company_item(item))
         return result
 
     def add_watchlist_item(
@@ -132,6 +149,13 @@ class WatchlistService:
         if not self._repository.verify_watchlist_ownership(watchlist_id, user_id):
             logger.error("Watchlist not found or access denied")
             raise ValueError("Watchlist not found or access denied")
+
+        if self._repository.check_watchlist_item_exists(
+            watchlist_id, watchlist_item_in.symbol
+        ):
+            logger.error("Watchlist item already exists")
+            raise ValueError("Watchlist item already exists")
+
         watchlist_item_in = WatchlistItemCreate(
             watchlist_id=watchlist_id,
             symbol=watchlist_item_in.symbol,
@@ -142,7 +166,7 @@ class WatchlistService:
             result = self._repository.get_watchlist_item_with_relations(
                 watchlist_id, watchlist_item.id, user_id
             )
-            return self.convert_watchlist_item_to_company_item(result)
+            return self._convert_watchlist_item_to_company_item(result)
         return None
 
     def delete_watchlist_item(

@@ -1,17 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.api.internal.config import DEFAULTS, ERROR_MESSAGES, LIMITS, PERIOD_TYPES, TAGS
 from app.dependencies.sync_services import create_sync_service_provider
-from app.schemas.financial_statements import CompanyBalanceSheetRead
-from app.schemas.financial_statements import CompanyCashFlowStatementRead
-from app.schemas.financial_health import CompanyFinancialHealthRead
-from app.schemas.financial_statements import CompanyIncomeStatementRead
-from app.services.internal.financial_sync_service import FinancialSyncService
+from app.schemas.financial_statements import (
+    CompanyBalanceSheetRead,
+    CompanyCashFlowStatementRead,
+    CompanyFinancialRatioRead,
+    CompanyIncomeStatementRead,
+)
+from app.services.internal.financial_statements_sync_service import (
+    CompanyFinancialStatementsSyncService,
+)
 
-router = APIRouter(prefix="", tags=[TAGS["financial"]["name"]])
+router = APIRouter(prefix="")
 
 # Create dependency provider for FinancialSyncService
-get_financials_sync_service = create_sync_service_provider(FinancialSyncService)
+get_financials_sync_service = create_sync_service_provider(
+    CompanyFinancialStatementsSyncService
+)
 
 
 @router.get(
@@ -23,12 +28,14 @@ get_financials_sync_service = create_sync_service_provider(FinancialSyncService)
 def sync_balance_sheets(
     symbol: str,
     limit: int = Query(
-        default=DEFAULTS["financial_limit"],
-        ge=LIMITS["financial_limit"]["min"],
-        le=LIMITS["financial_limit"]["max"],
+        default=100,
+        ge=1,
+        le=100,
     ),
-    period: str = Query(default="quarter", enum=PERIOD_TYPES["financial"]),
-    service: FinancialSyncService = Depends(get_financials_sync_service),
+    period: str = Query(default="quarter", enum=["annual", "quarter"]),
+    service: CompanyFinancialStatementsSyncService = Depends(
+        get_financials_sync_service
+    ),
 ):
     """
     Sync company's balance sheets from the external API and store in the database.
@@ -49,7 +56,7 @@ def sync_balance_sheets(
     if not statements:
         raise HTTPException(
             status_code=404,
-            detail=ERROR_MESSAGES["NOT_FOUND_BALANCE_SHEETS"].format(symbol=symbol),
+            detail="Balance sheets not found for symbol: {}".format(symbol),
         )
     return statements
 
@@ -63,12 +70,14 @@ def sync_balance_sheets(
 def sync_income_statements(
     symbol: str,
     limit: int = Query(
-        default=DEFAULTS["financial_limit"],
-        ge=LIMITS["financial_limit"]["min"],
-        le=LIMITS["financial_limit"]["max"],
+        default=100,
+        ge=1,
+        le=100,
     ),
-    period: str = Query(default="quarter", enum=PERIOD_TYPES["financial"]),
-    service: FinancialSyncService = Depends(get_financials_sync_service),
+    period: str = Query(default="quarter", enum=["annual", "quarter"]),
+    service: CompanyFinancialStatementsSyncService = Depends(
+        get_financials_sync_service
+    ),
 ):
     """
     Sync company's income statements from the external API and store in the database.
@@ -89,7 +98,7 @@ def sync_income_statements(
     if not statements:
         raise HTTPException(
             status_code=404,
-            detail=ERROR_MESSAGES["NOT_FOUND_INCOME_STATEMENTS"].format(symbol=symbol),
+            detail="Income statements not found for symbol: {}".format(symbol),
         )
     return statements
 
@@ -103,12 +112,14 @@ def sync_income_statements(
 def sync_cash_flow_statements(
     symbol: str,
     limit: int = Query(
-        default=DEFAULTS["financial_limit"],
-        ge=LIMITS["financial_limit"]["min"],
-        le=LIMITS["financial_limit"]["max"],
+        default=100,
+        ge=1,
+        le=100,
     ),
-    period: str = Query(default="quarter", enum=PERIOD_TYPES["financial"]),
-    service: FinancialSyncService = Depends(get_financials_sync_service),
+    period: str = Query(default="quarter", enum=["annual", "quarter"]),
+    service: CompanyFinancialStatementsSyncService = Depends(
+        get_financials_sync_service
+    ),
 ):
     """
     Sync company's cash flow statements from the external API and store in the database.
@@ -129,38 +140,48 @@ def sync_cash_flow_statements(
     if not statements:
         raise HTTPException(
             status_code=404,
-            detail=ERROR_MESSAGES["NOT_FOUND_CASH_FLOW"].format(symbol=symbol),
+            detail="Cash flow statements not found for symbol: {}".format(symbol),
         )
     return statements
 
 
 @router.get(
-    "/financial-health/{symbol}/sync",
-    response_model=list[CompanyFinancialHealthRead],
-    summary="Sync company financial health data from external API",
-    description="Fetches and upserts company's financial health data from the external API into the database.",
+    "/financial-ratios/{symbol}/sync",
+    response_model=list[CompanyFinancialRatioRead],
+    summary="Sync company financial ratios from external API",
+    description="Fetches and upserts company's financial ratios from the external API into the database.",
 )
-def sync_financial_health(
+def sync_financial_ratios(
     symbol: str,
-    service: FinancialSyncService = Depends(get_financials_sync_service),
+    limit: int = Query(
+        default=100,
+        ge=1,
+        le=100,
+    ),
+    period: str = Query(default="quarter", enum=["annual", "quarter"]),
+    service: CompanyFinancialStatementsSyncService = Depends(
+        get_financials_sync_service
+    ),
 ):
     """
-    Sync company's financial health data from the external API and store in the database.
+    Sync company's financial ratios from the external API and store in the database.
 
     Args:
         symbol: Stock symbol (e.g., 'AAPL')
-        service: FinancialSyncService instance (injected)
+        limit: Number of records to fetch (1-100)
+        period: Period type ('annual' or 'quarter')
+        service: CompanyFinancialStatementsSyncService instance (injected)
 
     Returns:
-        list[CompanyFinancialHealthRead]: Synced financial health records
+        list[CompanyFinancialRatioRead]: Synced financial ratio records
 
     Raises:
-        HTTPException: 404 if financial health data not found
+        HTTPException: 404 if financial ratios not found
     """
-    health_data = service.upsert_financial_health(symbol)
-    if not health_data:
+    ratios = service.upsert_financial_ratios(symbol, limit, period)
+    if not ratios:
         raise HTTPException(
             status_code=404,
-            detail=ERROR_MESSAGES["NOT_FOUND_FINANCIAL_HEALTH"].format(symbol=symbol),
+            detail="Financial ratios not found for symbol: {}".format(symbol),
         )
-    return health_data
+    return ratios

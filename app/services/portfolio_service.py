@@ -1,17 +1,16 @@
 import logging
 
 from sqlalchemy.orm import Session
+from datetime import date as date_type
 
-from app.repositories.company_repo import CompanyRepository
 from app.repositories.portfolio_repo import (
-    PortfolioHoldingPerformanceRepository,
     PortfolioRepository,
-    PortfolioTradingHistoryRepository,
 )
 from app.schemas.user import (
     PortfolioCreate,
     PortfolioDetail,
     PortfolioDividendHistoryRead,
+    PortfolioDividendHistoryWrite,
     PortfolioHoldingPerformanceRead,
     PortfolioHoldingPerformanceWrite,
     PortfolioIndustryPerformanceRead,
@@ -33,9 +32,6 @@ class PortfolioService:
     def __init__(self, session: Session) -> None:
         self._session = session
         self._portfolio_repo = PortfolioRepository(session)
-        self._holding_repo = PortfolioHoldingPerformanceRepository(session)
-        self._trading_repo = PortfolioTradingHistoryRepository(session)
-        self._company_repo = CompanyRepository(session)
 
     @staticmethod
     def _validate_list(items: list, schema_class):
@@ -64,7 +60,17 @@ class PortfolioService:
         use get_portfolio_details() instead.
         """
         portfolios = self._portfolio_repo.get_all_portfolios(user_id)
-        return [PortfolioRead.model_validate(p) for p in portfolios]
+        return [
+            PortfolioRead(
+                id=p.id,
+                name=p.name,
+                description=p.description,
+                currency=p.currency,
+                created_at=p.created_at,
+                updated_at=p.updated_at,
+            )
+            for p in portfolios
+        ]
 
     def create_portfolio(
         self, portfolio_in: PortfolioUpsertRequest, user_id: int
@@ -76,9 +82,16 @@ class PortfolioService:
             currency=portfolio_in.currency,
             user_id=user_id,
         )
-        portfolio = self._portfolio_repo.create_portfolio(portfolio_create)
-        logger.info(f"Created portfolio {portfolio.id} for user {user_id}")
-        return PortfolioRead.model_validate(portfolio)
+        portfolio_dto = self._portfolio_repo.create_portfolio(portfolio_create)
+        logger.info(f"Created portfolio {portfolio_dto.id} for user {user_id}")
+        return PortfolioRead(
+            id=portfolio_dto.id,
+            name=portfolio_dto.name,
+            description=portfolio_dto.description,
+            currency=portfolio_dto.currency,
+            created_at=portfolio_dto.created_at,
+            updated_at=portfolio_dto.updated_at,
+        )
 
     def update_portfolio(
         self, portfolio_id: int, portfolio_in: PortfolioUpsertRequest, user_id: int
@@ -93,9 +106,16 @@ class PortfolioService:
             description=portfolio_in.description,
             currency=portfolio_in.currency,
         )
-        updated = self._portfolio_repo.update_portfolio(portfolio_update)
-        logger.info(f"Updated portfolio {updated.id} for user {user_id}")
-        return PortfolioRead.model_validate(updated)
+        updated_dto = self._portfolio_repo.update_portfolio(portfolio_update)
+        logger.info(f"Updated portfolio {updated_dto.id} for user {user_id}")
+        return PortfolioRead(
+            id=updated_dto.id,
+            name=updated_dto.name,
+            description=updated_dto.description,
+            currency=updated_dto.currency,
+            created_at=updated_dto.created_at,
+            updated_at=updated_dto.updated_at,
+        )
 
     def delete_portfolio(self, portfolio_id: int, user_id: int) -> bool:
         """Delete a portfolio (soft delete), ensuring it belongs to the authenticated user."""
@@ -160,6 +180,32 @@ class PortfolioService:
             industry_performances=industry_performances,
         )
 
+    def get_portfolio_dividend_history(
+        self, portfolio_id: int, user_id: int
+    ) -> list[PortfolioDividendHistoryRead]:
+        """
+        Retrieve dividend history for a specific portfolio.
+
+        Args:
+            portfolio_id: The portfolio to retrieve dividend history for
+            user_id: The user requesting the dividend history
+        Returns:
+            List of PortfolioDividendHistoryRead records
+        """
+        try:
+            self._get_verified_portfolio(portfolio_id, user_id)
+            dividend_histories = self._portfolio_repo.get_dividend_history(portfolio_id)
+            results = self._validate_list(
+                dividend_histories, PortfolioDividendHistoryRead
+            )
+            return results
+        except Exception as e:
+            logger.error(
+                f"Error retrieving dividend history for portfolio {portfolio_id}: {str(e)}",
+                exc_info=True,
+            )
+            raise
+
     def buy_holding(
         self,
         portfolio_id: int,
@@ -176,7 +222,7 @@ class PortfolioService:
         trade_data.update({**trade_totals, "portfolio_id": portfolio_id})
 
         trade_write = PortfolioTradingHistoryWrite.model_validate(trade_data)
-        response = self._trading_repo.add_trade(trade_write)
+        response = self._portfolio_repo.add_trade(trade_write)
         logger.info(
             f"Recorded BUY trade: {trading.shares} shares of {trading.symbol} at ${trading.price_per_share} in portfolio {portfolio_id}"
         )
@@ -196,7 +242,7 @@ class PortfolioService:
         self._get_verified_portfolio(portfolio_id, user_id)
 
         # Verify sufficient shares
-        holding = self._holding_repo.get_holding(portfolio_id, trading.symbol)
+        holding = self._portfolio_repo.get_holding(portfolio_id, trading.symbol)
         if not holding:
             raise ValueError(
                 f"No holding of {trading.symbol} exists in portfolio {portfolio_id}"
@@ -213,19 +259,102 @@ class PortfolioService:
         trade_data.update({**trade_totals, "portfolio_id": portfolio_id})
 
         trade_write = PortfolioTradingHistoryWrite.model_validate(trade_data)
-        response = self._trading_repo.add_trade(trade_write)
+        response = self._portfolio_repo.add_trade(trade_write)
         logger.info(
             f"Recorded SELL trade: {trading.shares} shares of {trading.symbol} at ${trading.price_per_share} in portfolio {portfolio_id}"
         )
 
         # Remove holding if all shares sold
         if holding.total_shares == trading.shares:
-            self._holding_repo.delete_holding(holding.id)
+            self._portfolio_repo.delete_holding(holding.id)
             logger.info(
                 f"Removed holding {trading.symbol} from portfolio {portfolio_id} after selling all shares"
             )
 
         return PortfolioTradingHistoryRead.model_validate(response)
+
+    def sync_dividends_for_portfolio(
+        self, portfolio_id: int, after_date: date_type | None = None
+    ) -> list[PortfolioDividendHistoryRead]:
+        """
+        Sync dividends for a specific portfolio.
+
+        Args:
+            portfolio_id: The portfolio to sync dividends for
+            after_date: Optional date to only process dividends after this date
+
+        Returns:
+            Dictionary with summary of processed dividends
+        """
+        # Get all unprocessed company dividends
+        try:
+            unprocessed_dividends = self._dividend_repo.get_unprocessed_dividends(
+                after_date
+            )
+            dividend_created = []
+
+            for company_dividend in unprocessed_dividends:
+                symbol = company_dividend.symbol
+                declaration_date = company_dividend.declaration_date
+                payment_date = company_dividend.payment_date
+                dividend_per_share = (
+                    company_dividend.adj_dividend or company_dividend.dividend
+                )
+                currency = company_dividend.currency
+
+                if not dividend_per_share or dividend_per_share <= 0:
+                    logger.warning(
+                        f"Skipping dividend for {symbol} on {declaration_date}: "
+                        "Invalid dividend amount"
+                    )
+                    continue
+
+                # Get all trades for this symbol before declaration date
+                trades = self._portfolio_repo.get_trading_history_before_date(
+                    portfolio_id, symbol, declaration_date
+                )
+
+                if not trades:
+                    logger.debug(
+                        f"No trades found for {symbol} before {declaration_date} "
+                        f"in portfolio {portfolio_id}"
+                    )
+                    continue
+
+                # Calculate shares held at declaration date
+                shares_held = self._calculate_shares_held(trades)
+
+                if shares_held <= 0:
+                    logger.debug(
+                        f"No shares held for {symbol} at {declaration_date} "
+                        f"in portfolio {portfolio_id}"
+                    )
+                    continue
+
+                # Record the dividend
+                dividend_record = PortfolioDividendHistoryWrite(
+                    portfolio_id=portfolio_id,
+                    symbol=symbol,
+                    shares=shares_held,
+                    dividend_per_share=dividend_per_share,
+                    dividend_amount=shares_held * dividend_per_share,
+                    declaration_date=declaration_date,
+                    payment_date=payment_date,
+                    currency=currency,
+                )
+                result = self._portfolio_repo.add_dividend(dividend_record)
+                dividend_created.append(result)
+            results = [
+                PortfolioDividendHistoryRead.model_validate(dividend)
+                for dividend in dividend_created
+            ]
+            return results
+        except Exception as e:
+            logger.error(
+                f"Error syncing dividends for portfolio {portfolio_id}: {str(e)}",
+                exc_info=True,
+            )
+            raise
 
     def _calculate_trade_totals(
         self, trading: PortfolioTradingHistoryUpsertRequest, is_buy: bool
@@ -240,14 +369,14 @@ class PortfolioService:
         self, portfolio_id: int, symbol: str, currency: str
     ) -> None:
         """Get or create a holding for the given symbol."""
-        holding = self._holding_repo.get_holding(portfolio_id, symbol)
+        holding = self._portfolio_repo.get_holding(portfolio_id, symbol)
         if not holding:
             holding_write = PortfolioHoldingPerformanceWrite(
                 portfolio_id=portfolio_id,
                 symbol=symbol,
                 currency=currency,
             )
-            self._holding_repo.add_holding(holding_write)
+            self._portfolio_repo.add_holding(holding_write)
 
     def _calculate_sector_performances(
         self, holdings: list, company_sectors: dict[str, str]
