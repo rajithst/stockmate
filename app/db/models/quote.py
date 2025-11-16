@@ -79,6 +79,7 @@ class CompanyStockPrice(Base):
     volume: Mapped[int] = mapped_column(nullable=False)
     change: Mapped[float] = mapped_column(Float, nullable=True)
     change_percent: Mapped[float] = mapped_column(Float, nullable=True)
+    after_hours_price: Mapped[float] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -100,3 +101,19 @@ class CompanyStockPrice(Base):
         foreign_keys=[company_id],
         lazy="select",
     )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "company_id": self.company_id,
+            "symbol": self.symbol,
+            "date": self.date,
+            "open_price": self.open_price,
+            "close_price": self.close_price,
+            "high_price": self.high_price,
+            "low_price": self.low_price,
+            "volume": self.volume,
+            "change": self.change,
+            "change_percent": self.change_percent,
+            "after_hours_price": self.after_hours_price,
+        }

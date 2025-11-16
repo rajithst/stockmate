@@ -20,7 +20,11 @@ from app.clients.fmp.models.news import (
     FMPStockGradingNews,
     FMPStockNews,
 )
-from app.clients.fmp.models.quotes import FMPStockPrice, FMPStockPriceChange
+from app.clients.fmp.models.quotes import (
+    FMPStockPrice,
+    FMPStockPriceChange,
+    FMPAfterHoursPrice,
+)
 from app.clients.fmp.models.revenue_product_segmentation import (
     FMPRevenueProductSegmentation,
 )
@@ -198,4 +202,14 @@ class FMPClientProtocol(Protocol):
 
     def get_current_price_quote(self, symbol: str) -> Optional[FMPStockPrice]:
         """Fetches the current stock price quote for a given stock symbol."""
+        ...
+
+    def get_after_hours_price(self, symbol: str) -> Optional[FMPAfterHoursPrice]:
+        """Fetches the after-hours price for a given stock symbol."""
+        ...
+
+    def get_historical_prices(
+        self, symbol: str, from_date: str, to_date: str
+    ) -> List[FMPStockPrice]:
+        """Fetches historical stock prices for a given stock symbol within a date range."""
         ...

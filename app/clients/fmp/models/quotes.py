@@ -18,6 +18,18 @@ class FMPStockPriceChange(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class FMPStockHistoricalPrice(BaseModel):
+    symbol: str
+    date: date_type
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: int
+    change: float
+    change_percent: float = Field(..., alias="changePercent")
+
+
 class FMPStockPrice(BaseModel):
     symbol: str
     date: date_type = Field(..., alias="timestamp")
@@ -54,3 +66,10 @@ class FMPStockPrice(BaseModel):
         if hasattr(v, "date"):
             return v.date()
         return v
+
+
+class FMPAfterHoursPrice(BaseModel):
+    symbol: str
+    after_hours_price: float = Field(..., alias="price")
+
+    model_config = ConfigDict(populate_by_name=True)

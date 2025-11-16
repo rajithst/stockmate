@@ -24,7 +24,12 @@ from app.clients.fmp.models.news import (
     FMPStockGradingNews,
     FMPStockNews,
 )
-from app.clients.fmp.models.quotes import FMPStockPrice, FMPStockPriceChange
+from app.clients.fmp.models.quotes import (
+    FMPStockPrice,
+    FMPStockPriceChange,
+    FMPAfterHoursPrice,
+    FMPStockHistoricalPrice,
+)
 from app.clients.fmp.models.revenue_product_segmentation import (
     FMPRevenueProductSegmentation,
 )
@@ -546,6 +551,53 @@ class FMPClient:
         """
         current_price = self.__get_by_url(endpoint="quote", params={"symbol": symbol})
         return self._handle_single_response(current_price, FMPStockPrice)
+
+    def get_after_hours_price(self, symbol: str) -> Optional[FMPAfterHoursPrice]:
+        """Fetches the after-hours price for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the after-hours price for.
+        Returns:
+            Optional[FMPAfterHoursPrice]: The after-hours price if found, else None.
+        """
+        after_hours_price = self.__get_by_url(
+            endpoint="aftermarket-trade", params={"symbol": symbol}
+        )
+        return self._handle_single_response(after_hours_price, FMPAfterHoursPrice)
+
+    def get_historical_prices(
+        self, symbol: str, from_date: str, to_date: str
+    ) -> list[FMPStockPrice]:
+        """Fetches historical stock prices for a given stock symbol within a date range.
+        Args:
+            symbol (str): The stock symbol to fetch the historical prices for.
+            from_date (str): The start date for the historical prices in 'YYYY-MM-DD' format.
+            to_date (str): The end date for the historical prices in 'YYYY-MM-DD' format.
+        Returns:
+            list: A list of historical stock price records within the specified date range.
+        """
+        historical_prices = self.__get_by_url(
+            endpoint="historical-price-eod/full",
+            params={"symbol": symbol, "from": from_date, "to": to_date},
+        )
+        historical_prices = self._handle_list_response(
+            historical_prices, FMPStockHistoricalPrice
+        )
+        return [
+            FMPStockPrice(
+                **{
+                    "symbol": price.symbol,
+                    "date": price.date,
+                    "open_price": price.open,
+                    "high_price": price.high,
+                    "low_price": price.low,
+                    "close_price": price.close,
+                    "volume": price.volume,
+                    "change": price.change,
+                    "change_percent": price.change_percent,
+                }
+            )
+            for price in historical_prices
+        ]
 
     def _validate_symbol(self, symbol: str) -> None:
         """Validate stock symbol parameter"""

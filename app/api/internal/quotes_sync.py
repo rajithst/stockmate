@@ -17,6 +17,28 @@ get_quotes_sync_service = create_sync_service_provider(QuotesSyncService)
 
 
 @router.get(
+    "/historical-prices/{symbol}/sync",
+    response_model=list[StockPriceRead],
+    summary="Sync company historical prices from external API",
+    description="Fetches and upserts a company's historical prices from the external API into the database.",
+)
+def sync_historical_prices(
+    symbol: str,
+    from_date: str | None = Query(default=None),
+    to_date: str | None = Query(default=None),
+    service: QuotesSyncService = Depends(get_quotes_sync_service),
+):
+    """Sync a company's historical prices from the external API and store them in the database."""
+    historical_prices = service.upsert_historical_prices(symbol, from_date, to_date)
+    if not historical_prices:
+        raise HTTPException(
+            status_code=404,
+            detail="Historical prices not found for symbol: {}".format(symbol),
+        )
+    return historical_prices
+
+
+@router.get(
     "/price-change/{symbol}/sync",
     response_model=StockPriceChangeRead,
     summary="Sync company price change from external API",
@@ -52,6 +74,25 @@ def sync_daily_prices(
             detail="Daily prices not found for symbol: {}".format(symbol),
         )
     return daily_prices
+
+
+@router.get(
+    "/after-hours-price/{symbol}/sync",
+    response_model=StockPriceRead,
+    summary="Sync company after-hours prices from external API",
+    description="Fetches and upserts a company's after-hours prices from the external API into the database.",
+)
+def sync_after_hours_prices(
+    symbol: str, service: QuotesSyncService = Depends(get_quotes_sync_service)
+):
+    """Sync a company's after-hours prices from the external API and store them in the database."""
+    after_hours_prices = service.upsert_after_hours_prices(symbol)
+    if not after_hours_prices:
+        raise HTTPException(
+            status_code=404,
+            detail="After-hours prices not found for symbol: {}".format(symbol),
+        )
+    return after_hours_prices
 
 
 @router.get(

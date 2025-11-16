@@ -26,6 +26,68 @@ class CompanyQuoteSyncRepository:
     def __init__(self, session: Session) -> None:
         self._db = session
 
+    def get_latest_daily_price_by_symbol(self, symbol) -> CompanyStockPrice | None:
+        """Get the latest daily price record for a given symbol."""
+        return (
+            self._db.query(CompanyStockPrice)
+            .filter(CompanyStockPrice.symbol == symbol)
+            .order_by(CompanyStockPrice.date.desc())
+            .first()
+        )
+
+    def upsert_historical_prices(
+        self, historical_prices: list[StockPriceWrite]
+    ) -> list[CompanyStockPrice]:
+        """Bulk upsert historical price records by symbol and date."""
+        try:
+            results = []
+            dates = [price.date for price in historical_prices]
+            min_date = min(dates)
+            max_date = max(dates)
+
+            # Fetch all existing records in one query within the date range
+            symbols = {price.symbol for price in historical_prices}
+            existing_records = (
+                self._db.query(CompanyStockPrice)
+                .filter(CompanyStockPrice.symbol.in_(symbols))
+                .filter(CompanyStockPrice.date.between(min_date, max_date))
+                .all()
+            )
+
+            # Create lookup dictionary: (symbol, date) -> record
+            existing_map = {
+                (record.symbol, record.date): record for record in existing_records
+            }
+
+            for price_in in historical_prices:
+                key = (price_in.symbol, price_in.date)
+
+                if key in existing_map:
+                    # Update existing
+                    result = map_model(existing_map[key], price_in)
+                else:
+                    # Create new
+                    result = CompanyStockPrice(
+                        **price_in.model_dump(exclude_unset=True)
+                    )
+                    self._db.add(result)
+
+                results.append(result)
+
+            # Commit all changes
+            self._db.commit()
+
+            # Refresh all records
+            for result in results:
+                self._db.refresh(result)
+
+            logger.info(f"Upserted {len(results)} historical price records")
+            return results
+        except SQLAlchemyError as e:
+            self._db.rollback()
+            logger.error(f"Error during upsert_historical_prices: {e}")
+            raise
+
     def upsert_price_change(
         self, price_change: StockPriceChangeWrite
     ) -> CompanyStockPriceChange:

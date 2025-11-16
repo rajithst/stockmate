@@ -30,6 +30,45 @@ class QuotesSyncService(BaseSyncService):
         self._repository = CompanyQuoteSyncRepository(session)
         self._company_repository = CompanyRepository(session)
 
+    def upsert_historical_prices(self, symbol, from_date, to_date):
+        """
+        Fetch and upsert historical stock prices for a company.
+
+        Args:
+            symbol: Stock symbol
+            from_date: Start date for historical data
+            to_date: End date for historical data
+        Returns:
+            List of upserted historical price records or None if not found
+        """
+        try:
+            company = self._get_company_or_fail(symbol)
+            if not company:
+                return None
+
+            # Explicit control over API call
+            historical_data = self._market_api_client.get_historical_prices(
+                symbol, from_date, to_date
+            )
+            if not historical_data:
+                return None
+
+            records_to_persist = self._add_company_id_to_records(
+                historical_data, company.id, StockPriceWrite
+            )
+
+            historical_prices = self._repository.upsert_historical_prices(
+                records_to_persist
+            )
+            result = self._map_schema_list(historical_prices, StockPriceRead)
+
+            logger.info(f"Upserted historical prices for symbol {symbol}")
+            return result
+
+        except Exception as e:
+            logger.error(f"Failed to upsert historical prices for symbol {symbol}: {e}")
+            raise
+
     def upsert_price_change(self, symbol: str) -> StockPriceChangeRead | None:
         """
         Fetch and upsert stock price change/quote for a company.
@@ -95,6 +134,54 @@ class QuotesSyncService(BaseSyncService):
 
         except Exception as e:
             logger.error(f"Failed to upsert daily price for symbol {symbol}: {e}")
+            raise
+
+    def upsert_after_hours_prices(self, symbol) -> StockPriceRead | None:
+        """
+        Fetch and upsert after-hours stock price for a company.
+        Args:
+            symbol: Stock symbol
+        Returns:
+            Upserted after-hours price record or None if not found
+        """
+        try:
+            company = self._get_company_or_fail(symbol)
+            if not company:
+                return None
+
+            # Explicit control over API call
+            api_data = self._market_api_client.get_after_hours_price(symbol)
+            if not api_data:
+                logger.warning(
+                    f"No after-hours price data found from API for symbol {symbol}"
+                )
+                return None
+
+            # Fetch the current daily price record to update after-hours price
+            daily_price_record = self._repository.get_latest_daily_price_by_symbol(
+                symbol
+            )
+            if not daily_price_record:
+                logger.warning(
+                    f"No daily price record found for symbol {symbol} to update after-hours price."
+                )
+                return None
+
+            after_market_price = api_data.after_hours_price
+            stock_price_write = StockPriceWrite.model_validate(
+                {
+                    **daily_price_record.to_dict(),
+                    "after_hours_price": after_market_price,
+                }
+            )
+
+            updated_record = self._repository.upsert_daily_price(stock_price_write)
+            result = self._map_schema_single(updated_record, StockPriceRead)
+
+            logger.info(f"Upserted after-hours price for symbol {symbol}")
+            return result
+        except Exception as e:
+            logger.error(f"Failed to upsert after-hours price for symbol {symbol}: {e}")
             raise
 
     def upsert_stock_splits(

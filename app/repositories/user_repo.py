@@ -15,21 +15,21 @@ class UserRepository:
 
     def get_user_by_username(self, username: str) -> User | None:
         """Get a user by username."""
-        user = self._get_by_filter(User, {"username": username}, limit=1)
+        user = self._db.query(User).filter(User.username == username).limit(1).all()
         if user:
             return user[0]
         return None
 
     def get_user_by_email(self, email: str) -> User | None:
         """Get a user by email."""
-        user = self._get_by_filter(User, {"email": email}, limit=1)
+        user = self._db.query(User).filter(User.email == email).limit(1).all()
         if user:
             return user[0]
         return None
 
     def get_user_by_id(self, user_id: int) -> User | None:
         """Get a user by ID."""
-        return self._get_by_id(User, user_id)
+        return self._db.query(User).filter(User.id == user_id).first()
 
     def create_user(self, user_data: UserWrite) -> User:
         """Create a new user."""

@@ -53,6 +53,7 @@ class StockPrice(BaseModel):
     high_price: float
     low_price: float
     volume: int
+    after_hours_price: Optional[float] = None
     change: Optional[float] = None
     change_percent: Optional[float] = None
 
