@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.schemas.financial_statements import CompanyBalanceSheetRead
 from app.schemas.financial_statements import CompanyCashFlowStatementRead
-from app.schemas.company_metrics import CompanyDiscountedCashFlowRead
+from app.schemas.company_metrics import CompanyDiscountedCashFlowRead, CompanyAnalystEstimateRead
 from app.schemas.quote import CompanyDividendRead, StockPriceRead
 from app.schemas.financial_health import CompanyFinancialHealthRead
 from app.schemas.financial_statements import CompanyFinancialRatioRead
@@ -80,6 +80,7 @@ class CompanyPageResponse(BaseModel):
     stock_prices: List[StockPriceRead]
     price_change: Optional[StockPriceChangeRead]
     price_target_summary: Optional[CompanyPriceTargetSummaryRead]
+    analyst_estimates: List[CompanyAnalystEstimateRead] = []
     latest_gradings: List[CompanyGradingRead] = []
     price_target_news: List[CompanyPriceTargetNewsRead] = []
     general_news: List[CompanyGeneralNewsRead] = []

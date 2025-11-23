@@ -22,7 +22,7 @@ from app.schemas.company import (
 )
 from app.schemas.company_metrics import (
     CompanyDiscountedCashFlowRead,
-    CompanyKeyMetricsRead,
+    CompanyKeyMetricsRead, CompanyAnalystEstimateRead,
 )
 from app.schemas.financial_health import CompanyFinancialHealthRead
 from app.schemas.financial_statements import (
@@ -161,6 +161,9 @@ class CompanyService:
             StockPriceRead,
             self._quotes_repository.get_daily_prices(symbol)
         )
+        analyst_estimates_read = self._validate_models(
+            CompanyAnalystEstimateRead,
+            self._metrics_repository.get_analyst_estimates(symbol))
 
         return CompanyPageResponse(
             company=company_read,
@@ -172,6 +175,7 @@ class CompanyService:
             stock_prices=daily_prices_read,
             price_change=price_change_read,
             latest_gradings=latest_gradings,
+            analyst_estimates=analyst_estimates_read,
             price_target_news=price_target_news_read,
             general_news=general_news_read,
             grading_news=grading_news_read,
