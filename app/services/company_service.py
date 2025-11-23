@@ -44,7 +44,7 @@ from app.schemas.market_data import (
 from app.schemas.quote import (
     CompanyDividendRead,
     CompanyTechnicalIndicatorRead,
-    StockPriceChangeRead,
+    StockPriceChangeRead, StockPriceRead,
 )
 
 logger = getLogger(__name__)
@@ -157,6 +157,11 @@ class CompanyService:
             ),
         )
 
+        daily_prices_read = self._validate_models(
+            StockPriceRead,
+            self._quotes_repository.get_daily_prices(symbol)
+        )
+
         return CompanyPageResponse(
             company=company_read,
             grading_summary=grading_summary_read,
@@ -164,6 +169,7 @@ class CompanyService:
             price_target_summary=price_target_summary_read,
             dcf=dcf_read,
             price_target=price_target_read,
+            stock_prices=daily_prices_read,
             price_change=price_change_read,
             latest_gradings=latest_gradings,
             price_target_news=price_target_news_read,

@@ -201,7 +201,7 @@ async def sell_holding(
 async def get_portfolio_dividends(
     portfolio_id: int,
     current_user: Annotated[UserRead, Depends(get_current_user)],
-    service: DividendService = Depends(get_dividend_service),
+    service: PortfolioService = Depends(get_portfolio_service)
 ):
     """
     Retrieve the dividend history for a specific portfolio.
@@ -220,7 +220,7 @@ async def get_portfolio_dividends(
     return service.get_portfolio_dividend_history(portfolio_id, user_id=current_user.id)
 
 
-@router.post(
+@router.get(
     "/{portfolio_id}/sync-dividends",
     response_model=list[PortfolioDividendHistoryRead],
     summary="Sync company dividends to portfolio dividend history",

@@ -68,7 +68,7 @@ class DividendService:
                     continue
 
                 # Get all trades for this symbol before declaration date
-                trades = self._portfolio_repo.get_trades_for_symbol_before_date(
+                trades = self._portfolio_repo.get_trading_history_before_date(
                     portfolio_id, symbol, declaration_date
                 )
 
@@ -114,7 +114,7 @@ class DividendService:
             )
             raise
 
-    def sync_all_portfolios(self, after_date: date_type | None = None) -> dict:
+    def sync_all_portfolios(self, after_date: date_type | None = None) ->  list[PortfolioDividendHistoryRead]:
         """
         Sync dividends for all user portfolios.
 

@@ -11,7 +11,7 @@ Consolidated user and portfolio schemas:
 - Token: Authentication token
 """
 
-from datetime import datetime
+from datetime import datetime, date as date_type
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr
@@ -146,6 +146,24 @@ class PortfolioUpdate(Portfolio):
     user_id: int
     model_config = ConfigDict(from_attributes=True)
 
+class PortfolioMonthlyPerformance(BaseModel):
+    """Monthly portfolio performance data for charting."""
+    year: int
+    month: int
+    date: date_type  # First day of the month
+    total_value: float = 0.0
+    total_invested: float = 0.0
+    total_gain_loss: float = 0.0
+    gain_loss_percentage: float = 0.0
+    dividends_received: float = 0.0
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PortfolioMonthlyPerformanceRead(PortfolioMonthlyPerformance):
+    """Read schema for monthly performance with all calculated metrics."""
+    model_config = ConfigDict(from_attributes=True)
+
 
 # ========================
 # PORTFOLIO SECTOR & INDUSTRY PERFORMANCE SCHEMAS
@@ -264,8 +282,8 @@ class PortfolioDividendHistory(BaseModel):
     dividend_per_share: float = 0.0
     dividend_amount: float = 0.0
     currency: str
-    declaration_date: datetime
-    payment_date: datetime
+    declaration_date: date_type
+    payment_date: date_type
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -294,6 +312,7 @@ class PortfolioDetail(BaseModel):
     industry_performances: List[PortfolioIndustryPerformanceRead] = []
     holding_performances: List[PortfolioHoldingPerformanceRead] = []
     trading_histories: List[PortfolioTradingHistoryRead] = []
+    monthly_performances: List[PortfolioMonthlyPerformanceRead] = []
 
     model_config = ConfigDict(from_attributes=True)
 

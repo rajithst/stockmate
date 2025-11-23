@@ -74,13 +74,17 @@ class CompanyFinancialStatementsRepository:
             logger.error(f"Error getting cash flow statements for {symbol}: {e}")
             raise
 
-    def get_financial_ratios(self, symbol: str) -> CompanyFinancialRatio | None:
+    def get_financial_ratios(self, symbol: str) -> list[CompanyFinancialRatio]:
         """Retrieve financial ratios for a company."""
         try:
             return (
                 self._db.query(CompanyFinancialRatio)
                 .filter(CompanyFinancialRatio.symbol == symbol)
-                .first()
+                .order_by(
+                    CompanyFinancialRatio.date.desc(),
+                    CompanyFinancialRatio.fiscal_year.desc(),
+                )
+                .all()
             )
         except SQLAlchemyError as e:
             logger.error(f"Error getting financial ratios for {symbol}: {e}")

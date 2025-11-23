@@ -57,7 +57,7 @@ class CompanyMarketDataRepository:
             return (
                 self._db.query(target_model)
                 .filter(target_model.symbol == symbol)
-                .order_by(target_model.published_at.desc())
+                .order_by(target_model.published_date.desc())
                 .limit(limit)
                 .all()
             )

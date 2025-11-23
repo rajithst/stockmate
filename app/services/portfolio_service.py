@@ -14,6 +14,7 @@ from app.schemas.user import (
     PortfolioHoldingPerformanceRead,
     PortfolioHoldingPerformanceWrite,
     PortfolioIndustryPerformanceRead,
+    PortfolioMonthlyPerformanceRead,
     PortfolioRead,
     PortfolioSectorPerformanceRead,
     PortfolioTradingHistoryRead,
@@ -147,8 +148,18 @@ class PortfolioService:
         trading_history = portfolio.trading_histories
         dividends = portfolio.dividend_histories
 
+        trading_history_read = self._validate_list(
+            trading_history, PortfolioTradingHistoryRead
+        )
+        dividend_history_read = self._validate_list(
+            dividends, PortfolioDividendHistoryRead
+        )
+
+        #calculate portfolio monthly performance
+        monthly_performance = self._calculate_monthly_performance(trading_history_read, dividend_history_read)
+
         # Calculate total dividends received
-        dividends_received = sum(d.dividend_amount for d in dividends)
+        dividends_received = sum(d.dividend_amount for d in dividend_history_read)
 
         company_sectors = {h.symbol: h.sector for h in holdings}
         company_industries = {h.symbol: h.industry for h in holdings}
@@ -170,14 +181,10 @@ class PortfolioService:
             holding_performances=self._validate_list(
                 holdings, PortfolioHoldingPerformanceRead
             ),
-            trading_histories=self._validate_list(
-                trading_history, PortfolioTradingHistoryRead
-            ),
-            dividend_histories=self._validate_list(
-                dividends, PortfolioDividendHistoryRead
-            ),
+            trading_histories=trading_history_read,
             sector_performances=sector_performances,
             industry_performances=industry_performances,
+            monthly_performances=monthly_performance,
         )
 
     def get_portfolio_dividend_history(
@@ -469,3 +476,98 @@ class PortfolioService:
             industry_performances.append(industry_perf)
 
         return industry_performances
+
+    def _calculate_monthly_performance(self, trading_history, dividend_history) -> list[PortfolioMonthlyPerformanceRead]:
+        """
+        Calculate the monthly performance of a portfolio with cumulative values.
+
+        This function computes:
+        - Monthly total invested (cumulative)
+        - Monthly portfolio value (cumulative)
+        - Monthly gain/loss (cumulative)
+        - Monthly gain/loss percentage
+        - Monthly dividend income
+
+        Args:
+            trading_history: List of PortfolioTradingHistoryRead
+            dividend_history: List of PortfolioDividendHistoryRead
+
+        Returns:
+            List of PortfolioMonthlyPerformanceRead with monthly performance data
+        """
+
+        if not trading_history:
+            return []
+
+        # Group trades by month and sort chronologically
+        monthly_trades = {}
+        for trade in trading_history:
+            trade_date = trade.trade_date
+            month_key = trade_date.strftime("%Y-%m")  # Format: YYYY-MM
+            year = int(trade_date.strftime("%Y"))
+            month = int(trade_date.strftime("%m"))
+
+            if month_key not in monthly_trades:
+                monthly_trades[month_key] = {
+                    "year": year,
+                    "month": month,
+                    "date": date_type(year, month, 1),
+                    "total_invested": 0.0,
+                    "total_value": 0.0,
+                }
+
+            # Update monthly totals
+            monthly_trades[month_key]["total_invested"] += trade.net_total
+            monthly_trades[month_key]["total_value"] += trade.total_value
+
+        # Process dividends to calculate monthly dividend income
+        monthly_dividends = {}
+        for dividend in dividend_history:
+            payment_month = dividend.payment_date.strftime("%Y-%m")
+            if payment_month not in monthly_dividends:
+                monthly_dividends[payment_month] = 0.0
+            monthly_dividends[payment_month] += dividend.dividend_amount
+
+        # Sort months chronologically
+        sorted_months = sorted(monthly_trades.keys())
+
+        # Calculate cumulative values and create monthly performance records
+        monthly_performance = []
+        cumulative_invested = 0.0
+        cumulative_value = 0.0
+
+        for month_key in sorted_months:
+            month_data = monthly_trades[month_key]
+
+            # Accumulate values
+            cumulative_invested += month_data["total_invested"]
+            cumulative_value += month_data["total_value"]
+            cumulative_gain_loss = cumulative_value - cumulative_invested
+
+            # Calculate gain/loss percentage
+            gain_loss_percentage = (
+                (cumulative_gain_loss / cumulative_invested * 100)
+                if cumulative_invested > 0
+                else 0.0
+            )
+
+            # Get dividend amount for this month
+            dividends_received = monthly_dividends.get(month_key, 0.0)
+
+            monthly_record = {
+                "year": month_data["year"],
+                "month": month_data["month"],
+                "date": month_data["date"],
+                "total_invested": cumulative_invested,
+                "total_value": cumulative_value,
+                "total_gain_loss": cumulative_gain_loss,
+                "gain_loss_percentage": gain_loss_percentage,
+                "dividends_received": dividends_received,
+            }
+            monthly_performance.append(monthly_record)
+
+        # Convert to PortfolioMonthlyPerformanceRead schema
+        return [
+            PortfolioMonthlyPerformanceRead.model_validate(record)
+            for record in monthly_performance
+        ]
