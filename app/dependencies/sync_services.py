@@ -123,7 +123,6 @@ def get_pubsub_service() -> PubSubService:
     """
     return PubSubService(
         project_id=config.gcp_project_id,
-        credentials_path=config.gcp_credentials_path,
     )
 
 

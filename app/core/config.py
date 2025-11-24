@@ -1,10 +1,8 @@
+import os
 from urllib.parse import quote_plus
 
-from dotenv import load_dotenv
 from pydantic import ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-load_dotenv()
 
 
 class Config(BaseSettings):
@@ -20,15 +18,12 @@ class Config(BaseSettings):
     openai_api_key: str = ""
 
     # Authentication settings
-    auth_secret_key: str = (
-        "c2ec5943cf9a81b1e22f808a958ed1fac22b9f5f1dd92fef4e036e82226a0c18"
-    )
+    auth_secret_key: str = ""
     auth_algorithm: str = "HS256"
     auth_token_expire_minutes: int = 300
 
     # Google Cloud Pub/Sub settings
     gcp_project_id: str = ""
-    gcp_credentials_path: str = ""
     pubsub_company_sync_topic: str = "company-sync"
     pubsub_enabled: bool = False
 
@@ -47,7 +42,10 @@ class Config(BaseSettings):
             f"@{self.db_host}:{self.db_port}/{self.db_name}"
         )
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=".env" if not os.getenv("K_SERVICE") else None,
+        env_file_encoding="utf-8"
+    )
 
 
 try:

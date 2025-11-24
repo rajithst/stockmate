@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class PubSubService:
     """Service for publishing company sync messages to Google Cloud Pub/Sub."""
 
-    def __init__(self, project_id: str, credentials_path: Optional[str] = None):
+    def __init__(self, project_id: str):
         """
         Initialize the Pub/Sub service.
 
