@@ -8,6 +8,7 @@ from app.api.internal import (
     financial_health_sync,
     financials_statements_sync,
     market_data_sync,
+    pubsub_handler_api,
     quotes_sync,
 )
 from app.api.v1 import auth, company, portfolio, watchlist
@@ -66,4 +67,11 @@ app.include_router(
     quotes_sync.router,
     prefix="/api/internal/quotes-sync",
     tags=["quotes-sync"],
+)
+
+# Include Pub/Sub webhook endpoint
+app.include_router(
+    pubsub_handler_api.router,
+    prefix="/api/internal/pubsub",
+    tags=["pubsub"],
 )

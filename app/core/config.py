@@ -26,6 +26,12 @@ class Config(BaseSettings):
     auth_algorithm: str = "HS256"
     auth_token_expire_minutes: int = 300
 
+    # Google Cloud Pub/Sub settings
+    gcp_project_id: str = ""
+    gcp_credentials_path: str = ""
+    pubsub_company_sync_topic: str = "company-sync"
+    pubsub_enabled: bool = False
+
     @field_validator("db_user", "db_password", "db_name", "fmp_api_key")
     @classmethod
     def validate_required_fields(cls, v: str, info) -> str:

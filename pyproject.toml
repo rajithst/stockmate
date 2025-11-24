@@ -9,6 +9,7 @@ dependencies = [
     "black>=25.9.0",
     "cryptography>=46.0.3",
     "fastapi[standard]>=0.117.1",
+    "google-cloud-pubsub>=2.25.0",
     "pwdlib[argon2]>=0.3.0",
     "pydantic-settings>=2.11.0",
     "pyjwt>=2.10.1",
