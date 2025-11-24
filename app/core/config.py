@@ -44,7 +44,7 @@ class Config(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_file=".env" if not os.getenv("K_SERVICE") else None,
-        env_file_encoding="utf-8"
+        env_file_encoding="utf-8",
     )
 
 

@@ -30,7 +30,9 @@ class CompanyMetricsRepository:
             logger.error(f"Error getting key metrics for {symbol}: {e}")
             raise
 
-    def get_analyst_estimates(self, symbol: str, limit: int = 50) -> list[CompanyAnalystEstimate]:
+    def get_analyst_estimates(
+        self, symbol: str, limit: int = 50
+    ) -> list[CompanyAnalystEstimate]:
         """Retrieve analyst estimates for a company."""
         try:
             return (

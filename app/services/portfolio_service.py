@@ -155,8 +155,10 @@ class PortfolioService:
             dividends, PortfolioDividendHistoryRead
         )
 
-        #calculate portfolio monthly performance
-        monthly_performance = self._calculate_monthly_performance(trading_history_read, dividend_history_read)
+        # calculate portfolio monthly performance
+        monthly_performance = self._calculate_monthly_performance(
+            trading_history_read, dividend_history_read
+        )
 
         # Calculate total dividends received
         dividends_received = sum(d.dividend_amount for d in dividend_history_read)
@@ -477,7 +479,9 @@ class PortfolioService:
 
         return industry_performances
 
-    def _calculate_monthly_performance(self, trading_history, dividend_history) -> list[PortfolioMonthlyPerformanceRead]:
+    def _calculate_monthly_performance(
+        self, trading_history, dividend_history
+    ) -> list[PortfolioMonthlyPerformanceRead]:
         """
         Calculate the monthly performance of a portfolio with cumulative values.
 

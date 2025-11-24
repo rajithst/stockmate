@@ -201,7 +201,7 @@ async def sell_holding(
 async def get_portfolio_dividends(
     portfolio_id: int,
     current_user: Annotated[UserRead, Depends(get_current_user)],
-    service: PortfolioService = Depends(get_portfolio_service)
+    service: PortfolioService = Depends(get_portfolio_service),
 ):
     """
     Retrieve the dividend history for a specific portfolio.

@@ -1,10 +1,3 @@
-"""
-Generic sync service dependency providers for API endpoints.
-
-This module provides a reusable factory pattern to create sync service instances
-with all required dependencies, eliminating boilerplate in endpoint files.
-"""
-
 from typing import Callable, Type, TypeVar
 
 from fastapi import Depends
@@ -20,12 +13,6 @@ from app.services.pubsub_handler import PubSubHandler
 from app.services.pubsub_service import PubSubService
 from app.services.cron_dispatcher import CronDispatcher
 from app.services.internal.company_sync_service import CompanySyncService
-from app.services.internal.market_data_sync_service import MarketDataSyncService
-from app.services.internal.financial_statements_sync_service import (
-    FinancialStatementsSyncService,
-)
-from app.services.internal.financial_health_sync_service import FinancialHealthSyncService
-from app.services.internal.company_metrics_sync_service import CompanyMetricsSyncService
 
 T = TypeVar("T", bound=BaseSyncService)
 
@@ -92,25 +79,9 @@ def get_pubsub_handler(
     company_sync_service = CompanySyncService(
         market_api_client=fmp_client, session=db_session
     )
-    market_data_sync_service = MarketDataSyncService(
-        market_api_client=fmp_client, session=db_session
-    )
-    financial_statements_sync_service = FinancialStatementsSyncService(
-        market_api_client=fmp_client, session=db_session
-    )
-    financial_health_sync_service = FinancialHealthSyncService(
-        market_api_client=fmp_client, session=db_session
-    )
-    company_metrics_sync_service = CompanyMetricsSyncService(
-        market_api_client=fmp_client, session=db_session
-    )
 
     return PubSubHandler(
         company_sync_service=company_sync_service,
-        market_data_sync_service=market_data_sync_service,
-        financial_statements_sync_service=financial_statements_sync_service,
-        financial_health_sync_service=financial_health_sync_service,
-        company_metrics_sync_service=company_metrics_sync_service,
     )
 
 
@@ -140,7 +111,7 @@ def get_cron_dispatcher(
     Returns:
         Initialized CronDispatcher instance
     """
-    company_repo = CompanyRepository(session=db_session)
+    company_repo = CompanyRepository(db=db_session)
     return CronDispatcher(
         pubsub_service=pubsub_service,
         company_repo=company_repo,

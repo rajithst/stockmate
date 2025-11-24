@@ -114,7 +114,9 @@ class DividendService:
             )
             raise
 
-    def sync_all_portfolios(self, after_date: date_type | None = None) ->  list[PortfolioDividendHistoryRead]:
+    def sync_all_portfolios(
+        self, after_date: date_type | None = None
+    ) -> list[PortfolioDividendHistoryRead]:
         """
         Sync dividends for all user portfolios.
 

@@ -5,7 +5,10 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.schemas.financial_statements import CompanyBalanceSheetRead
 from app.schemas.financial_statements import CompanyCashFlowStatementRead
-from app.schemas.company_metrics import CompanyDiscountedCashFlowRead, CompanyAnalystEstimateRead
+from app.schemas.company_metrics import (
+    CompanyDiscountedCashFlowRead,
+    CompanyAnalystEstimateRead,
+)
 from app.schemas.quote import CompanyDividendRead, StockPriceRead
 from app.schemas.financial_health import CompanyFinancialHealthRead
 from app.schemas.financial_statements import CompanyFinancialRatioRead

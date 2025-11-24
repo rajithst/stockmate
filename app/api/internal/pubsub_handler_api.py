@@ -3,6 +3,7 @@ API endpoint for receiving Pub/Sub push subscription messages.
 This is the webhook endpoint that Google Cloud Pub/Sub calls.
 Also includes the cron trigger endpoint for scheduling company sync.
 """
+
 import logging
 from typing import Any
 

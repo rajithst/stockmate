@@ -146,8 +146,10 @@ class PortfolioUpdate(Portfolio):
     user_id: int
     model_config = ConfigDict(from_attributes=True)
 
+
 class PortfolioMonthlyPerformance(BaseModel):
     """Monthly portfolio performance data for charting."""
+
     year: int
     month: int
     date: date_type  # First day of the month
@@ -162,6 +164,7 @@ class PortfolioMonthlyPerformance(BaseModel):
 
 class PortfolioMonthlyPerformanceRead(PortfolioMonthlyPerformance):
     """Read schema for monthly performance with all calculated metrics."""
+
     model_config = ConfigDict(from_attributes=True)
 
 

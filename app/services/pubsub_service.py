@@ -1,6 +1,7 @@
 """
 Pub/Sub service for publishing messages to Google Cloud Pub/Sub topics.
 """
+
 import json
 import logging
 from typing import Any, Optional

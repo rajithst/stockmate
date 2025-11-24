@@ -1,6 +1,7 @@
 """
 Cron dispatcher for scheduling and publishing company batch sync messages to Pub/Sub.
 """
+
 import logging
 from datetime import datetime
 
@@ -55,7 +56,9 @@ class CronDispatcher:
                 }
 
             # Create batches and publish
-            batches = [symbols[i : i + batch_size] for i in range(0, len(symbols), batch_size)]
+            batches = [
+                symbols[i : i + batch_size] for i in range(0, len(symbols), batch_size)
+            ]
             message_ids = []
 
             logger.info(
@@ -82,7 +85,9 @@ class CronDispatcher:
             successful_batches = sum(1 for mid in message_ids if mid is not None)
 
             return {
-                "status": "success" if successful_batches == len(batches) else "partial",
+                "status": "success"
+                if successful_batches == len(batches)
+                else "partial",
                 "total_companies": len(symbols),
                 "total_batches": len(batches),
                 "successful_batches": successful_batches,

@@ -1,6 +1,7 @@
 """
 Pub/Sub message handler for processing incoming company batch sync messages.
 """
+
 import base64
 import json
 import logging
