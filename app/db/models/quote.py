@@ -18,6 +18,41 @@ if TYPE_CHECKING:
     from app.db.models.company import Company
 
 
+class IndexQuote(Base):
+    """Latest quote data for market indices (^GSPC, ^DJI, ^IXIC, etc.)"""
+
+    __tablename__ = "index_quotes"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    symbol: Mapped[str] = mapped_column(
+        String(20), index=True, unique=True, nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    price: Mapped[float] = mapped_column(Float, nullable=False)
+    change: Mapped[float] = mapped_column(Float, nullable=True)
+    change_percent: Mapped[float] = mapped_column(Float, nullable=True)
+    open_price: Mapped[float] = mapped_column(Float, nullable=False)
+    previous_close_price: Mapped[float] = mapped_column(Float, nullable=False)
+    day_high_price: Mapped[float] = mapped_column(Float, nullable=False)
+    day_low_price: Mapped[float] = mapped_column(Float, nullable=False)
+    year_high_price: Mapped[float] = mapped_column(Float, nullable=True)
+    year_low_price: Mapped[float] = mapped_column(Float, nullable=True)
+    price_average_50d: Mapped[float] = mapped_column(Float, nullable=True)
+    price_average_200d: Mapped[float] = mapped_column(Float, nullable=True)
+    volume: Mapped[int] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    __table_args__ = (Index("ix_index_quote_symbol", "symbol"),)
+
+
 class CompanyStockPriceChange(Base):
     __tablename__ = "stock_price_changes"
 

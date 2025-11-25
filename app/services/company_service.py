@@ -17,6 +17,7 @@ from app.repositories.quotes_repo import CompanyQuotesRepository
 from app.schemas.company import (
     CompanyFinancialHealthResponse,
     CompanyFinancialResponse,
+    CompanyInsightsResponse,
     CompanyPageResponse,
     CompanyRead,
 )
@@ -162,6 +163,7 @@ class CompanyService:
         daily_prices_read = self._validate_models(
             StockPriceRead, self._quotes_repository.get_daily_prices(symbol)
         )
+
         analyst_estimates_read = self._validate_models(
             CompanyAnalystEstimateRead,
             self._metrics_repository.get_analyst_estimates(symbol),
@@ -303,3 +305,260 @@ class CompanyService:
                 f"Error retrieving technical indicators for {symbol}: {str(e)}"
             )
             raise
+
+    def get_company_insights(self, symbol: str) -> CompanyInsightsResponse:
+        """Retrieve various insights for a company by its stock symbol."""
+        try:
+            # Retrieve raw financial data
+            income_statements = (
+                self._financial_statements_repository.get_income_statements(
+                    symbol,
+                )
+            )
+            balance_sheets = self._financial_statements_repository.get_balance_sheets(
+                symbol,
+            )
+            cash_flow_statements = (
+                self._financial_statements_repository.get_cash_flow_statements(
+                    symbol,
+                )
+            )
+            financial_ratios = (
+                self._financial_statements_repository.get_financial_ratios(
+                    symbol,
+                )
+            )
+            key_metrics = self._metrics_repository.get_key_metrics(symbol)
+
+            # Transform raw data into insights
+            inc_statement_insights = self._transform_income_statement_data(
+                income_statements
+            )
+            bal_sheet_insights = self._transform_balance_sheet_data(balance_sheets)
+            cf_statement_insights = self._transform_cash_flow_statement_data(
+                cash_flow_statements
+            )
+            fr_insights = self._transform_financial_ratio_data(financial_ratios)
+            km_insights = self._transform_key_metrics_data(key_metrics)
+
+            return CompanyInsightsResponse(
+                net_income=inc_statement_insights["net_income"],
+                ebita=inc_statement_insights["ebita"],
+                eps=inc_statement_insights["eps"],
+                eps_diluted=inc_statement_insights["eps_diluted"],
+                weighted_average_shs_out=inc_statement_insights[
+                    "weighted_average_shs_out"
+                ],
+                total_debt=bal_sheet_insights["total_debt"],
+                free_cash_flow=cf_statement_insights["free_cash_flow"],
+                operating_cash_flow=cf_statement_insights["operating_cash_flow"],
+                gross_profit_margin=fr_insights["gross_profit_margin"],
+                operating_profit_margin=fr_insights["operating_profit_margin"],
+                debt_to_equity_ratio=fr_insights["debt_to_equity_ratio"],
+                dividend_yield=fr_insights["dividend_yield"],
+                return_on_equity=km_insights["return_on_equity"],
+                market_cap=km_insights["market_cap"],
+            )
+        except Exception as e:
+            logger.error(f"Error retrieving insights for {symbol}: {str(e)}")
+            raise
+
+    def _transform_income_statement_data(
+        self, income_statements
+    ) -> dict[str, list[dict[str, float]]]:
+        """Transform income statement records into structured insights.
+
+        Returns:
+            Dictionary with keys: revenue, net_income, ebita, eps, eps_diluted, weighted_average_shs_out
+        """
+        insights = {
+            "revenue": [],
+            "net_income": [],
+            "ebita": [],
+            "eps": [],
+            "eps_diluted": [],
+            "weighted_average_shs_out": [],
+        }
+        for inc_stmt in income_statements:
+            year = inc_stmt.fiscal_year
+            quarter = inc_stmt.period
+
+            insights["revenue"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": inc_stmt.revenue,
+                }
+            )
+            insights["net_income"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": inc_stmt.net_income,
+                }
+            )
+            insights["ebita"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": inc_stmt.ebitda,
+                }
+            )
+            insights["eps"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": inc_stmt.eps,
+                }
+            )
+            insights["eps_diluted"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": inc_stmt.eps_diluted,
+                }
+            )
+            insights["weighted_average_shs_out"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": inc_stmt.weighted_average_shs_out,
+                }
+            )
+        return insights
+
+    def _transform_balance_sheet_data(
+        self, balance_sheets
+    ) -> dict[str, list[dict[str, float]]]:
+        """Transform balance sheet records into structured insights.
+
+        Returns:
+            Dictionary with key: total_debt
+        """
+        insights = {
+            "total_debt": [],
+        }
+        for bal_sheet in balance_sheets:
+            year = bal_sheet.fiscal_year
+            quarter = bal_sheet.period
+
+            insights["total_debt"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": bal_sheet.total_debt,
+                }
+            )
+        return insights
+
+    def _transform_cash_flow_statement_data(
+        self, cash_flow_statements
+    ) -> dict[str, list[dict[str, float]]]:
+        """Transform cash flow statement records into structured insights.
+
+        Returns:
+            Dictionary with keys: free_cash_flow, operating_cash_flow
+        """
+        insights = {
+            "free_cash_flow": [],
+            "operating_cash_flow": [],
+        }
+        for cf_stmt in cash_flow_statements:
+            year = cf_stmt.fiscal_year
+            quarter = cf_stmt.period
+
+            insights["free_cash_flow"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": cf_stmt.free_cash_flow,
+                }
+            )
+            insights["operating_cash_flow"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": cf_stmt.operating_cash_flow,
+                }
+            )
+        return insights
+
+    def _transform_financial_ratio_data(
+        self, financial_ratios
+    ) -> dict[str, list[dict[str, float]]]:
+        """Transform financial ratio records into structured insights.
+
+        Returns:
+            Dictionary with keys: gross_profit_margin, operating_profit_margin, debt_to_equity_ratio, dividend_yield
+        """
+        insights = {
+            "gross_profit_margin": [],
+            "operating_profit_margin": [],
+            "debt_to_equity_ratio": [],
+            "dividend_yield": [],
+        }
+        for fr in financial_ratios:
+            year = fr.fiscal_year
+            quarter = fr.period
+
+            insights["gross_profit_margin"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": fr.gross_profit_margin,
+                }
+            )
+            insights["operating_profit_margin"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": fr.operating_profit_margin,
+                }
+            )
+            insights["debt_to_equity_ratio"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": fr.debt_to_equity_ratio,
+                }
+            )
+            insights["dividend_yield"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": fr.dividend_yield,
+                }
+            )
+        return insights
+
+    def _transform_key_metrics_data(
+        self, key_metrics
+    ) -> dict[str, list[dict[str, float]]]:
+        """Transform key metrics records into structured insights.
+
+        Returns:
+            Dictionary with keys: return_on_equity, market_cap
+        """
+        insights = {
+            "return_on_equity": [],
+            "market_cap": [],
+        }
+        for km in key_metrics:
+            year = km.fiscal_year
+            quarter = km.period
+
+            insights["return_on_equity"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": km.return_on_equity,
+                }
+            )
+            insights["market_cap"].append(
+                {
+                    "year": year,
+                    "quarter": quarter,
+                    "value": km.market_cap,
+                }
+            )
+        return insights

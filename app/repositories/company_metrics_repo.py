@@ -37,8 +37,8 @@ class CompanyMetricsRepository:
         try:
             return (
                 self._db.query(CompanyAnalystEstimate)
-                .filter(CompanyKeyMetrics.symbol == symbol)
-                .order_by(CompanyKeyMetrics.date.desc())
+                .filter(CompanyAnalystEstimate.symbol == symbol)
+                .order_by(CompanyAnalystEstimate.date.desc())
                 .limit(limit)
                 .all()
             )

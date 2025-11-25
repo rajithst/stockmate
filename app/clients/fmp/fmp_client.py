@@ -25,6 +25,7 @@ from app.clients.fmp.models.news import (
     FMPStockNews,
 )
 from app.clients.fmp.models.quotes import (
+    FMPIndexQuote,
     FMPStockPrice,
     FMPStockPriceChange,
     FMPAfterHoursPrice,
@@ -551,6 +552,16 @@ class FMPClient:
         """
         current_price = self.__get_by_url(endpoint="quote", params={"symbol": symbol})
         return self._handle_single_response(current_price, FMPStockPrice)
+
+    def get_index_quote(self, symbol: str) -> Optional[FMPIndexQuote]:
+        """Fetches the current price quote for a given index symbol.
+        Args:
+            symbol (str): The index symbol to fetch the current price quote for.
+        Returns:
+            Optional[FMPIndexQuote]: The current price quote if found, else None.
+        """
+        current_price = self.__get_by_url(endpoint="quote", params={"symbol": symbol})
+        return self._handle_single_response(current_price, FMPIndexQuote)
 
     def get_after_hours_price(self, symbol: str) -> Optional[FMPAfterHoursPrice]:
         """Fetches the after-hours price for a given stock symbol.

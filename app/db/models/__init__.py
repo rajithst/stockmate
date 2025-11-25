@@ -32,7 +32,7 @@ from .news import (
 from .ratings import CompanyRatingSummary
 from .stock import CompanyStockPeer, CompanyStockSplit
 from .price_target import CompanyPriceTarget, CompanyPriceTargetSummary
-from .quote import CompanyStockPriceChange, CompanyStockPrice
+from .quote import CompanyStockPriceChange, CompanyStockPrice, IndexQuote
 
 # User/Portfolio Models
 from .financial_health import CompanyFinancialHealth

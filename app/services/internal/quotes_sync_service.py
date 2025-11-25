@@ -12,6 +12,8 @@ from app.schemas.quote import (
     CompanyStockPeerWrite,
     CompanyStockSplitRead,
     CompanyStockSplitWrite,
+    IndexQuoteRead,
+    IndexQuoteWrite,
     StockPriceChangeRead,
     StockPriceChangeWrite,
     StockPriceRead,
@@ -337,4 +339,36 @@ class QuotesSyncService(BaseSyncService):
 
         except Exception as e:
             logger.error(f"Error upserting dividend calendar: {str(e)}", exc_info=True)
+            raise
+
+    def upsert_index_quote(self, symbol: str) -> IndexQuoteRead:
+        """
+        Fetch and upsert index quote data.
+
+        Args:
+            symbol: Index symbol (e.g., ^GSPC, ^DJI, ^IXIC)
+        Returns:
+            Upserted index quote record
+        """
+        try:
+            # Fetch index quote data from API
+            index_data = self._market_api_client.get_index_quote(symbol)
+
+            if not index_data:
+                logger.warning(f"No index data found for symbol: {symbol}")
+                return None
+
+            # Convert API response to IndexQuoteWrite schema
+            index_quote_write = IndexQuoteWrite.model_validate(index_data)
+
+            # Upsert to database
+            result = self._repository.upsert_index_quote(index_quote_write)
+
+            logger.info(f"Successfully upserted index quote for symbol: {symbol}")
+            return self._map_schema(result, IndexQuoteRead)
+
+        except Exception as e:
+            logger.error(
+                f"Error upserting index quote for {symbol}: {str(e)}", exc_info=True
+            )
             raise

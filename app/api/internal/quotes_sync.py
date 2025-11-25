@@ -5,6 +5,7 @@ from app.schemas.quote import (
     CompanyDividendRead,
     CompanyStockPeerRead,
     CompanyStockSplitRead,
+    IndexQuoteRead,
     StockPriceChangeRead,
     StockPriceRead,
 )
@@ -74,6 +75,25 @@ def sync_daily_prices(
             detail="Daily prices not found for symbol: {}".format(symbol),
         )
     return daily_prices
+
+
+@router.get(
+    "/index-quote/{symbol}/sync",
+    response_model=IndexQuoteRead,
+    summary="Sync company index quote from external API",
+    description="Fetches and upserts a company's index quote from the external API into the database.",
+)
+def sync_index_quote(
+    symbol: str, service: QuotesSyncService = Depends(get_quotes_sync_service)
+):
+    """Sync a company's index quote from the external API and store it in the database."""
+    index_quote = service.upsert_index_quote(symbol)
+    if not index_quote:
+        raise HTTPException(
+            status_code=404,
+            detail="Index quote not found for symbol: {}".format(symbol),
+        )
+    return index_quote
 
 
 @router.get(

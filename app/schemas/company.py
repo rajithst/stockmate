@@ -92,6 +92,31 @@ class CompanyPageResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CompanyInsight(BaseModel):
+    year: int
+    quarter: str
+    value: float
+
+
+class CompanyInsightsResponse(BaseModel):
+    net_income: list[CompanyInsight]
+    gross_profit_margin: list[CompanyInsight]
+    operating_profit_margin: list[CompanyInsight]
+    ebita: list[CompanyInsight]
+    free_cash_flow: list[CompanyInsight]
+    eps: list[CompanyInsight]
+    eps_diluted: list[CompanyInsight]
+    weighted_average_shs_out: list[CompanyInsight]
+    return_on_equity: list[CompanyInsight]
+    debt_to_equity_ratio: list[CompanyInsight]
+    total_debt: list[CompanyInsight]
+    operating_cash_flow: list[CompanyInsight]
+    market_cap: list[CompanyInsight]
+    dividend_yield: list[CompanyInsight]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class CompanyFinancialResponse(BaseModel):
     balance_sheets: List[CompanyBalanceSheetRead] = []
     income_statements: List[CompanyIncomeStatementRead] = []

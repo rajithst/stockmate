@@ -180,3 +180,37 @@ class CompanyTechnicalIndicatorRead(CompanyTechnicalIndicator):
     updated_at: Optional[datetime.datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ========================
+# INDEX QUOTE SCHEMAS
+# ========================
+
+
+class IndexQuote(BaseModel):
+    symbol: str
+    name: str
+    price: float
+    change: float
+    change_percent: float
+    open_price: float
+    previous_close_price: float
+    high_price: float
+    low_price: float
+    year_high_price: Optional[float] = None
+    year_low_price: Optional[float] = None
+    price_average_50d: Optional[float] = None
+    price_average_200d: Optional[float] = None
+    volume: int
+    vwap: Optional[float] = None
+
+
+class IndexQuoteWrite(IndexQuote):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class IndexQuoteRead(IndexQuote):
+    created_at: Optional[datetime.datetime] = None
+    updated_at: Optional[datetime.datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)

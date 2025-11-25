@@ -68,6 +68,25 @@ class FMPStockPrice(BaseModel):
         return v
 
 
+class FMPIndexQuote(BaseModel):
+    symbol: str
+    price: float
+    changes_percentage: float
+    change: float
+    change_percent: float = Field(..., alias="changePercentage")
+    open_price: float = Field(..., alias="open")
+    previous_close_price: float = Field(..., alias="previousClose")
+    day_high_price: float = Field(..., alias="dayHigh")
+    day_low_price: float = Field(..., alias="dayLow")
+    year_high_price: float = Field(..., alias="yearHigh")
+    year_low_price: float = Field(..., alias="yearLow")
+    price_average_50d: float = Field(..., alias="priceAvg50")
+    price_average_200d: float = Field(..., alias="priceAvg200")
+    volume: int
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class FMPAfterHoursPrice(BaseModel):
     symbol: str
     after_hours_price: float = Field(..., alias="price")
