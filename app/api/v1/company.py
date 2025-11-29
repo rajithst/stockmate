@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 
-from app.dependencies import get_db_session
+from app.dependencies.sync_services import create_sync_service_provider
 from app.schemas.company import (
     CompanyFinancialHealthResponse,
     CompanyFinancialResponse,
@@ -13,11 +12,7 @@ from app.services.company_service import CompanyService
 
 router = APIRouter(prefix="")
 
-
-def get_company_service(
-    session: Session = Depends(get_db_session),
-) -> CompanyService:
-    return CompanyService(session=session)
+get_company_service = create_sync_service_provider(CompanyService)
 
 
 @router.get("/{symbol}", response_model=CompanyPageResponse)

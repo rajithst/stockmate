@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 from datetime import date as date_type
 
@@ -12,6 +14,7 @@ class FMPDividend(BaseModel):
     dividend: float
     dividend_yield: float = Field(..., alias="yield")
     frequency: str
+    currency: Optional[str] = None
 
     model_config = ConfigDict(populate_by_name=True)
 

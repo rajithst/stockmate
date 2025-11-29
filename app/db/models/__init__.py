@@ -45,4 +45,9 @@ from .portfolio import (
     PortfolioTradingHistory,
     PortfolioDividendHistory,
 )
+
+# Notification Models
 from .notification import Notification
+
+# Earnings Models
+from .earnings import CompanyEarningsCalendar

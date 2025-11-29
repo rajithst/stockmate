@@ -18,6 +18,8 @@ from app.schemas.quote import (
     StockPriceChangeWrite,
     StockPriceRead,
     StockPriceWrite,
+    CompanyEarningsCalendarWrite,
+    CompanyEarningsCalendarRead,
 )
 from app.services.internal.base_sync_service import BaseSyncService
 from datetime import datetime, timedelta
@@ -339,6 +341,59 @@ class QuotesSyncService(BaseSyncService):
 
         except Exception as e:
             logger.error(f"Error upserting dividend calendar: {str(e)}", exc_info=True)
+            raise
+
+    def upsert_earnings_calendar(
+        self, from_date: str | None = None, to_date: str | None = None
+    ) -> list[CompanyEarningsCalendarRead] | None:
+        """
+        Fetch and upsert earnings calendar data.
+
+        Returns:
+            List of upserted earnings calendar records or None if not found
+        """
+        try:
+            if not from_date:
+                from_date = datetime.now().strftime("%Y-%m-%d")
+            if not to_date:
+                to_date = (datetime.now().replace(day=1) + timedelta(days=90)).strftime(
+                    "%Y-%m-%d"
+                )
+            earnings_data = self._market_api_client.get_earnings_calendar(
+                from_date, to_date
+            )
+
+            if not earnings_data:
+                logger.warning("No earnings calendar data found from API")
+                return None
+
+            all_symbols_with_currency = self._company_repository.get_all_companies()
+
+            records_to_persist = []
+            for company in all_symbols_with_currency:
+                sym = company.symbol
+                sym_earnings = [
+                    record for record in earnings_data if record.symbol == sym
+                ]
+                logger.info(
+                    f"Found {len(sym_earnings)} earnings records to upsert for symbol: {sym}"
+                )
+                # Add currency to each dividend record
+                records_to_persist.extend(
+                    CompanyEarningsCalendarWrite.model_validate({**record.model_dump()})
+                    for record in sym_earnings
+                )
+
+            earnings = self._repository.upsert_earnings_calendar(records_to_persist)
+            result = self._map_schema_list(earnings, CompanyEarningsCalendarRead)
+
+            logger.info(
+                f"Successfully upserted {len(result)} dividend records for {len(all_symbols_with_currency)} companies"
+            )
+            return result
+
+        except Exception as e:
+            logger.error(f"Error fetching earnings calendar: {str(e)}", exc_info=True)
             raise
 
     def upsert_index_quote(self, symbol: str) -> IndexQuoteRead:

@@ -1,0 +1,1549 @@
+[
+    {
+        "symbol": "AAPL",
+        "name": "Apple Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/AAPL.png"
+    },
+    {
+        "symbol": "MSFT",
+        "name": "Microsoft Corporation",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MSFT.png"
+    },
+    {
+        "symbol": "GOOGL",
+        "name": "Alphabet Inc. Class A",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/GOOGL.png"
+    },
+    {
+        "symbol": "GOOG",
+        "name": "Alphabet Inc. Class C",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/GOOG.png"
+    },
+    {
+        "symbol": "AMZN",
+        "name": "Amazon.com Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/AMZN.png"
+    },
+    {
+        "symbol": "META",
+        "name": "Meta Platforms Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/META.png"
+    },
+    {
+        "symbol": "TSLA",
+        "name": "Tesla Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/TSLA.png"
+    },
+    {
+        "symbol": "NVDA",
+        "name": "NVIDIA Corporation",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/NVDA.png"
+    },
+    {
+        "symbol": "BRK.B",
+        "name": "Berkshire Hathaway Inc. Class B",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/BRK.B.png"
+    },
+    {
+        "symbol": "BRK.A",
+        "name": "Berkshire Hathaway Inc. Class A",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/BRK.A.png"
+    },
+    {
+        "symbol": "JPM",
+        "name": "JPMorgan Chase & Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/JPM.png"
+    },
+    {
+        "symbol": "JNJ",
+        "name": "Johnson & Johnson",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/JNJ.png"
+    },
+    {
+        "symbol": "V",
+        "name": "Visa Inc. Class A",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/V.png"
+    },
+    {
+        "symbol": "MA",
+        "name": "Mastercard Inc. Class A",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MA.png"
+    },
+    {
+        "symbol": "PG",
+        "name": "Procter & Gamble Company",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PG.png"
+    },
+    {
+        "symbol": "HD",
+        "name": "Home Depot Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/HD.png"
+    },
+    {
+        "symbol": "BAC",
+        "name": "Bank of America Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/BAC.png"
+    },
+    {
+        "symbol": "PFE",
+        "name": "Pfizer Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PFE.png"
+    },
+    {
+        "symbol": "KO",
+        "name": "Coca-Cola Company",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/KO.png"
+    },
+    {
+        "symbol": "PEP",
+        "name": "PepsiCo Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PEP.png"
+    },
+    {
+        "symbol": "NFLX",
+        "name": "Netflix Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/NFLX.png"
+    },
+    {
+        "symbol": "DIS",
+        "name": "Walt Disney Company",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/DIS.png"
+    },
+    {
+        "symbol": "WMT",
+        "name": "Walmart Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/WMT.png"
+    },
+    {
+        "symbol": "XOM",
+        "name": "Exxon Mobil Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/XOM.png"
+    },
+    {
+        "symbol": "CVX",
+        "name": "Chevron Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CVX.png"
+    },
+    {
+        "symbol": "ABBV",
+        "name": "AbbVie Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ABBV.png"
+    },
+    {
+        "symbol": "MRK",
+        "name": "Merck & Co. Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MRK.png"
+    },
+    {
+        "symbol": "CSCO",
+        "name": "Cisco Systems Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CSCO.png"
+    },
+    {
+        "symbol": "ORCL",
+        "name": "Oracle Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ORCL.png"
+    },
+    {
+        "symbol": "ADBE",
+        "name": "Adobe Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ADBE.png"
+    },
+    {
+        "symbol": "CRM",
+        "name": "Salesforce Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CRM.png"
+    },
+    {
+        "symbol": "INTC",
+        "name": "Intel Corporation",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/INTC.png"
+    },
+    {
+        "symbol": "T",
+        "name": "AT&T Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/T.png"
+    },
+    {
+        "symbol": "VZ",
+        "name": "Verizon Communications Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/VZ.png"
+    },
+    {
+        "symbol": "NKE",
+        "name": "Nike Inc. Class B",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/NKE.png"
+    },
+    {
+        "symbol": "MCD",
+        "name": "McDonald's Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MCD.png"
+    },
+    {
+        "symbol": "COST",
+        "name": "Costco Wholesale Corporation",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/COST.png"
+    },
+    {
+        "symbol": "UPS",
+        "name": "United Parcel Service Inc. Class B",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/UPS.png"
+    },
+    {
+        "symbol": "BA",
+        "name": "Boeing Company",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/BA.png"
+    },
+    {
+        "symbol": "CAT",
+        "name": "Caterpillar Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CAT.png"
+    },
+    {
+        "symbol": "IBM",
+        "name": "International Business Machines Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/IBM.png"
+    },
+    {
+        "symbol": "HON",
+        "name": "Honeywell International Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/HON.png"
+    },
+    {
+        "symbol": "QCOM",
+        "name": "Qualcomm Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/QCOM.png"
+    },
+    {
+        "symbol": "AVGO",
+        "name": "Broadcom Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/AVGO.png"
+    },
+    {
+        "symbol": "AMAT",
+        "name": "Applied Materials Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/AMAT.png"
+    },
+    {
+        "symbol": "AMD",
+        "name": "Advanced Micro Devices Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/AMD.png"
+    },
+    {
+        "symbol": "TXN",
+        "name": "Texas Instruments Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/TXN.png"
+    },
+    {
+        "symbol": "BLK",
+        "name": "BlackRock Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/BLK.png"
+    },
+    {
+        "symbol": "SPGI",
+        "name": "S&P Global Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SPGI.png"
+    },
+    {
+        "symbol": "GS",
+        "name": "Goldman Sachs Group Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/GS.png"
+    },
+    {
+        "symbol": "MS",
+        "name": "Morgan Stanley",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MS.png"
+    },
+    {
+        "symbol": "C",
+        "name": "Citigroup Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/C.png"
+    },
+    {
+        "symbol": "AMGN",
+        "name": "Amgen Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/AMGN.png"
+    },
+    {
+        "symbol": "LLY",
+        "name": "Eli Lilly and Company",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/LLY.png"
+    },
+    {
+        "symbol": "UNH",
+        "name": "UnitedHealth Group Incorporated",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/UNH.png"
+    },
+    {
+        "symbol": "TMO",
+        "name": "Thermo Fisher Scientific Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/TMO.png"
+    },
+    {
+        "symbol": "MDT",
+        "name": "Medtronic plc",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MDT.png"
+    },
+    {
+        "symbol": "ABT",
+        "name": "Abbott Laboratories",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ABT.png"
+    },
+    {
+        "symbol": "CVS",
+        "name": "CVS Health Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CVS.png"
+    },
+    {
+        "symbol": "CMCSA",
+        "name": "Comcast Corporation",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CMCSA.png"
+    },
+    {
+        "symbol": "TGT",
+        "name": "Target Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/TGT.png"
+    },
+    {
+        "symbol": "SBUX",
+        "name": "Starbucks Corporation",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SBUX.png"
+    },
+    {
+        "symbol": "LMT",
+        "name": "Lockheed Martin Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/LMT.png"
+    },
+    {
+        "symbol": "RTX",
+        "name": "RTX Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/RTX.png"
+    },
+    {
+        "symbol": "DE",
+        "name": "Deere & Company",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/DE.png"
+    },
+    {
+        "symbol": "LIN",
+        "name": "Linde plc",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/LIN.png"
+    },
+    {
+        "symbol": "EL",
+        "name": "Est\u00e9e Lauder Companies Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/EL.png"
+    },
+    {
+        "symbol": "MO",
+        "name": "Altria Group Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MO.png"
+    },
+    {
+        "symbol": "F",
+        "name": "Ford Motor Company",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/F.png"
+    },
+    {
+        "symbol": "GM",
+        "name": "General Motors Company",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/GM.png"
+    },
+    {
+        "symbol": "DAL",
+        "name": "Delta Air Lines Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/DAL.png"
+    },
+    {
+        "symbol": "AAL",
+        "name": "American Airlines Group Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/AAL.png"
+    },
+    {
+        "symbol": "UAL",
+        "name": "United Airlines Holdings Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/UAL.png"
+    },
+    {
+        "symbol": "MAR",
+        "name": "Marriott International Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MAR.png"
+    },
+    {
+        "symbol": "BKNG",
+        "name": "Booking Holdings Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/BKNG.png"
+    },
+    {
+        "symbol": "ABNB",
+        "name": "Airbnb Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ABNB.png"
+    },
+    {
+        "symbol": "UBER",
+        "name": "Uber Technologies Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/UBER.png"
+    },
+    {
+        "symbol": "LYFT",
+        "name": "Lyft Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/LYFT.png"
+    },
+    {
+        "symbol": "SQ",
+        "name": "Block Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SQ.png"
+    },
+    {
+        "symbol": "PYPL",
+        "name": "PayPal Holdings Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PYPL.png"
+    },
+    {
+        "symbol": "PLTR",
+        "name": "Palantir Technologies Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PLTR.png"
+    },
+    {
+        "symbol": "SNOW",
+        "name": "Snowflake Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SNOW.png"
+    },
+    {
+        "symbol": "SHOP",
+        "name": "Shopify Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SHOP.png"
+    },
+    {
+        "symbol": "ZM",
+        "name": "Zoom Video Communications Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ZM.png"
+    },
+    {
+        "symbol": "ROKU",
+        "name": "Roku Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ROKU.png"
+    },
+    {
+        "symbol": "EA",
+        "name": "Electronic Arts Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/EA.png"
+    },
+    {
+        "symbol": "TTWO",
+        "name": "Take-Two Interactive Software Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/TTWO.png"
+    },
+    {
+        "symbol": "ATVI",
+        "name": "Activision Blizzard Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ATVI.png"
+    },
+    {
+        "symbol": "SO",
+        "name": "Southern Company",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SO.png"
+    },
+    {
+        "symbol": "DUK",
+        "name": "Duke Energy Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/DUK.png"
+    },
+    {
+        "symbol": "NEE",
+        "name": "NextEra Energy Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/NEE.png"
+    },
+    {
+        "symbol": "COP",
+        "name": "ConocoPhillips",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/COP.png"
+    },
+    {
+        "symbol": "SLB",
+        "name": "Schlumberger Limited",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SLB.png"
+    },
+    {
+        "symbol": "OXY",
+        "name": "Occidental Petroleum Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/OXY.png"
+    },
+    {
+        "symbol": "SPG",
+        "name": "Simon Property Group Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SPG.png"
+    },
+    {
+        "symbol": "AMT",
+        "name": "American Tower Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/AMT.png"
+    },
+    {
+        "symbol": "GE",
+        "name": "GE Aerospace",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/GE.png"
+    },
+    {
+        "symbol": "WFC",
+        "name": "Wells Fargo & Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/WFC.png"
+    },
+    {
+        "symbol": "MU",
+        "name": "Micron Technology, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MU.png"
+    },
+    {
+        "symbol": "AXP",
+        "name": "American Express Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/AXP.png"
+    },
+    {
+        "symbol": "PM",
+        "name": "Philip Morris International Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PM.png"
+    },
+    {
+        "symbol": "TMUS",
+        "name": "T-Mobile US, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/TMUS.png"
+    },
+    {
+        "symbol": "ISRG",
+        "name": "Intuitive Surgical, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ISRG.png"
+    },
+    {
+        "symbol": "INTU",
+        "name": "Intuit Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/INTU.png"
+    },
+    {
+        "symbol": "TJX",
+        "name": "The TJX Companies, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/TJX.png"
+    },
+    {
+        "symbol": "APH",
+        "name": "Amphenol Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/APH.png"
+    },
+    {
+        "symbol": "NOW",
+        "name": "ServiceNow, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/NOW.png"
+    },
+    {
+        "symbol": "SCHW",
+        "name": "The Charles Schwab Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SCHW.png"
+    },
+    {
+        "symbol": "DHR",
+        "name": "Danaher Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/DHR.png"
+    },
+    {
+        "symbol": "ANET",
+        "name": "Arista Networks, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ANET.png"
+    },
+    {
+        "symbol": "PNC",
+        "name": "PNC Financial Services Group, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PNC.png"
+    },
+    {
+        "symbol": "COF",
+        "name": "Capital One Financial Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/COF.png"
+    },
+    {
+        "symbol": "REGN",
+        "name": "Regeneron Pharmaceuticals, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/REGN.png"
+    },
+    {
+        "symbol": "PLD",
+        "name": "Prologis, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PLD.png"
+    },
+    {
+        "symbol": "FDX",
+        "name": "FedEx Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/FDX.png"
+    },
+    {
+        "symbol": "ELV",
+        "name": "Elevance Health, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ELV.png"
+    },
+    {
+        "symbol": "ADP",
+        "name": "ADP, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ADP.png"
+    },
+    {
+        "symbol": "CSX",
+        "name": "CSX Corporation",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CSX.png"
+    },
+    {
+        "symbol": "GD",
+        "name": "General Dynamics Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/GD.png"
+    },
+    {
+        "symbol": "AZO",
+        "name": "AutoZone, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/AZO.png"
+    },
+    {
+        "symbol": "EOG",
+        "name": "EOG Resources, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/EOG.png"
+    },
+    {
+        "symbol": "NSC",
+        "name": "Norfolk Southern Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/NSC.png"
+    },
+    {
+        "symbol": "ADI",
+        "name": "Analog Devices, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ADI.png"
+    },
+    {
+        "symbol": "SRE",
+        "name": "Sempra",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SRE.png"
+    },
+    {
+        "symbol": "FIS",
+        "name": "Fidelity National Information Services, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/FIS.png"
+    },
+    {
+        "symbol": "PGR",
+        "name": "Progressive Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PGR.png"
+    },
+    {
+        "symbol": "CNC",
+        "name": "Centene Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CNC.png"
+    },
+    {
+        "symbol": "DELL",
+        "name": "Dell Technologies Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/DELL.png"
+    },
+    {
+        "symbol": "MPC",
+        "name": "Marathon Petroleum Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MPC.png"
+    },
+    {
+        "symbol": "MET",
+        "name": "MetLife, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MET.png"
+    },
+    {
+        "symbol": "KLAC",
+        "name": "KLA Corporation",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/KLAC.png"
+    },
+    {
+        "symbol": "LOW",
+        "name": "Lowe's Companies, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/LOW.png"
+    },
+    {
+        "symbol": "CCI",
+        "name": "Crown Castle Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CCI.png"
+    },
+    {
+        "symbol": "GILD",
+        "name": "Gilead Sciences, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/GILD.png"
+    },
+    {
+        "symbol": "ETN",
+        "name": "Eaton Corporation Plc",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ETN.png"
+    },
+    {
+        "symbol": "MRNA",
+        "name": "Moderna, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MRNA.png"
+    },
+    {
+        "symbol": "APD",
+        "name": "Air Products and Chemicals, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/APD.png"
+    },
+    {
+        "symbol": "SYK",
+        "name": "Stryker Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SYK.png"
+    },
+    {
+        "symbol": "WM",
+        "name": "Waste Management, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/WM.png"
+    },
+    {
+        "symbol": "GEV",
+        "name": "General Electric Vernova Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/GEV.png"
+    },
+    {
+        "symbol": "PXD",
+        "name": "Pioneer Natural Resources Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PXD.png"
+    },
+    {
+        "symbol": "HESS",
+        "name": "Hess Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/HESS.png"
+    },
+    {
+        "symbol": "TRV",
+        "name": "The Travelers Companies, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/TRV.png"
+    },
+    {
+        "symbol": "HUM",
+        "name": "Humana Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/HUM.png"
+    },
+    {
+        "symbol": "SNA",
+        "name": "Snap-on Incorporated",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SNA.png"
+    },
+    {
+        "symbol": "PSA",
+        "name": "Public Storage",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PSA.png"
+    },
+    {
+        "symbol": "CME",
+        "name": "CME Group Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CME.png"
+    },
+    {
+        "symbol": "ITW",
+        "name": "Illinois Tool Works Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ITW.png"
+    },
+    {
+        "symbol": "TROW",
+        "name": "T. Rowe Price Group, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/TROW.png"
+    },
+    {
+        "symbol": "SHW",
+        "name": "Sherwin-Williams Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SHW.png"
+    },
+    {
+        "symbol": "CI",
+        "name": "The Cigna Group",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CI.png"
+    },
+    {
+        "symbol": "GLW",
+        "name": "Corning Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/GLW.png"
+    },
+    {
+        "symbol": "CL",
+        "name": "Colgate-Palmolive Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CL.png"
+    },
+    {
+        "symbol": "D",
+        "name": "Dominion Energy, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/D.png"
+    },
+    {
+        "symbol": "DLR",
+        "name": "Digital Realty Trust, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/DLR.png"
+    },
+    {
+        "symbol": "HPQ",
+        "name": "HP Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/HPQ.png"
+    },
+    {
+        "symbol": "MNST",
+        "name": "Monster Beverage Corp.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MNST.png"
+    },
+    {
+        "symbol": "BX",
+        "name": "Blackstone Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/BX.png"
+    },
+    {
+        "symbol": "PCAR",
+        "name": "PACCAR Inc",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PCAR.png"
+    },
+    {
+        "symbol": "PANW",
+        "name": "Palo Alto Networks, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PANW.png"
+    },
+    {
+        "symbol": "CB",
+        "name": "Chubb Ltd.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CB.png"
+    },
+    {
+        "symbol": "MMC",
+        "name": "Marsh & McLennan Cos., Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MMC.png"
+    },
+    {
+        "symbol": "TSN",
+        "name": "Tyson Foods, Inc. (Class A)",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/TSN.png"
+    },
+    {
+        "symbol": "DHI",
+        "name": "D.R. Horton, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/DHI.png"
+    },
+    {
+        "symbol": "NOC",
+        "name": "Northrop Grumman Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/NOC.png"
+    },
+    {
+        "symbol": "BMY",
+        "name": "Bristol-Myers Squibb Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/BMY.png"
+    },
+    {
+        "symbol": "VLO",
+        "name": "Valero Energy Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/VLO.png"
+    },
+    {
+        "symbol": "KMI",
+        "name": "Kinder Morgan, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/KMI.png"
+    },
+    {
+        "symbol": "KR",
+        "name": "The Kroger Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/KR.png"
+    },
+    {
+        "symbol": "BDX",
+        "name": "Becton, Dickinson and Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/BDX.png"
+    },
+    {
+        "symbol": "EQIX",
+        "name": "Equinix, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/EQIX.png"
+    },
+    {
+        "symbol": "EIX",
+        "name": "Edison International",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/EIX.png"
+    },
+    {
+        "symbol": "ED",
+        "name": "Consolidated Edison, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ED.png"
+    },
+    {
+        "symbol": "MCK",
+        "name": "McKesson Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MCK.png"
+    },
+    {
+        "symbol": "CAH",
+        "name": "Cardinal Health, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CAH.png"
+    },
+    {
+        "symbol": "COR",
+        "name": "Cencora, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/COR.png"
+    },
+    {
+        "symbol": "ALL",
+        "name": "The Allstate Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ALL.png"
+    },
+    {
+        "symbol": "PPL",
+        "name": "PPL Corporation",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PPL.png"
+    },
+    {
+        "symbol": "MSI",
+        "name": "Motorola Solutions, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MSI.png"
+    },
+    {
+        "symbol": "GIS",
+        "name": "General Mills, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/GIS.png"
+    },
+    {
+        "symbol": "CPB",
+        "name": "Campbell Soup Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CPB.png"
+    },
+    {
+        "symbol": "CLX",
+        "name": "Clorox Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CLX.png"
+    },
+    {
+        "symbol": "KMB",
+        "name": "Kimberly-Clark Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/KMB.png"
+    },
+    {
+        "symbol": "WBA",
+        "name": "Walgreens Boots Alliance, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/WBA.png"
+    },
+    {
+        "symbol": "KSS",
+        "name": "Kohl's Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/KSS.png"
+    },
+    {
+        "symbol": "MGM",
+        "name": "MGM Resorts International",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MGM.png"
+    },
+    {
+        "symbol": "WYNN",
+        "name": "Wynn Resorts, Ltd.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/WYNN.png"
+    },
+    {
+        "symbol": "LUV",
+        "name": "Southwest Airlines Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/LUV.png"
+    },
+    {
+        "symbol": "SNAP",
+        "name": "Snap Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/SNAP.png"
+    },
+    {
+        "symbol": "FOXA",
+        "name": "Fox Corporation (Class A)",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/FOXA.png"
+    },
+    {
+        "symbol": "WBD",
+        "name": "Warner Bros. Discovery, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/WBD.png"
+    },
+    {
+        "symbol": "Z",
+        "name": "Zillow Group, Inc. (Class A)",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/Z.png"
+    },
+    {
+        "symbol": "PHM",
+        "name": "PulteGroup, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/PHM.png"
+    },
+    {
+        "symbol": "LEN",
+        "name": "Lennar Corporation (Class A)",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/LEN.png"
+    },
+    {
+        "symbol": "WHR",
+        "name": "Whirlpool Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/WHR.png"
+    },
+    {
+        "symbol": "GRMN",
+        "name": "Garmin Ltd.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/GRMN.png"
+    },
+    {
+        "symbol": "HAS",
+        "name": "Hasbro, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/HAS.png"
+    },
+    {
+        "symbol": "MAT",
+        "name": "Mattel, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MAT.png"
+    },
+    {
+        "symbol": "HOG",
+        "name": "Harley-Davidson, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/HOG.png"
+    },
+    {
+        "symbol": "NCLH",
+        "name": "Norwegian Cruise Line Holdings Ltd.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/NCLH.png"
+    },
+    {
+        "symbol": "CCL",
+        "name": "Carnival Corporation & plc",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/CCL.png"
+    },
+    {
+        "symbol": "RCL",
+        "name": "Royal Caribbean Group",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/RCL.png"
+    },
+    {
+        "symbol": "TRIP",
+        "name": "Tripadvisor, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/TRIP.png"
+    },
+    {
+        "symbol": "EXPE",
+        "name": "Expedia Group, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/EXPE.png"
+    },
+    {
+        "symbol": "K",
+        "name": "Kellogg Company",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/K.png"
+    },
+    {
+        "symbol": "HSY",
+        "name": "Hershey Co.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/HSY.png"
+    },
+    {
+        "symbol": "MDLZ",
+        "name": "Mondelez International, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MDLZ.png"
+    },
+    {
+        "symbol": "DEO",
+        "name": "Diageo plc",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/DEO.png"
+    },
+    {
+        "symbol": "BF.B",
+        "name": "Brown-Forman Corp. (Class B)",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/BF.B.png"
+    },
+    {
+        "symbol": "FNF",
+        "name": "Fidelity National Financial, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/FNF.png"
+    },
+    {
+        "symbol": "NDAQ",
+        "name": "Nasdaq, Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/NDAQ.png"
+    },
+    {
+        "symbol": "ICE",
+        "name": "Intercontinental Exchange, Inc.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ICE.png"
+    },
+    {
+        "symbol": "MTB",
+        "name": "M&T Bank Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/MTB.png"
+    },
+    {
+        "symbol": "KEY",
+        "name": "KeyCorp",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/KEY.png"
+    },
+    {
+        "symbol": "ZION",
+        "name": "Zions Bancorporation, National Association",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/ZION.png"
+    },
+    {
+        "symbol": "FITB",
+        "name": "Fifth Third Bancorp",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/FITB.png"
+    },
+    {
+        "symbol": "RF",
+        "name": "Regions Financial Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/RF.png"
+    },
+    {
+        "symbol": "HBAN",
+        "name": "Huntington Bancshares Inc.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/HBAN.png"
+    },
+    {
+        "symbol": "STT",
+        "name": "State Street Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/STT.png"
+    },
+    {
+        "symbol": "NTRS",
+        "name": "Northern Trust Corp.",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/NTRS.png"
+    },
+    {
+        "symbol": "BK",
+        "name": "Bank of New York Mellon Corp.",
+        "exchange": "NYSE",
+        "currency": "USD",
+        "image": "https://images.financialmodelingprep.com/symbol/BK.png"
+    }
+]

@@ -149,6 +149,32 @@ class CompanyDividendRead(CompanyDividend):
     model_config = ConfigDict(from_attributes=True)
 
 
+### ========================
+# EARNINGS CALENDAR SCHEMAS
+# ========================
+
+
+class CompanyEarningsCalendar(BaseModel):
+    symbol: str
+    date: date_type
+    eps_actual: Optional[float] = None
+    eps_estimated: float
+    revenue_actual: Optional[float]
+    revenue_estimated: float
+    last_update: date_type
+
+
+class CompanyEarningsCalendarWrite(CompanyEarningsCalendar):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyEarningsCalendarRead(CompanyEarningsCalendar):
+    created_at: Optional[datetime.datetime] = None
+    updated_at: Optional[datetime.datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # ========================
 # TECHNICAL INDICATOR SCHEMAS
 # ========================
@@ -195,8 +221,8 @@ class IndexQuote(BaseModel):
     change_percent: float
     open_price: float
     previous_close_price: float
-    high_price: float
-    low_price: float
+    day_high_price: float
+    day_low_price: float
     year_high_price: Optional[float] = None
     year_low_price: Optional[float] = None
     price_average_50d: Optional[float] = None

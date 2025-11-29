@@ -8,6 +8,7 @@ from app.clients.fmp.models.analyst_estimates import FMPAnalystEstimates
 from app.clients.fmp.models.company import FMPCompanyProfile
 from app.clients.fmp.models.discounted_cashflow import FMPDFCValuation
 from app.clients.fmp.models.dividend import FMPDividend, FMPDividendCalendar
+from app.clients.fmp.models.earnings import FMPEarningsCalendar
 from app.clients.fmp.models.financial_ratios import (
     FMPFinancialRatios,
     FMPFinancialScores,
@@ -438,6 +439,27 @@ class FMPClient:
         )
         return self._handle_list_response(calendar, FMPDividendCalendar)
 
+    def get_earnings_calendar(
+        self, from_date: Optional[str] = None, to_date: Optional[str] = None
+    ) -> list[FMPEarningsCalendar]:
+        """Fetches the earnings calendar within a specified date range.
+        maximum range is 90 days.
+        Args:
+            from_date (Optional[str]): The start date for the calendar in 'YYYY-MM-DD' format.
+            to_date (Optional[str]): The end date for the calendar in 'YYYY-MM-DD' format.
+        Returns:
+            list: A list of earnings records within the specified date range.
+        """
+        if IS_DEV:
+            params = {}
+        else:
+            params = {"from": from_date, "to": to_date}
+        calendar = self.__get_by_url(
+            endpoint="earnings-calendar",
+            params=params,
+        )
+        return self._handle_list_response(calendar, FMPEarningsCalendar)
+
     def get_stock_splits(self, symbol: str) -> list[FMPStockSplit]:
         """Fetches the stock split history for a given stock symbol.
         Args:
@@ -593,6 +615,7 @@ class FMPClient:
         historical_prices = self._handle_list_response(
             historical_prices, FMPStockHistoricalPrice
         )
+        logger.info("Fetched %d historical prices for %s", len(historical_prices), symbol)
         return [
             FMPStockPrice(
                 **{

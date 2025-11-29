@@ -1,8 +1,10 @@
 from enum import Enum
 from logging import getLogger
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from app.clients.fmp.protocol import FMPClientProtocol
 from app.repositories.company_metrics_repo import CompanyMetricsRepository
 from app.repositories.company_repo import CompanyRepository
 from app.repositories.financial_health_repo import CompanyFinancialHealthRepository
@@ -51,6 +53,9 @@ from app.schemas.quote import (
 )
 
 logger = getLogger(__name__)
+local_cache = {}
+local_insights_cache = {}
+CACHE_TIMEOUT_SECONDS = 86400  # 24 hours
 
 
 class FinancialHealthSectorsEnum(Enum):
@@ -67,7 +72,7 @@ class FinancialHealthSectorsEnum(Enum):
 
 
 class CompanyService:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, market_api_client: FMPClientProtocol):
         self._db = session
         self._company_repository = CompanyRepository(session)
         self._market_data_repository = CompanyMarketDataRepository(session)
@@ -77,6 +82,7 @@ class CompanyService:
         self._metrics_repository = CompanyMetricsRepository(session)
         self._financial_health_repository = CompanyFinancialHealthRepository(session)
         self._quotes_repository = CompanyQuotesRepository(session)
+        self._market_api_client = market_api_client
 
     @staticmethod
     def _validate_models(schema_class, items):
@@ -111,7 +117,7 @@ class CompanyService:
         """Retrieve a company's profile by its stock symbol."""
         response = self._company_repository.get_company_snapshot_by_symbol(symbol)
         if not response:
-            return None
+            return self.get_company_on_demand(symbol)
 
         # Validate company - from_attributes=True will call property methods automatically
         company_read = CompanyRead.model_validate(response)
@@ -169,8 +175,18 @@ class CompanyService:
             self._metrics_repository.get_analyst_estimates(symbol),
         )
 
+        latest_financial_ratios = (
+            self._financial_statements_repository.get_financial_ratios(symbol, limit=1)
+        )
+
+        financial_ratio_read = self._validate_single(
+            CompanyFinancialRatioRead,
+            latest_financial_ratios[0] if latest_financial_ratios else None,
+        )
+
         return CompanyPageResponse(
             company=company_read,
+            ratios=financial_ratio_read,
             grading_summary=grading_summary_read,
             rating_summary=rating_summary_read,
             price_target_summary=price_target_summary_read,
@@ -309,7 +325,10 @@ class CompanyService:
     def get_company_insights(self, symbol: str) -> CompanyInsightsResponse:
         """Retrieve various insights for a company by its stock symbol."""
         try:
-            # Retrieve raw financial data
+            company = self._company_repository.get_company_by_symbol(symbol)
+            if not company:
+                return self._get_company_insights_on_demand(symbol)
+
             income_statements = (
                 self._financial_statements_repository.get_income_statements(
                     symbol,
@@ -361,6 +380,201 @@ class CompanyService:
             )
         except Exception as e:
             logger.error(f"Error retrieving insights for {symbol}: {str(e)}")
+            raise
+
+    def get_company_on_demand(self, symbol: str):
+        """Retrieve on-demand data for a company by its stock symbol."""
+        try:
+            if symbol in local_cache:
+                is_cache_within_24_hours = (
+                    datetime.now() - local_cache[symbol]["timestamp"]
+                ).seconds < 3600
+                if is_cache_within_24_hours:
+                    return local_cache[symbol]["data"]
+
+            today = datetime.now()
+            one_month_ago = today.replace(month=today.month - 1)
+            today_str = today.strftime("%Y-%m-%d")
+            one_month_ago_str = one_month_ago.strftime("%Y-%m-%d")
+            company_data = self._market_api_client.get_company_profile(symbol)
+            daily_prices = self._market_api_client.get_historical_prices(
+                symbol, from_date=one_month_ago_str, to_date=today_str
+            )
+            grading_summary = self._market_api_client.get_company_grading_summary(
+                symbol
+            )
+            # gradings = self._market_api_client.get_company_gradings(symbol)
+            price_target_summary = self._market_api_client.get_price_target_summary(
+                symbol
+            )
+            if price_target_summary and hasattr(price_target_summary, "publishers"):
+                if isinstance(price_target_summary.publishers, list):
+                    price_target_summary.publishers = ", ".join(
+                        price_target_summary.publishers
+                    )
+
+            price_target = self._market_api_client.get_price_target(symbol)
+            rating_summary = self._market_api_client.get_company_rating(symbol)
+            dcf = self._market_api_client.get_discounted_cash_flow(symbol)
+            analyst_estimates = self._market_api_client.get_analyst_estimates(symbol)
+            financial_ratios = self._market_api_client.get_financial_ratios(
+                symbol, limit=1
+            )
+
+            # Build company_read from company_data and latest daily price
+            latest_price = daily_prices[0] if daily_prices else None
+            company_read = CompanyRead(
+                symbol=company_data.symbol,
+                company_name=company_data.company_name,
+                market_cap=company_data.market_cap,
+                currency=company_data.currency,
+                exchange_full_name=company_data.exchange_full_name,
+                exchange=company_data.exchange,
+                industry=company_data.industry,
+                website=str(company_data.website),
+                description=company_data.description,
+                sector=company_data.sector,
+                country=company_data.country,
+                phone=company_data.phone,
+                address=company_data.address,
+                city=company_data.city,
+                state=company_data.state,
+                zip=company_data.zip,
+                image=company_data.image,
+                ipo_date=company_data.ipo_date,
+                is_in_db=False,
+                price=latest_price.close_price if latest_price else None,
+                daily_price_change=latest_price.change if latest_price else None,
+                daily_price_change_percent=latest_price.change_percent
+                if latest_price
+                else None,
+                open_price=latest_price.open_price if latest_price else None,
+                high_price=latest_price.high_price if latest_price else None,
+                low_price=latest_price.low_price if latest_price else None,
+                created_at=company_data.created_at
+                if hasattr(company_data, "created_at")
+                else datetime.now(),
+                updated_at=company_data.updated_at
+                if hasattr(company_data, "updated_at")
+                else datetime.now(),
+            )
+
+            grading_summary_read = self._validate_single(
+                CompanyGradingSummaryRead, grading_summary
+            )
+            dcf_read = self._validate_single(CompanyDiscountedCashFlowRead, dcf)
+            rating_summary_read = self._validate_single(
+                CompanyRatingSummaryRead, rating_summary
+            )
+            price_target_read = self._validate_single(
+                CompanyPriceTargetRead, price_target
+            )
+            price_target_summary_read = self._validate_single(
+                CompanyPriceTargetSummaryRead, price_target_summary
+            )
+            price_change_read = self._validate_single(StockPriceChangeRead, [])
+
+            # Use repository methods for collections
+            # latest_gradings = self._validate_models(CompanyGradingRead, gradings)
+
+            general_news_read = self._validate_models(
+                CompanyGeneralNewsRead,
+                [],
+            )
+            price_target_news_read = self._validate_models(
+                CompanyPriceTargetNewsRead, []
+            )
+            grading_news_read = self._validate_models(
+                CompanyGradingNewsRead,
+                [],
+            )
+
+            daily_prices_read = self._validate_models(StockPriceRead, daily_prices)
+
+            analyst_estimates_read = self._validate_models(
+                CompanyAnalystEstimateRead, analyst_estimates
+            )
+            ratios_read = self._validate_single(
+                CompanyFinancialRatioRead,
+                financial_ratios[0] if financial_ratios else None,
+            )
+            response = CompanyPageResponse(
+                company=company_read,
+                ratios=ratios_read,
+                grading_summary=grading_summary_read,
+                rating_summary=rating_summary_read,
+                price_target_summary=price_target_summary_read,
+                dcf=dcf_read,
+                price_target=price_target_read,
+                stock_prices=daily_prices_read,
+                price_change=price_change_read,
+                latest_gradings=[],
+                analyst_estimates=analyst_estimates_read,
+                price_target_news=price_target_news_read,
+                general_news=general_news_read,
+                grading_news=grading_news_read,
+            )
+            local_cache[symbol] = {"data": response, "timestamp": datetime.now()}
+            return response
+
+        except Exception as e:
+            logger.error(f"Error retrieving on-demand data for {symbol}: {str(e)}")
+            raise
+
+    def _get_company_insights_on_demand(self, symbol: str) -> CompanyInsightsResponse:
+        """Retrieve various insights for a company on-demand by its stock symbol."""
+        try:
+            if symbol in local_insights_cache:
+                is_cache_within_24_hours = (
+                    datetime.now() - local_insights_cache[symbol]["timestamp"]
+                ).seconds < CACHE_TIMEOUT_SECONDS
+                if is_cache_within_24_hours:
+                    return local_insights_cache[symbol]["data"]
+
+            income_statements = self._market_api_client.get_income_statements(symbol)
+            balance_sheets = self._market_api_client.get_balance_sheets(symbol)
+            cash_flow_statements = self._market_api_client.get_cash_flow_statements(
+                symbol
+            )
+            financial_ratios = self._market_api_client.get_financial_ratios(symbol)
+            key_metrics = self._market_api_client.get_key_metrics(symbol)
+
+            # Transform raw data into insights
+            inc_statement_insights = self._transform_income_statement_data(
+                income_statements
+            )
+            bal_sheet_insights = self._transform_balance_sheet_data(balance_sheets)
+            cf_statement_insights = self._transform_cash_flow_statement_data(
+                cash_flow_statements
+            )
+            fr_insights = self._transform_financial_ratio_data(financial_ratios)
+            km_insights = self._transform_key_metrics_data(key_metrics)
+
+            insights = CompanyInsightsResponse(
+                net_income=inc_statement_insights["net_income"],
+                ebita=inc_statement_insights["ebita"],
+                eps=inc_statement_insights["eps"],
+                eps_diluted=inc_statement_insights["eps_diluted"],
+                weighted_average_shs_out=inc_statement_insights[
+                    "weighted_average_shs_out"
+                ],
+                total_debt=bal_sheet_insights["total_debt"],
+                free_cash_flow=cf_statement_insights["free_cash_flow"],
+                operating_cash_flow=cf_statement_insights["operating_cash_flow"],
+                gross_profit_margin=fr_insights["gross_profit_margin"],
+                operating_profit_margin=fr_insights["operating_profit_margin"],
+                debt_to_equity_ratio=fr_insights["debt_to_equity_ratio"],
+                dividend_yield=fr_insights["dividend_yield"],
+                return_on_equity=km_insights["return_on_equity"],
+                market_cap=km_insights["market_cap"],
+            )
+            local_insights_cache[symbol] = {
+                "data": insights,
+                "timestamp": datetime.now(),
+            }
+            return insights
+        except Exception as e:
+            logger.error(f"Error retrieving on-demand insights for {symbol}: {str(e)}")
             raise
 
     def _transform_income_statement_data(

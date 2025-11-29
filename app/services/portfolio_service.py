@@ -6,6 +6,7 @@ from datetime import date as date_type
 from app.repositories.portfolio_repo import (
     PortfolioRepository,
 )
+from app.services.dividend_service import DividendService
 from app.schemas.user import (
     PortfolioCreate,
     PortfolioDetail,
@@ -33,6 +34,7 @@ class PortfolioService:
     def __init__(self, session: Session) -> None:
         self._session = session
         self._portfolio_repo = PortfolioRepository(session)
+        self._dividend_service = DividendService(session)
 
     @staticmethod
     def _validate_list(items: list, schema_class):
@@ -189,6 +191,39 @@ class PortfolioService:
             monthly_performances=monthly_performance,
         )
 
+    def get_portfolio_snapshot(
+        self, portfolio_id: int, user_id: int
+    ) -> PortfolioDetail:
+        """
+        Get a snapshot of the portfolio with key metrics only.
+
+        Args:
+            portfolio_id: The portfolio to retrieve snapshot for
+            user_id: The user requesting the portfolio snapshot
+        Returns:
+            PortfolioDetail: Snapshot of portfolio information
+        """
+        portfolio = self._portfolio_repo.get_portfolio_with_relations(
+            portfolio_id, user_id
+        )
+        if not portfolio:
+            raise ValueError("Portfolio not found or access denied")
+        dividends_received = sum(
+            d.dividend_amount for d in portfolio.dividend_histories
+        )
+        return PortfolioDetail(
+            total_value=portfolio.total_value,
+            total_invested=portfolio.total_invested,
+            total_gain_loss=portfolio.total_gain_loss,
+            dividends_received=dividends_received,
+            total_return_percentage=portfolio.total_return_percentage,
+            holding_performances=[],
+            trading_histories=[],
+            sector_performances=[],
+            industry_performances=[],
+            monthly_performances=[],
+        )
+
     def get_portfolio_dividend_history(
         self, portfolio_id: int, user_id: int
     ) -> list[PortfolioDividendHistoryRead]:
@@ -238,6 +273,13 @@ class PortfolioService:
 
         # Ensure holding exists for this symbol
         self._ensure_holding_exists(portfolio_id, trading.symbol, trading.currency)
+
+        # Sync dividends from trade date onwards
+        # This will check CompanyDividend table for any new dividends after this trade
+        self._dividend_service.sync_dividends_for_portfolio(
+            portfolio_id, after_date=trading.trade_date
+        )
+
         return PortfolioTradingHistoryRead.model_validate(response)
 
     def sell_holding(
@@ -271,6 +313,12 @@ class PortfolioService:
         response = self._portfolio_repo.add_trade(trade_write)
         logger.info(
             f"Recorded SELL trade: {trading.shares} shares of {trading.symbol} at ${trading.price_per_share} in portfolio {portfolio_id}"
+        )
+
+        # Sync dividends from trade date onwards
+        # This will check CompanyDividend table for any new dividends after this trade
+        self._dividend_service.sync_dividends_for_portfolio(
+            portfolio_id, after_date=trading.trade_date
         )
 
         # Remove holding if all shares sold

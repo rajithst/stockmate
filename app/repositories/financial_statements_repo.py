@@ -74,7 +74,9 @@ class CompanyFinancialStatementsRepository:
             logger.error(f"Error getting cash flow statements for {symbol}: {e}")
             raise
 
-    def get_financial_ratios(self, symbol: str) -> list[CompanyFinancialRatio]:
+    def get_financial_ratios(
+        self, symbol: str, limit: int = 50
+    ) -> list[CompanyFinancialRatio]:
         """Retrieve financial ratios for a company."""
         try:
             return (

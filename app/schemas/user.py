@@ -16,6 +16,12 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
+from app.schemas.quote import (
+    IndexQuoteRead,
+    CompanyEarningsCalendarRead,
+    CompanyDividendRead,
+)
+
 
 # ========================
 # USER & AUTH SCHEMAS
@@ -415,5 +421,30 @@ class WatchlistCompanyItem(BaseModel):
 class WatchlistResponse(BaseModel):
     watchlist: WatchlistRead
     items: list[WatchlistCompanyItem] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DashboardResponse(BaseModel):
+    total_portfolios: int = 0
+    total_invested: float = 0.0
+    total_current_value: float = 0.0
+    total_profit_loss: float = 0.0
+    total_dividends: float = 0.0
+    gain_loss_percentage: float = 0.0
+    index_quotes: list[IndexQuoteRead] = []
+    earnings_calendar: list[CompanyEarningsCalendarRead] = []
+    dividends_calendar: list[CompanyDividendRead] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StockSymbol(BaseModel):
+    symbol: str
+    name: str
+    exchange: Optional[str] = None
+    currency: str
+    image: Optional[str] = None
+    is_in_db: bool = False
 
     model_config = ConfigDict(from_attributes=True)

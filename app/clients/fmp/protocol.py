@@ -4,6 +4,7 @@ from app.clients.fmp.models.analyst_estimates import FMPAnalystEstimates
 from app.clients.fmp.models.company import FMPCompanyProfile
 from app.clients.fmp.models.discounted_cashflow import FMPDFCValuation
 from app.clients.fmp.models.dividend import FMPDividend, FMPDividendCalendar
+from app.clients.fmp.models.earnings import FMPEarningsCalendar
 from app.clients.fmp.models.financial_ratios import (
     FMPFinancialRatios,
     FMPFinancialScores,
@@ -159,6 +160,12 @@ class FMPClientProtocol(Protocol):
         self, from_date: Optional[str] = None, to_date: Optional[str] = None
     ) -> List[FMPDividendCalendar]:
         """Fetches the dividend calendar within a specified date range."""
+        ...
+
+    def get_earnings_calendar(
+        self, from_date: Optional[str] = None, to_date: Optional[str] = None
+    ) -> List[FMPEarningsCalendar]:
+        """Fetches the earnings calendar within a specified date range."""
         ...
 
     def get_stock_splits(self, symbol: str) -> List[FMPStockSplit]:

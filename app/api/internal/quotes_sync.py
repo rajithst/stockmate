@@ -8,6 +8,7 @@ from app.schemas.quote import (
     IndexQuoteRead,
     StockPriceChangeRead,
     StockPriceRead,
+    CompanyEarningsCalendarRead,
 )
 from app.services.internal.quotes_sync_service import QuotesSyncService
 
@@ -175,7 +176,7 @@ def sync_dividends_for_company(
     service: QuotesSyncService = Depends(get_quotes_sync_service),
 ):
     """Sync a specific company's dividend history from the external API and store in the database."""
-    dividends = service.upsert_dividends(symbol)
+    dividends = service.upsert_dividends(symbol, limit)
     if not dividends:
         raise HTTPException(
             status_code=404,
@@ -203,3 +204,24 @@ def sync_dividends(
             detail="Dividends not found",
         )
     return dividends
+
+
+@router.get(
+    "/earnings-calendar/sync",
+    response_model=list[CompanyEarningsCalendarRead],
+    summary="Sync company earnings from external API",
+    description="Fetches and upserts company's earnings history from the external API into the database.",
+)
+def sync_earnings(
+    from_date: str | None = Query(default=None),
+    to_date: str | None = Query(default=None),
+    service: QuotesSyncService = Depends(get_quotes_sync_service),
+):
+    """Sync company's earnings history from the external API and store in the database."""
+    earnings = service.upsert_earnings_calendar(from_date, to_date)
+    if not earnings:
+        raise HTTPException(
+            status_code=404,
+            detail="Earnings not found",
+        )
+    return earnings

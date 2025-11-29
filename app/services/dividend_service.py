@@ -5,11 +5,11 @@ from datetime import date as date_type
 
 from sqlalchemy.orm import Session
 
-from app.db.models.portfolio import PortfolioTradingHistory
 from app.repositories.portfolio_repo import (
     PortfolioRepository,
 )
 from app.schemas.user import PortfolioDividendHistoryRead, PortfolioDividendHistoryWrite
+from app.db.models.portfolio import PortfolioTradingHistory
 
 logger = logging.getLogger(__name__)
 

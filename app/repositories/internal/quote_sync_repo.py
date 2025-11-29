@@ -3,6 +3,7 @@ import logging
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.db.models import CompanyEarningsCalendar
 from app.db.models.dividend import CompanyDividend
 from app.db.models.quote import CompanyStockPrice, CompanyStockPriceChange, IndexQuote
 from app.db.models.stock import CompanyStockPeer, CompanyStockSplit
@@ -15,6 +16,7 @@ from app.schemas.quote import (
     IndexQuoteWrite,
     StockPriceChangeWrite,
     StockPriceWrite,
+    CompanyEarningsCalendarWrite,
 )
 from app.util.model_mapper import map_model
 
@@ -265,6 +267,45 @@ class CompanyQuoteSyncRepository:
         except SQLAlchemyError as e:
             self._db.rollback()
             logger.error(f"Error during upsert_dividends: {e}")
+            raise
+
+    def upsert_earnings_calendar(
+        self, earnings_data: list[CompanyEarningsCalendarWrite]
+    ) -> list[CompanyEarningsCalendar]:
+        try:
+            results = []
+            for earnings_in in earnings_data:
+                # Find existing record
+                existing = (
+                    self._db.query(CompanyEarningsCalendar)
+                    .filter_by(symbol=earnings_in.symbol, date=earnings_in.date)
+                    .first()
+                )
+
+                if existing:
+                    # Update existing
+                    result = map_model(existing, earnings_in)
+                else:
+                    # Create new
+                    result = CompanyEarningsCalendar(
+                        **earnings_in.model_dump(exclude_unset=True)
+                    )
+                    self._db.add(result)
+
+                results.append(result)
+
+            # Commit all changes
+            self._db.commit()
+
+            # Refresh all records
+            for result in results:
+                self._db.refresh(result)
+
+            logger.info(f"Upserted {len(results)} earnings calendar records")
+            return results
+        except SQLAlchemyError as e:
+            self._db.rollback()
+            logger.error(f"Error during upsert_earnings_calendar: {e}")
             raise
 
     def upsert_technical_indicators(

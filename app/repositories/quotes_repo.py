@@ -1,8 +1,9 @@
 import logging
 
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
-from app.db.models import CompanyStockPrice
+from app.db.models import CompanyStockPrice, CompanyEarningsCalendar, IndexQuote
 from app.db.models.dividend import CompanyDividend
 from app.db.models.stock import CompanyStockPeer, CompanyStockSplit
 from app.db.models.technical_indicators import CompanyTechnicalIndicator
@@ -80,5 +81,64 @@ class CompanyQuotesRepository:
         except Exception as e:
             logger.error(
                 f"Error retrieving technical indicators for symbol {symbol}: {e}"
+            )
+            return []
+
+    def get_index_quotes(self) -> list[IndexQuote]:
+        """Retrieve index quotes."""
+        try:
+            return self._db.query(IndexQuote).all()
+        except Exception as e:
+            logger.error(f"Error retrieving index quotes: {e}")
+            return []
+
+    def get_earnings_calendar(
+        self, from_date: str, to_date: str
+    ) -> list[CompanyEarningsCalendar]:
+        """Retrieve earnings calendar for companies within a date range.
+
+        Filters by either date or last_update within the specified range.
+        """
+        try:
+            return (
+                self._db.query(CompanyEarningsCalendar)
+                .filter(
+                    or_(
+                        (CompanyEarningsCalendar.date >= from_date)
+                        & (CompanyEarningsCalendar.date <= to_date),
+                        (CompanyEarningsCalendar.last_update >= from_date)
+                        & (CompanyEarningsCalendar.last_update <= to_date),
+                    )
+                )
+                .order_by(CompanyEarningsCalendar.date.asc())
+                .all()
+            )
+        except Exception as e:
+            logger.error(
+                f"Error retrieving earnings calendar from {from_date} to {to_date}: {e}"
+            )
+            return []
+
+    def get_dividend_calendar(
+        self, from_date: str, to_date: str
+    ) -> list[CompanyDividend]:
+        """Retrieve dividend calendar for companies within a date range.
+
+        Filters by either date or last_update within the specified range.
+        """
+        try:
+            return (
+                self._db.query(CompanyDividend)
+                .filter(
+                    CompanyDividend.date
+                    >= from_date & CompanyEarningsCalendar.date
+                    <= to_date
+                )
+                .order_by(CompanyDividend.date.asc())
+                .all()
+            )
+        except Exception as e:
+            logger.error(
+                f"Error retrieving dividend calendar from {from_date} to {to_date}: {e}"
             )
             return []

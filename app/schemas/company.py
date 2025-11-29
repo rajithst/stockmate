@@ -64,6 +64,7 @@ class CompanyRead(Company):
     open_price: Optional[float] = None
     high_price: Optional[float] = None
     low_price: Optional[float] = None
+    is_in_db: bool = True
     created_at: datetime
     updated_at: datetime
 
@@ -74,8 +75,15 @@ class CompanyWrite(Company):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CompanyInsight(BaseModel):
+    year: int
+    quarter: str
+    value: float
+
+
 class CompanyPageResponse(BaseModel):
     company: CompanyRead
+    ratios: CompanyFinancialRatioRead
     grading_summary: Optional[CompanyGradingSummaryRead]
     rating_summary: Optional[CompanyRatingSummaryRead]
     dcf: Optional[CompanyDiscountedCashFlowRead]
@@ -90,12 +98,6 @@ class CompanyPageResponse(BaseModel):
     grading_news: List[CompanyGradingNewsRead] = []
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class CompanyInsight(BaseModel):
-    year: int
-    quarter: str
-    value: float
 
 
 class CompanyInsightsResponse(BaseModel):
