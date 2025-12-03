@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.clients.fmp.protocol import FMPClientProtocol
+from app.clients.yfinance.protocol import YFinanceClientProtocol
 from app.repositories.company_metrics_repo import CompanyMetricsRepository
 from app.repositories.company_repo import CompanyRepository
 from app.repositories.financial_health_repo import CompanyFinancialHealthRepository
@@ -22,6 +23,7 @@ from app.schemas.company import (
     CompanyInsightsResponse,
     CompanyPageResponse,
     CompanyRead,
+    NonUSCompany,
 )
 from app.schemas.company_metrics import (
     CompanyDiscountedCashFlowRead,
@@ -72,7 +74,12 @@ class FinancialHealthSectorsEnum(Enum):
 
 
 class CompanyService:
-    def __init__(self, session: Session, market_api_client: FMPClientProtocol):
+    def __init__(
+        self,
+        session: Session,
+        fmp_client: FMPClientProtocol,
+        yfinance_client: YFinanceClientProtocol,
+    ) -> None:
         self._db = session
         self._company_repository = CompanyRepository(session)
         self._market_data_repository = CompanyMarketDataRepository(session)
@@ -82,7 +89,8 @@ class CompanyService:
         self._metrics_repository = CompanyMetricsRepository(session)
         self._financial_health_repository = CompanyFinancialHealthRepository(session)
         self._quotes_repository = CompanyQuotesRepository(session)
-        self._market_api_client = market_api_client
+        self._fmp_client = fmp_client
+        self._yfinance_client = yfinance_client
 
     @staticmethod
     def _validate_models(schema_class, items):
@@ -200,6 +208,17 @@ class CompanyService:
             general_news=general_news_read,
             grading_news=grading_news_read,
         )
+
+    def get_non_us_company_page(self, symbol: str) -> NonUSCompany | None:
+        """Retrieve a non-US company's profile by its stock symbol."""
+        company = self._company_repository.get_non_us_company_by_symbol(symbol)
+
+        if not company:
+            logger.warning(f"Non-US Company not found for symbol: {symbol}")
+            return self._get_non_us_company_on_demand(symbol)
+
+        company_read = NonUSCompany.model_validate(company)
+        return company_read
 
     def get_company_financials(self, symbol: str) -> CompanyFinancialResponse | None:
         """Retrieve a company's financials by its stock symbol."""
@@ -385,41 +404,32 @@ class CompanyService:
     def get_company_on_demand(self, symbol: str):
         """Retrieve on-demand data for a company by its stock symbol."""
         try:
-            if symbol in local_cache:
-                is_cache_within_24_hours = (
-                    datetime.now() - local_cache[symbol]["timestamp"]
-                ).seconds < 3600
-                if is_cache_within_24_hours:
-                    return local_cache[symbol]["data"]
+            cache_exist = self._try_company_from_cache(symbol)
+            if cache_exist:
+                return cache_exist
 
             today = datetime.now()
             one_month_ago = today.replace(month=today.month - 1)
             today_str = today.strftime("%Y-%m-%d")
             one_month_ago_str = one_month_ago.strftime("%Y-%m-%d")
-            company_data = self._market_api_client.get_company_profile(symbol)
-            daily_prices = self._market_api_client.get_historical_prices(
+            company_data = self._fmp_client.get_company_profile(symbol)
+            daily_prices = self._fmp_client.get_historical_prices(
                 symbol, from_date=one_month_ago_str, to_date=today_str
             )
-            grading_summary = self._market_api_client.get_company_grading_summary(
-                symbol
-            )
+            grading_summary = self._fmp_client.get_company_grading_summary(symbol)
             # gradings = self._market_api_client.get_company_gradings(symbol)
-            price_target_summary = self._market_api_client.get_price_target_summary(
-                symbol
-            )
+            price_target_summary = self._fmp_client.get_price_target_summary(symbol)
             if price_target_summary and hasattr(price_target_summary, "publishers"):
                 if isinstance(price_target_summary.publishers, list):
                     price_target_summary.publishers = ", ".join(
                         price_target_summary.publishers
                     )
 
-            price_target = self._market_api_client.get_price_target(symbol)
-            rating_summary = self._market_api_client.get_company_rating(symbol)
-            dcf = self._market_api_client.get_discounted_cash_flow(symbol)
-            analyst_estimates = self._market_api_client.get_analyst_estimates(symbol)
-            financial_ratios = self._market_api_client.get_financial_ratios(
-                symbol, limit=1
-            )
+            price_target = self._fmp_client.get_price_target(symbol)
+            rating_summary = self._fmp_client.get_company_rating(symbol)
+            dcf = self._fmp_client.get_discounted_cash_flow(symbol)
+            analyst_estimates = self._fmp_client.get_analyst_estimates(symbol)
+            financial_ratios = self._fmp_client.get_financial_ratios(symbol, limit=1)
 
             # Build company_read from company_data and latest daily price
             latest_price = daily_prices[0] if daily_prices else None
@@ -531,13 +541,11 @@ class CompanyService:
                 if is_cache_within_24_hours:
                     return local_insights_cache[symbol]["data"]
 
-            income_statements = self._market_api_client.get_income_statements(symbol)
-            balance_sheets = self._market_api_client.get_balance_sheets(symbol)
-            cash_flow_statements = self._market_api_client.get_cash_flow_statements(
-                symbol
-            )
-            financial_ratios = self._market_api_client.get_financial_ratios(symbol)
-            key_metrics = self._market_api_client.get_key_metrics(symbol)
+            income_statements = self._fmp_client.get_income_statements(symbol)
+            balance_sheets = self._fmp_client.get_balance_sheets(symbol)
+            cash_flow_statements = self._fmp_client.get_cash_flow_statements(symbol)
+            financial_ratios = self._fmp_client.get_financial_ratios(symbol)
+            key_metrics = self._fmp_client.get_key_metrics(symbol)
 
             # Transform raw data into insights
             inc_statement_insights = self._transform_income_statement_data(
@@ -576,6 +584,48 @@ class CompanyService:
         except Exception as e:
             logger.error(f"Error retrieving on-demand insights for {symbol}: {str(e)}")
             raise
+
+    def _get_non_us_company_on_demand(self, symbol: str) -> NonUSCompany | None:
+        """Retrieve on-demand data for a non-US company by its stock symbol."""
+        try:
+            cache_exist = self._try_company_from_cache(symbol)
+            if cache_exist:
+                return cache_exist
+
+            company_data = self._yfinance_client.get_company_profile(symbol)
+
+            if not company_data:
+                logger.warning(
+                    f"Non-US Company data not found on-demand for symbol: {symbol}"
+                )
+                return None
+
+            # Convert Pydantic model to dictionary using Python field names (not aliases)
+            company_data_dict = company_data.model_dump()
+
+            company_read = self._validate_single(
+                NonUSCompany,
+                company_data_dict,
+            )
+            local_cache[symbol] = {"data": company_read, "timestamp": datetime.now()}
+
+            return company_read
+
+        except Exception as e:
+            logger.error(
+                f"Error retrieving on-demand non-US data for {symbol}: {str(e)}"
+            )
+            raise
+
+    def _try_company_from_cache(self, symbol: str):
+        """Attempt to retrieve data from local cache if within timeout."""
+        if symbol in local_cache:
+            is_cache_within_timeout = (
+                datetime.now() - local_cache[symbol]["timestamp"]
+            ).seconds < CACHE_TIMEOUT_SECONDS
+            if is_cache_within_timeout:
+                return local_cache[symbol]["data"]
+        return None
 
     def _transform_income_statement_data(
         self, income_statements

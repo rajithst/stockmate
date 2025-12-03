@@ -1,18 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.dependencies.sync_services import create_sync_service_provider
+from app.dependencies.sync_services import get_company_service
 from app.schemas.company import (
     CompanyFinancialHealthResponse,
     CompanyFinancialResponse,
     CompanyInsightsResponse,
     CompanyPageResponse,
+    NonUSCompany,
 )
 from app.schemas.quote import CompanyTechnicalIndicatorRead
 from app.services.company_service import CompanyService
 
 router = APIRouter(prefix="")
-
-get_company_service = create_sync_service_provider(CompanyService)
 
 
 @router.get("/{symbol}", response_model=CompanyPageResponse)
@@ -20,6 +19,16 @@ def get_company_profile(
     symbol: str, service: CompanyService = Depends(get_company_service)
 ):
     page = service.get_company_page(symbol)
+    if not page:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return page
+
+
+@router.get("/non-us/{symbol}", response_model=NonUSCompany)
+def get_non_us_company_profile(
+    symbol: str, service: CompanyService = Depends(get_company_service)
+):
+    page = service.get_non_us_company_page(symbol)
     if not page:
         raise HTTPException(status_code=404, detail="Company not found")
     return page

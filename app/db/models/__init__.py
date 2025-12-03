@@ -17,7 +17,7 @@ from .company_metrics import (
 )
 
 # Core Models
-from .company import Company
+from .company import Company, NonUSCompany
 from .dividend import CompanyDividend
 from .financial_score import CompanyFinancialScore
 

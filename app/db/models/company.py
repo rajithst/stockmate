@@ -248,3 +248,352 @@ class Company(Base):
 
     def __repr__(self) -> str:
         return f"<Company(symbol={self.symbol}, name={self.company_name})>"
+
+
+class NonUSCompany(Base):
+    """Non-US company data from YFinance
+
+    Stores comprehensive company information for international stocks,
+    including pricing, valuations, financials, and analyst data.
+    """
+
+    __tablename__ = "non_us_companies"
+    __table_args__ = (
+        Index("ix_non_us_company_symbol_exchange", "symbol", "exchange"),
+        Index("ix_non_us_company_sector_industry", "sector", "industry"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # === BASIC COMPANY INFORMATION ===
+    symbol: Mapped[str] = mapped_column(
+        String(250), unique=True, index=True, nullable=False
+    )
+    short_name: Mapped[str] = mapped_column(String(250), default="", nullable=False)
+    long_name: Mapped[str] = mapped_column(String(250), nullable=False)
+    quote_type: Mapped[str] = mapped_column(
+        String(50), default="EQUITY", nullable=False
+    )
+
+    # === LOCATION & CONTACT ===
+    country: Mapped[str | None] = mapped_column(String(250), nullable=True)
+    state: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    address1: Mapped[str | None] = mapped_column(String(250), nullable=True)
+    address2: Mapped[str | None] = mapped_column(String(250), nullable=True)
+    zip: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    website: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    ir_website: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    # === COMPANY CLASSIFICATION ===
+    industry: Mapped[str | None] = mapped_column(String(250), nullable=True, index=True)
+    industry_key: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    industry_display: Mapped[str | None] = mapped_column(String(250), nullable=True)
+    sector: Mapped[str | None] = mapped_column(String(250), nullable=True, index=True)
+    sector_key: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    sector_display: Mapped[str | None] = mapped_column(String(250), nullable=True)
+
+    # === COMPANY DESCRIPTION & DETAILS ===
+    long_business_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    full_time_employees: Mapped[float | None] = mapped_column(Float, nullable=True)
+    image: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    default_image: Mapped[bool | None] = mapped_column(nullable=True)
+
+    # === EXCHANGE INFORMATION ===
+    exchange: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    full_exchange_name: Mapped[str] = mapped_column(String(250), nullable=False)
+    market: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    market_state: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    # === IPO & TRADING INFO ===
+    ipo_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    # === PRICING INFORMATION ===
+    currency: Mapped[str] = mapped_column(String(10), nullable=False)
+    current_price: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    previous_close: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    open: Mapped[float | None] = mapped_column(Float, default=0.0, nullable=True)
+    day_low: Mapped[float | None] = mapped_column(Float, default=0.0, nullable=True)
+    day_high: Mapped[float | None] = mapped_column(Float, default=0.0, nullable=True)
+    regular_market_previous_close: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    regular_market_open: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    regular_market_day_low: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    regular_market_day_high: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    regular_market_price: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    regular_market_change: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    regular_market_change_percent: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    bid: Mapped[float | None] = mapped_column(Float, default=0.0, nullable=True)
+    ask: Mapped[float | None] = mapped_column(Float, default=0.0, nullable=True)
+    bid_size: Mapped[float | None] = mapped_column(Float, nullable=True)
+    ask_size: Mapped[float | None] = mapped_column(Float, nullable=True)
+    price_hint: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # === VOLUME INFORMATION ===
+    volume: Mapped[float | None] = mapped_column(Float, nullable=True)
+    regular_market_volume: Mapped[float | None] = mapped_column(Float, nullable=True)
+    average_volume: Mapped[float | None] = mapped_column(Float, nullable=True)
+    average_volume_10_days: Mapped[float | None] = mapped_column(Float, nullable=True)
+    average_daily_volume_10_day: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    average_daily_volume_3_month: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+
+    # === MARKET CAPITALIZATION & SHARES ===
+    market_cap: Mapped[float | None] = mapped_column(Float, default=0.0, nullable=True)
+    enterprise_value: Mapped[float | None] = mapped_column(Float, nullable=True)
+    shares_outstanding: Mapped[float | None] = mapped_column(Float, nullable=True)
+    implied_shares_outstanding: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    float_shares: Mapped[float | None] = mapped_column(Float, nullable=True)
+    held_percent_insiders: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    held_percent_institutions: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+
+    # === 52 WEEK INFORMATION ===
+    fifty_two_week_low: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    fifty_two_week_high: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    fifty_two_week_low_change: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    fifty_two_week_low_change_percent: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    fifty_two_week_high_change: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    fifty_two_week_high_change_percent: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    fifty_two_week_range: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    fifty_two_week_change: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fifty_two_week_change_percent: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+
+    # === ALL TIME HIGH/LOW ===
+    all_time_high: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    all_time_low: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+
+    # === MOVING AVERAGES ===
+    fifty_day_average: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    fifty_day_average_change: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fifty_day_average_change_percent: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    two_hundred_day_average: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    two_hundred_day_average_change: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    two_hundred_day_average_change_percent: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+
+    # === DIVIDEND INFORMATION ===
+    dividend_rate: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    dividend_yield: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    trailing_annual_dividend_rate: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    trailing_annual_dividend_yield: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    five_year_avg_dividend_yield: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    ex_dividend_date: Mapped[float | None] = mapped_column(Float, nullable=True)
+    last_dividend_date: Mapped[float | None] = mapped_column(Float, nullable=True)
+    last_dividend_value: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    payout_ratio: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+
+    # === VALUATION RATIOS ===
+    trailing_pe: Mapped[float | None] = mapped_column(Float, nullable=True)
+    forward_pe: Mapped[float | None] = mapped_column(Float, nullable=True)
+    trailing_peg_ratio: Mapped[float | None] = mapped_column(Float, nullable=True)
+    price_to_sales_trailing_12_months: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    price_to_book: Mapped[float | None] = mapped_column(Float, nullable=True)
+    enterprise_to_revenue: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # === EARNINGS & EPS ===
+    trailing_eps: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    forward_eps: Mapped[float | None] = mapped_column(Float, default=0.0, nullable=True)
+    eps_trailing_twelve_months: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    eps_for_forward: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    earnings_growth: Mapped[float | None] = mapped_column(Float, nullable=True)
+    earnings_quarterly_growth: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    net_income_to_common: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # === FINANCIAL METRICS ===
+    book_value: Mapped[float | None] = mapped_column(Float, default=0.0, nullable=True)
+    total_cash: Mapped[float | None] = mapped_column(Float, default=0.0, nullable=True)
+    total_cash_per_share: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    total_debt: Mapped[float | None] = mapped_column(Float, default=0.0, nullable=True)
+    total_revenue: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    revenue_per_share: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    gross_profits: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    beta: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # === PROFITABILITY & MARGINS ===
+    profit_margins: Mapped[float | None] = mapped_column(Float, nullable=True)
+    gross_margins: Mapped[float | None] = mapped_column(Float, nullable=True)
+    operating_margins: Mapped[float | None] = mapped_column(Float, nullable=True)
+    ebitda_margins: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # === RETURNS ===
+    return_on_assets: Mapped[float | None] = mapped_column(Float, nullable=True)
+    return_on_equity: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # === GROWTH ===
+    revenue_growth: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # === ANALYST INFORMATION ===
+    number_of_analyst_opinions: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    recommendation_key: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    recommendation_mean: Mapped[float | None] = mapped_column(Float, nullable=True)
+    average_analyst_rating: Mapped[str | None] = mapped_column(
+        String(100), nullable=True
+    )
+    target_mean_price: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    target_median_price: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    target_high_price: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+    target_low_price: Mapped[float | None] = mapped_column(
+        Float, default=0.0, nullable=True
+    )
+
+    # === FISCAL YEAR INFORMATION ===
+    last_fiscal_year_end: Mapped[float | None] = mapped_column(Float, nullable=True)
+    next_fiscal_year_end: Mapped[float | None] = mapped_column(Float, nullable=True)
+    most_recent_quarter: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # === EARNINGS CALL INFORMATION ===
+    earnings_timestamp: Mapped[float | None] = mapped_column(Float, nullable=True)
+    earnings_timestamp_start: Mapped[float | None] = mapped_column(Float, nullable=True)
+    earnings_timestamp_end: Mapped[float | None] = mapped_column(Float, nullable=True)
+    earnings_call_timestamp_start: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    earnings_call_timestamp_end: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    is_earnings_date_estimate: Mapped[bool | None] = mapped_column(nullable=True)
+
+    # === STOCK SPLIT INFORMATION ===
+    last_split_factor: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    last_split_date: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # === GOVERNANCE & RISK ===
+    audit_risk: Mapped[float | None] = mapped_column(Float, nullable=True)
+    board_risk: Mapped[float | None] = mapped_column(Float, nullable=True)
+    compensation_risk: Mapped[float | None] = mapped_column(Float, nullable=True)
+    share_holder_rights_risk: Mapped[float | None] = mapped_column(Float, nullable=True)
+    overall_risk: Mapped[float | None] = mapped_column(Float, nullable=True)
+    governance_epoch_date: Mapped[float | None] = mapped_column(Float, nullable=True)
+    compensation_as_of_epoch_date: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+
+    # === MISCELLANEOUS ===
+    quote_source_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    triggerable: Mapped[bool | None] = mapped_column(nullable=True)
+    custom_price_alert_confidence: Mapped[str | None] = mapped_column(
+        String(50), nullable=True
+    )
+    source_interval: Mapped[float | None] = mapped_column(Float, nullable=True)
+    exchange_data_delayed_by: Mapped[float | None] = mapped_column(Float, nullable=True)
+    message_board_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    has_pre_post_market_data: Mapped[bool | None] = mapped_column(nullable=True)
+    esg_populated: Mapped[bool | None] = mapped_column(nullable=True)
+    region: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    language: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    type_display: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    regular_market_day_range: Mapped[str | None] = mapped_column(
+        String(50), nullable=True
+    )
+    regular_market_time: Mapped[float | None] = mapped_column(Float, nullable=True)
+    sand_p_52_week_change: Mapped[float | None] = mapped_column(Float, nullable=True)
+    max_age: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # === AUDIT FIELDS ===
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    def __repr__(self) -> str:
+        return f"<NonUSCompany(symbol={self.symbol}, name={self.long_name})>"

@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import Company
+from app.db.models.company import NonUSCompany
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,17 @@ class CompanyRepository:
             return self._db.execute(statement).scalars().all()
         except SQLAlchemyError as e:
             logger.error(f"Error getting all companies: {e}")
+            raise
+
+    def get_all_non_us_companies(self) -> list[str]:
+        """Retrieve all non-US companies"""
+        try:
+            statement = select(
+                NonUSCompany.symbol,
+            )
+            return [row[0] for row in self._db.execute(statement).all()]
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting all non-US companies: {e}")
             raise
 
     def get_company_by_symbol(self, symbol: str) -> Company | None:
@@ -40,6 +52,18 @@ class CompanyRepository:
             return self._db.execute(statement).scalars().all()
         except SQLAlchemyError as e:
             logger.error(f"Error getting company profiles by symbols {symbols}: {e}")
+            raise
+
+    def get_non_us_company_by_symbol(self, symbol) -> NonUSCompany | None:
+        """Retrieve a non-US company by its stock symbol."""
+        try:
+            return (
+                self._db.query(NonUSCompany)
+                .filter(NonUSCompany.symbol == symbol)
+                .first()
+            )
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting company by symbol {symbol}: {e}")
             raise
 
     def get_company_snapshot_by_symbol(self, symbol: str) -> Company | None:

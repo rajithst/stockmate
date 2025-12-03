@@ -615,7 +615,9 @@ class FMPClient:
         historical_prices = self._handle_list_response(
             historical_prices, FMPStockHistoricalPrice
         )
-        logger.info("Fetched %d historical prices for %s", len(historical_prices), symbol)
+        logger.info(
+            "Fetched %d historical prices for %s", len(historical_prices), symbol
+        )
         return [
             FMPStockPrice(
                 **{

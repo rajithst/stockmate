@@ -78,15 +78,26 @@ class DashboardService:
 
         # Get all symbols in database for quick lookup
         db_companies = self._company_repository.get_all_companies()
+        non_us_companies = self._company_repository.get_all_non_us_companies()
         db_symbols = {company.symbol for company in db_companies}
+        non_us_symbols = {company[0] for company in non_us_companies}
         # Read from file
+        us_stocks = []
+        non_us_stocks = []
         with open("app/data/stocks.json", "r") as f:
             stocks = json.load(f)
-            stock_symbols = [
+            us_stocks = [
                 StockSymbol(**stock, is_in_db=stock["symbol"] in db_symbols)
                 for stock in stocks
             ]
-            return stock_symbols
+        with open("app/data/jp_stocks.json", "r") as f:
+            stocks = json.load(f)
+            non_us_stocks = [
+                StockSymbol(**stock, is_in_db=stock["symbol"] in non_us_symbols)
+                for stock in stocks
+            ]
+        all_stocks = us_stocks + non_us_stocks
+        return all_stocks
 
     def _get_earnings_calendar(self) -> list[CompanyEarningsCalendarRead]:
         """Retrieve earnings calendar entries within a date range."""
