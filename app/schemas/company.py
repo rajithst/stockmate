@@ -115,6 +115,7 @@ class CompanyInsightsResponse(BaseModel):
     operating_cash_flow: list[CompanyInsight]
     market_cap: list[CompanyInsight]
     dividend_yield: list[CompanyInsight]
+    revenue_by_product_segments: dict[str, list[CompanyInsight]]
 
     model_config = ConfigDict(from_attributes=True)
 

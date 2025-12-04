@@ -3,7 +3,7 @@ import logging
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.models.company_metrics import CompanyAnalystEstimate
+from app.db.models.company_metrics import CompanyAnalystEstimate, CompanyRevenueProductSegmentation
 from app.db.models.company_metrics import CompanyKeyMetrics
 
 logger = logging.getLogger(__name__)
@@ -44,4 +44,21 @@ class CompanyMetricsRepository:
             )
         except SQLAlchemyError as e:
             logger.error(f"Error getting analyst estimates for {symbol}: {e}")
+            raise
+
+    def get_revenue_by_product_segments(
+        self, symbol: str
+    ) -> list[CompanyRevenueProductSegmentation]:
+        """Retrieve revenue by product segments for a company."""
+        try:
+            return (
+                self._db.query(CompanyRevenueProductSegmentation)
+                .filter(
+                    CompanyRevenueProductSegmentation.symbol == symbol,
+                )
+                .order_by(CompanyRevenueProductSegmentation.date.desc())
+                .all()
+            )
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting revenue by product segments for {symbol}: {e}")
             raise

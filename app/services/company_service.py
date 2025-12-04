@@ -367,6 +367,9 @@ class CompanyService:
                 )
             )
             key_metrics = self._metrics_repository.get_key_metrics(symbol)
+            revenue_product_segments = self._metrics_repository.get_revenue_by_product_segments(
+                symbol,
+            )
 
             # Transform raw data into insights
             inc_statement_insights = self._transform_income_statement_data(
@@ -378,6 +381,7 @@ class CompanyService:
             )
             fr_insights = self._transform_financial_ratio_data(financial_ratios)
             km_insights = self._transform_key_metrics_data(key_metrics)
+            rps_insights = self._transform_revenue_by_product_segments_data(revenue_product_segments)
 
             return CompanyInsightsResponse(
                 net_income=inc_statement_insights["net_income"],
@@ -396,6 +400,7 @@ class CompanyService:
                 dividend_yield=fr_insights["dividend_yield"],
                 return_on_equity=km_insights["return_on_equity"],
                 market_cap=km_insights["market_cap"],
+                revenue_by_product_segments=rps_insights,
             )
         except Exception as e:
             logger.error(f"Error retrieving insights for {symbol}: {str(e)}")
@@ -546,6 +551,9 @@ class CompanyService:
             cash_flow_statements = self._fmp_client.get_cash_flow_statements(symbol)
             financial_ratios = self._fmp_client.get_financial_ratios(symbol)
             key_metrics = self._fmp_client.get_key_metrics(symbol)
+            revenue_product_segments = self._metrics_repository.get_revenue_by_product_segments(
+                symbol,
+            )
 
             # Transform raw data into insights
             inc_statement_insights = self._transform_income_statement_data(
@@ -557,6 +565,7 @@ class CompanyService:
             )
             fr_insights = self._transform_financial_ratio_data(financial_ratios)
             km_insights = self._transform_key_metrics_data(key_metrics)
+            rps_insights = self._transform_revenue_by_product_segments_data(revenue_product_segments)
 
             insights = CompanyInsightsResponse(
                 net_income=inc_statement_insights["net_income"],
@@ -575,6 +584,7 @@ class CompanyService:
                 dividend_yield=fr_insights["dividend_yield"],
                 return_on_equity=km_insights["return_on_equity"],
                 market_cap=km_insights["market_cap"],
+                revenue_by_product_segments=rps_insights,
             )
             local_insights_cache[symbol] = {
                 "data": insights,
@@ -826,3 +836,56 @@ class CompanyService:
                 }
             )
         return insights
+
+    def _transform_revenue_by_product_segments_data(
+        self, revenue_product_segments
+    ) -> dict[str, list[dict[str, float | int | str]]]:
+        """Transform revenue by product segments records into structured insights.
+        
+        Groups revenue data by product segment, with quarterly data for each segment.
+        
+        Example output:
+        {
+            "Mac": [
+                {"fiscal_year": 2025, "period": "Q4", "value": 33708000000},
+                {"fiscal_year": 2025, "period": "Q3", "value": 32000000000},
+            ],
+            "Service": [
+                {"fiscal_year": 2025, "period": "Q4", "value": 109158000000},
+                ...
+            ]
+        }
+
+        Returns:
+            Dictionary with product segment names as keys and list of quarterly data as values
+        """
+        import json
+        
+        # Dictionary to store segments with their quarterly data
+        segments_by_product: dict[str, list[dict]] = {}
+        
+        # Iterate through all records (already ordered by date descending)
+        for record in revenue_product_segments:
+            try:
+                # Parse JSON segments data
+                segments_data = json.loads(record.segments_data)
+                
+                # For each product segment in this record
+                for product_name, revenue_value in segments_data.items():
+                    # Initialize product list if not exists
+                    if product_name not in segments_by_product:
+                        segments_by_product[product_name] = []
+                    
+                    # Add this quarter's data for the product
+                    segments_by_product[product_name].append(
+                        {
+                            "year": record.fiscal_year,
+                            "quarter": record.period,
+                            "value": revenue_value,
+                        }
+                    )
+            except (json.JSONDecodeError, AttributeError) as e:
+                logger.warning(f"Error parsing segments data for {record.symbol}: {e}")
+                continue
+        
+        return segments_by_product
