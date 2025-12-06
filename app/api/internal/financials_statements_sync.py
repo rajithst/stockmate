@@ -185,3 +185,35 @@ def sync_financial_ratios(
             detail="Financial ratios not found for symbol: {}".format(symbol),
         )
     return ratios
+
+
+@router.get(
+    "/financial-ratios-ttm/{symbol}/sync",
+    response_model=CompanyFinancialRatioRead,
+    summary="Sync company trailing twelve months financial ratios from external API",
+    description="Fetches and upserts company's trailing twelve months financial ratios from the external API into the database.",
+)
+def sync_financial_ratios_ttm(
+    symbol: str,
+    service: CompanyFinancialStatementsSyncService = Depends(
+        get_financials_sync_service
+    ),
+):
+    """
+    Sync company's trailing twelve months financial ratios from the external API and store in the database.
+
+    Args:
+        symbol: Stock symbol (e.g., 'AAPL')
+        service: CompanyFinancialStatementsSyncService instance (injected)
+    Returns:
+        CompanyFinancialRatioRead: Synced financial ratio record
+    Raises:
+        HTTPException: 404 if financial ratios not found
+    """
+    ratio = service.upsert_financial_ratios_ttm(symbol)
+    if not ratio:
+        raise HTTPException(
+            status_code=404,
+            detail="Financial ratios (TTM) not found for symbol: {}".format(symbol),
+        )
+    return ratio

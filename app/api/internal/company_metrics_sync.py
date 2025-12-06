@@ -102,6 +102,38 @@ def sync_key_metrics(
 
 
 @router.get(
+    "/key-metrics-ttm/{symbol}/sync",
+    response_model=CompanyKeyMetricsRead,
+    summary="Sync company trailing twelve months key metrics from external API",
+    description="Fetches and upserts company's trailing twelve months key metrics from the external API into the database.",
+)
+def sync_key_metrics_ttm(
+    symbol: str,
+    service: CompanyMetricsSyncService = Depends(company_metrics_sync_service),
+):
+    """
+    Sync company's trailing twelve months key metrics from the external API and store in the database.
+
+    Args:
+        symbol: Stock symbol (e.g., 'AAPL')
+        service: CompanyMetricsSyncService instance (injected)
+
+    Returns:
+        CompanyKeyMetricsRead: Synced key metrics record
+
+    Raises:
+        HTTPException: 404 if key metrics not found
+    """
+    key_metrics = service.upsert_key_metrics_ttm(symbol)
+    if not key_metrics:
+        raise HTTPException(
+            status_code=404,
+            detail="Key metrics (TTM) not found for symbol: {}".format(symbol),
+        )
+    return key_metrics
+
+
+@router.get(
     "/dcf/{symbol}/sync",
     response_model=CompanyDiscountedCashFlowRead,
     summary="Sync company DCF valuation from external API",

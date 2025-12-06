@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Dict, Optional
 import time
 from dataclasses import dataclass
@@ -11,8 +12,10 @@ from app.clients.fmp.models.dividend import FMPDividend, FMPDividendCalendar
 from app.clients.fmp.models.earnings import FMPEarningsCalendar
 from app.clients.fmp.models.financial_ratios import (
     FMPFinancialRatios,
+    FMPFinancialRatiosTTM,
     FMPFinancialScores,
     FMPKeyMetrics,
+    FMPKeyMetricsTTM,
 )
 from app.clients.fmp.models.financial_statements import (
     FMPCompanyBalanceSheet,
@@ -20,10 +23,7 @@ from app.clients.fmp.models.financial_statements import (
     FMPCompanyIncomeStatement,
 )
 from app.clients.fmp.models.news import (
-    FMPGeneralNews,
-    FMPPriceTargetNews,
-    FMPStockGradingNews,
-    FMPStockNews,
+    FMPNews,
 )
 from app.clients.fmp.models.quotes import (
     FMPIndexQuote,
@@ -220,6 +220,29 @@ class FMPClient:
         )
         return self._handle_list_response(key_metrics, FMPKeyMetrics)
 
+    def get_key_metrics_ttm(self, symbol: str) -> Optional[FMPKeyMetrics]:
+        """Fetches trailing twelve months key metrics for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the key metrics for.
+        Returns:
+            Optional[FMPKeyMetrics]: The key metrics if found, else None.
+        """
+        self._validate_symbol(symbol)
+        data = self.__get_by_url(endpoint="key-metrics-ttm", params={"symbol": symbol})
+        ttm_data = self._handle_single_response(data, FMPKeyMetricsTTM)
+        dict_values = ttm_data.model_dump() if ttm_data else {}
+        dict_values.update(
+            {
+                "date": datetime.now().date(),
+                "fiscal_year": str(datetime.now().year),
+                "period": "TTM",
+                "reported_currency": "USD",
+            }
+            if ttm_data
+            else {}
+        )
+        return FMPKeyMetrics(**dict_values) if ttm_data else None
+
     def get_financial_ratios(
         self, symbol: str, period: str = "annual", limit: int = 5
     ) -> list[FMPFinancialRatios]:
@@ -240,6 +263,29 @@ class FMPClient:
             params={"symbol": symbol, "period": period, "limit": limit},
         )
         return self._handle_list_response(ratios, FMPFinancialRatios)
+
+    def get_financial_ratios_ttm(self, symbol: str) -> Optional[FMPFinancialRatios]:
+        """Fetches trailing twelve months financial ratios for a given stock symbol.
+        Args:
+            symbol (str): The stock symbol to fetch the financial ratios for.
+        Returns:
+            Optional[FMPFinancialRatios]: The financial ratios if found, else None.
+        """
+        self._validate_symbol(symbol)
+        data = self.__get_by_url(endpoint="ratios-ttm", params={"symbol": symbol})
+        ttm_data = self._handle_single_response(data, FMPFinancialRatiosTTM)
+        dict_values = ttm_data.model_dump() if ttm_data else {}
+        dict_values.update(
+            {
+                "date": datetime.now().date(),
+                "fiscal_year": str(datetime.now().year),
+                "period": "TTM",
+                "reported_currency": "USD",
+            }
+            if ttm_data
+            else {}
+        )
+        return FMPFinancialRatios(**dict_values) if ttm_data else None
 
     def get_financial_scores(self, symbol: str) -> Optional[FMPFinancialScores]:
         """Fetches financial scores for a given stock symbol.
@@ -284,42 +330,10 @@ class FMPClient:
         peers = self.__get_by_url(endpoint="stock-peers", params={"symbol": symbol})
         return self._handle_list_response(peers, FMPStockPeer)
 
-    def get_price_target_news(
-        self, symbol: str, page: int = 1, limit: int = 10
-    ) -> list[FMPPriceTargetNews]:
-        """Fetches news related to stock price targets for a given stock symbol.
-        Args:
-            symbol (str): The stock symbol to fetch the price target news for.
-            page (int): The page number to fetch.
-            limit (int): The maximum number of news records to fetch.
-        Returns:
-            list: A list of price target news records.
-        """
-        price_target_news = self.__get_by_url(
-            endpoint="price-target-news",
-            params={"symbol": symbol, "limit": limit, "page": page},
-        )
-        return self._handle_list_response(price_target_news, FMPPriceTargetNews)
-
-    def get_grading_news(
-        self, symbol: str, limit: int = 100
-    ) -> list[FMPStockGradingNews]:
-        """Fetches news related to stock grading changes for a given stock symbol.
-        Args:
-            symbol (str): The stock symbol to fetch the grading news for.
-            limit (int): The maximum number of news records to fetch.
-        Returns:
-            list: A list of stock grading news records.
-        """
-        news = self.__get_by_url(
-            endpoint="grades-news", params={"symbol": symbol, "limit": limit}
-        )
-        return self._handle_list_response(news, FMPStockGradingNews)
-
     # news
     def get_latest_general_news(
         self, from_date: str, to_date: str, limit: int = 100, page: int = 0
-    ) -> list[FMPGeneralNews]:
+    ) -> list[FMPNews]:
         """Fetches the latest general news articles with pagination.
         Args:
             page (int): The page number to fetch.
@@ -332,7 +346,22 @@ class FMPClient:
             endpoint="news/general-latest",
             params={"page": page, "limit": limit, "from": from_date, "to": to_date},
         )
-        return self._handle_list_response(general_news, FMPGeneralNews)
+        return self._handle_list_response(general_news, FMPNews)
+
+    def get_lates_stock_news(self, limit: int = 100, page: int = 0) -> list[FMPNews]:
+        """Fetches the latest stock news articles with pagination.
+        Args:
+            page (int): The page number to fetch.
+            limit (int): The maximum number of articles to fetch.
+        Returns:
+            list: A list of stock news articles.
+        """
+        limit = min(limit, 100)  # maximum limit is 100
+        stock_news = self.__get_by_url(
+            endpoint="news/stock-latest",
+            params={"page": page, "limit": limit},
+        )
+        return self._handle_list_response(stock_news, FMPNews)
 
     def get_stock_news(
         self,
@@ -341,7 +370,7 @@ class FMPClient:
         to_date: Optional[str] = None,
         page: int = 0,
         limit: int = 20,
-    ) -> list[FMPStockNews]:
+    ) -> list[FMPNews]:
         """Fetches stock-specific news articles for given stock symbols within a date range.
         Args:
             symbol (str): The stock symbol to fetch the news for.
@@ -352,7 +381,7 @@ class FMPClient:
         Returns:
             list: A list of stock-specific news articles.
         """
-        if page < 1:
+        if page < 0:
             raise ValueError("Page number must be greater than 0.")
         limit = min(limit, 100)  # maximum limit is 100
         stock_news = self.__get_by_url(
@@ -365,7 +394,7 @@ class FMPClient:
                 "limit": limit,
             },
         )
-        return self._handle_list_response(stock_news, FMPStockNews)
+        return self._handle_list_response(stock_news, FMPNews)
 
     def get_price_target(self, symbol: str) -> FMPStockPriceTarget | None:
         """Fetches stock price target for a given stock symbol.

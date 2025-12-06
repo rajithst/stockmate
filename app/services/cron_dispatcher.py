@@ -25,7 +25,7 @@ class CronDispatcher:
         self.pubsub_service = pubsub_service
         self.company_repo = company_repo
 
-    def dispatch_weekly_company_sync(self, batch_size: int = 10) -> dict:
+    def dispatch_company_sync(self, batch_size: int = 10) -> dict:
         """
         Dispatch batch company sync jobs to Pub/Sub.
         Fetches all companies from DB and publishes them in batches.
@@ -37,7 +37,7 @@ class CronDispatcher:
             Dictionary with dispatch results and statistics
         """
         logger.info(
-            "Starting weekly company sync dispatch",
+            "Starting company sync dispatch",
             extra={"timestamp": datetime.utcnow()},
         )
 

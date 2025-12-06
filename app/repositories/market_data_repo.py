@@ -6,10 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models.grading import CompanyGrading, CompanyGradingSummary
 from app.db.models.news import (
-    CompanyGeneralNews,
-    CompanyGradingNews,
-    CompanyPriceTargetNews,
-    CompanyStockNews,
+    News,
 )
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -17,52 +14,43 @@ from sqlalchemy.exc import SQLAlchemyError
 logger = logging.getLogger(__name__)
 
 
-class CompanyNewsType(enum.Enum):
-    GENERAL = "general"
-    PRICE_TARGET = "price_target"
-    GRADING = "grading"
-    STOCK = "stock"
-
-
-NewsType = TypeVar(
-    "NewsType",
-    CompanyGeneralNews,
-    CompanyPriceTargetNews,
-    CompanyGradingNews,
-    CompanyStockNews,
-)
-
-
 class CompanyMarketDataRepository:
     def __init__(self, db: Session):
         self._db = db
 
-    def get_company_news(
-        self, symbol: str, news_type: CompanyNewsType, limit: int = 50
-    ) -> list[NewsType]:
-        """Retrieve news articles for a company based on the news type."""
-        if news_type == CompanyNewsType.GENERAL:
-            target_model = CompanyGeneralNews
-        elif news_type == CompanyNewsType.PRICE_TARGET:
-            target_model = CompanyPriceTargetNews
-        elif news_type == CompanyNewsType.GRADING:
-            target_model = CompanyGradingNews
-        elif news_type == CompanyNewsType.STOCK:
-            target_model = CompanyStockNews
-        else:
-            logger.error(f"Unsupported news type: {news_type}")
-            return []
-
+    def get_latest_news(
+        self, from_date: str, to_date: str, limit: int = 1000
+    ) -> list[News]:
+        """Retrieve the latest news articles within a date range."""
         try:
             return (
-                self._db.query(target_model)
-                .filter(target_model.symbol == symbol)
-                .order_by(target_model.published_date.desc())
+                self._db.query(News)
+                .filter(News.published_date >= from_date)
+                .filter(News.published_date <= to_date)
+                .order_by(News.published_date.desc())
                 .limit(limit)
                 .all()
             )
         except SQLAlchemyError as e:
-            logger.error(f"Error getting {news_type.value} news for {symbol}: {e}")
+            logger.error(f"Error getting latest news: {e}")
+            raise
+
+    def get_stock_news(
+        self, symbol: str, from_date: str, to_date: str, limit: int = 1000
+    ) -> list[News]:
+        """Retrieve stock-specific news articles for a given symbol within a date range."""
+        try:
+            return (
+                self._db.query(News)
+                .filter(News.symbol == symbol)
+                .filter(News.published_date >= from_date)
+                .filter(News.published_date <= to_date)
+                .order_by(News.published_date.desc())
+                .limit(limit)
+                .all()
+            )
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting stock news for {symbol}: {e}")
             raise
 
     def get_gradings(self, symbol: str, limit: int = 50) -> list[CompanyGrading]:

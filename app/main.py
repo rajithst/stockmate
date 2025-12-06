@@ -11,7 +11,7 @@ from app.api.internal import (
     pubsub_handler_api,
     quotes_sync,
 )
-from app.api.v1 import auth, company, portfolio, watchlist, dashboard
+from app.api.v1 import auth, company, news, portfolio, watchlist, dashboard
 from app.core.config import config
 from app.core.logs import setup_logging
 
@@ -32,6 +32,7 @@ app.add_middleware(
 app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
 app.include_router(company.router, prefix="/api/v1/company", tags=["company"])
 app.include_router(watchlist.router, prefix="/api/v1/watchlist", tags=["watchlist"])
+app.include_router(news.router, prefix="/api/v1/news", tags=["news"])
 
 app.include_router(portfolio.router, prefix="/api/v1/portfolio", tags=["portfolio"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])

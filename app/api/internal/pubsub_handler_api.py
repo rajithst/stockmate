@@ -92,21 +92,21 @@ async def handle_pubsub_message(
 
 
 @router.post(
-    "/scheduler/sync-company-weekly",
-    summary="Weekly Company Sync Trigger",
-    description="Triggered by Cloud Scheduler to dispatch weekly company batch sync.",
+    "/scheduler/sync-company",
+    summary="Company Sync Trigger",
+    description="Triggered by Cloud Scheduler to dispatch company batch sync.",
     responses={
         200: {"description": "Sync dispatched successfully"},
         500: {"description": "Internal server error"},
     },
 )
-async def trigger_weekly_company_sync(
+async def trigger_company_sync(
     cron_dispatcher=Depends(get_cron_dispatcher),
 ) -> dict[str, Any]:
     """
-    Trigger weekly company batch sync.
+    Trigger company batch sync.
 
-    This endpoint is called by Cloud Scheduler on a weekly basis.
+    This endpoint is called by Cloud Scheduler to dispatch company batch sync.
     It fetches all companies from the database, batches them,
     and publishes the batches to the Pub/Sub topic for processing.
 
@@ -120,12 +120,12 @@ async def trigger_weekly_company_sync(
         HTTPException: If dispatch fails
     """
     try:
-        logger.info("Weekly company sync triggered by Cloud Scheduler")
+        logger.info("Company sync triggered by Cloud Scheduler")
 
-        result = cron_dispatcher.dispatch_weekly_company_sync(batch_size=10)
+        result = cron_dispatcher.dispatch_company_sync(batch_size=10)
 
         logger.info(
-            "Weekly company sync dispatched successfully",
+            "Company sync dispatched successfully",
             extra=result,
         )
 
@@ -133,13 +133,13 @@ async def trigger_weekly_company_sync(
 
     except Exception as e:
         logger.error(
-            f"Failed to dispatch weekly company sync: {str(e)}",
+            f"Failed to dispatch company sync: {str(e)}",
             extra={"error": str(e)},
             exc_info=True,
         )
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to dispatch weekly company sync: {str(e)}",
+            detail=f"Failed to dispatch company sync: {str(e)}",
         )
 
 

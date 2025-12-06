@@ -2,15 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.dependencies.sync_services import create_sync_service_provider
 from app.schemas.market_data import (
-    CompanyGeneralNewsRead,
-    CompanyGradingNewsRead,
     CompanyGradingRead,
     CompanyGradingSummaryRead,
-    CompanyPriceTargetNewsRead,
     CompanyPriceTargetRead,
     CompanyPriceTargetSummaryRead,
     CompanyRatingSummaryRead,
-    CompanyStockNewsRead,
+    NewsRead,
 )
 from app.services.internal.market_data_sync_service import CompanyMarketDataSyncService
 
@@ -123,21 +120,24 @@ def sync_price_target_summary(
 
 @router.get(
     "/stock-news/{symbol}/sync",
-    response_model=list[CompanyStockNewsRead],
+    response_model=list[NewsRead],
     summary="Sync company stock news from external API",
     description="Fetches and upserts company's stock news from the external API into the database.",
 )
 def sync_stock_news(
     symbol: str,
-    limit: int = Query(
-        default=100,
-        ge=1,
-        le=100,
+    from_date: str = Query(
+        default=None,
+        description="Start date for fetching news in YYYY-MM-DD format. If not provided, defaults to 30 days ago.",
+    ),
+    to_date: str = Query(
+        default=None,
+        description="End date for fetching news in YYYY-MM-DD format. If not provided, defaults to today.",
     ),
     service: CompanyMarketDataSyncService = Depends(get_market_data_sync_service),
 ):
     """Sync company stock news from the external API and store in the database."""
-    news = service.upsert_stock_news(symbol, limit)
+    news = service.upsert_stock_news(symbol, from_date, to_date, limit=100)
     if not news:
         raise HTTPException(
             status_code=404,
@@ -148,7 +148,7 @@ def sync_stock_news(
 
 @router.get(
     "/general-news/sync",
-    response_model=list[CompanyGeneralNewsRead],
+    response_model=list[NewsRead],
     summary="Sync general market news from external API",
     description="Fetches and upserts general market news from the external API into the database.",
 )
@@ -173,13 +173,14 @@ def sync_general_news(
 
 
 @router.get(
-    "/price-target-news/{symbol}/sync",
-    response_model=list[CompanyPriceTargetNewsRead],
-    summary="Sync company price target news from external API",
-    description="Fetches and upserts company's price target news from the external API into the database.",
+    "/stock-news/sync",
+    response_model=list[NewsRead],
+    summary="Sync stock news from external API",
+    description="Fetches and upserts stock news from the external API into the database.",
 )
-def sync_price_target_news(
-    symbol: str,
+def sync_latest_stock_news(
+    from_date: str,
+    to_date: str,
     limit: int = Query(
         default=100,
         ge=1,
@@ -187,36 +188,11 @@ def sync_price_target_news(
     ),
     service: CompanyMarketDataSyncService = Depends(get_market_data_sync_service),
 ):
-    """Sync company's price target news from the external API and store in the database."""
-    news = service.upsert_price_target_news(symbol, limit)
+    """Sync general market news from the external API and store in the database."""
+    news = service.upsert_latest_stock_news(from_date, to_date, limit)
     if not news:
         raise HTTPException(
             status_code=404,
-            detail="Price target news not found for symbol: {}".format(symbol),
-        )
-    return news
-
-
-@router.get(
-    "/grading-news/{symbol}/sync",
-    response_model=list[CompanyGradingNewsRead],
-    summary="Sync company grading news from external API",
-    description="Fetches and upserts company's grading news from the external API into the database.",
-)
-def sync_grading_news(
-    symbol: str,
-    limit: int = Query(
-        default=100,
-        ge=1,
-        le=100,
-    ),
-    service: CompanyMarketDataSyncService = Depends(get_market_data_sync_service),
-):
-    """Sync company's grading news from the external API and store in the database."""
-    news = service.upsert_grading_news(symbol, limit)
-    if not news:
-        raise HTTPException(
-            status_code=404,
-            detail="Grading news not found for symbol: {}".format(symbol),
+            detail="General market news not found for the given date range.",
         )
     return news

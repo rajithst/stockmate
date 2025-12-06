@@ -27,6 +27,9 @@ class Config(BaseSettings):
     pubsub_company_sync_topic: str = "company-sync"
     pubsub_enabled: bool = False
 
+    # Cloud SQL settings (optional, for Cloud Run)
+    cloud_sql_instance: str = ""
+
     @field_validator("db_user", "db_password", "db_name", "fmp_api_key")
     @classmethod
     def validate_required_fields(cls, v: str, info) -> str:
@@ -37,6 +40,15 @@ class Config(BaseSettings):
     @property
     def db_url(self) -> str:
         safe_password = quote_plus(self.db_password)
+
+        # If running on Cloud Run with Cloud SQL Auth Proxy (Unix Socket)
+        if self.cloud_sql_instance:
+            return (
+                f"mysql+pymysql://{self.db_user}:{safe_password}"
+                f"@/{self.db_name}?unix_socket=/cloudsql/{self.cloud_sql_instance}"
+            )
+
+        # Standard TCP connection (Localhost or Private IP)
         return (
             f"mysql+pymysql://{self.db_user}:{safe_password}"
             f"@{self.db_host}:{self.db_port}/{self.db_name}"

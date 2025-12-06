@@ -6,23 +6,17 @@ from sqlalchemy.orm import Session
 
 from app.db.models.grading import CompanyGrading, CompanyGradingSummary
 from app.db.models.news import (
-    CompanyGradingNews,
-    CompanyGeneralNews,
-    CompanyPriceTargetNews,
-    CompanyStockNews,
+    News,
 )
 from app.db.models.price_target import CompanyPriceTarget, CompanyPriceTargetSummary
 from app.db.models.ratings import CompanyRatingSummary
 from app.schemas.market_data import (
     CompanyGradingWrite,
     CompanyGradingSummaryWrite,
-    CompanyGradingNewsWrite,
-    CompanyGeneralNewsWrite,
     CompanyPriceTargetWrite,
     CompanyPriceTargetSummaryWrite,
-    CompanyPriceTargetNewsWrite,
     CompanyRatingSummaryWrite,
-    CompanyStockNewsWrite,
+    NewsWrite,
 )
 from app.util.model_mapper import map_model
 
@@ -201,96 +195,14 @@ class CompanyMarketDataSyncRepository:
             logger.error(f"Error during upsert_price_target_summary: {e}")
             raise
 
-    def upsert_price_target_news(
-        self, news_data: List[CompanyPriceTargetNewsWrite]
-    ) -> List[CompanyPriceTargetNews]:
-        """Bulk upsert price target news articles by symbol and title."""
-        try:
-            results = []
-            for news_in in news_data:
-                # Find existing record
-                existing = (
-                    self._db.query(CompanyPriceTargetNews)
-                    .filter_by(symbol=news_in.symbol, title=news_in.title)
-                    .first()
-                )
-
-                if existing:
-                    # Update existing
-                    result = map_model(existing, news_in)
-                else:
-                    # Create new
-                    result = CompanyPriceTargetNews(
-                        **news_in.model_dump(exclude_unset=True)
-                    )
-                    self._db.add(result)
-
-                results.append(result)
-
-            # Commit all changes
-            self._db.commit()
-
-            # Refresh all records
-            for result in results:
-                self._db.refresh(result)
-
-            logger.info(f"Upserted {len(results)} price target news articles")
-            return results
-        except SQLAlchemyError as e:
-            self._db.rollback()
-            logger.error(f"Error during upsert_price_target_news: {e}")
-            raise
-
-    def upsert_grading_news(
-        self, news_data: List[CompanyGradingNewsWrite]
-    ) -> List[CompanyGradingNews]:
-        """Bulk upsert grading news articles by symbol and title."""
-        try:
-            results = []
-            for news_in in news_data:
-                # Find existing record
-                existing = (
-                    self._db.query(CompanyGradingNews)
-                    .filter_by(symbol=news_in.symbol, title=news_in.title)
-                    .first()
-                )
-
-                if existing:
-                    # Update existing
-                    result = map_model(existing, news_in)
-                else:
-                    # Create new
-                    result = CompanyGradingNews(
-                        **news_in.model_dump(exclude_unset=True)
-                    )
-                    self._db.add(result)
-
-                results.append(result)
-
-            # Commit all changes
-            self._db.commit()
-
-            # Refresh all records
-            for result in results:
-                self._db.refresh(result)
-
-            logger.info(f"Upserted {len(results)} grading news articles")
-            return results
-        except SQLAlchemyError as e:
-            self._db.rollback()
-            logger.error(f"Error during upsert_grading_news: {e}")
-            raise
-
-    def upsert_stock_news(
-        self, news_data: List[CompanyStockNewsWrite]
-    ) -> List[CompanyStockNews]:
+    def upsert_stock_news(self, news_data: List[NewsWrite]) -> List[News]:
         """Bulk upsert stock news articles by symbol and title."""
         try:
             results = []
             for news_in in news_data:
                 # Find existing record
                 existing = (
-                    self._db.query(CompanyStockNews)
+                    self._db.query(News)
                     .filter_by(symbol=news_in.symbol, title=news_in.title)
                     .first()
                 )
@@ -300,7 +212,7 @@ class CompanyMarketDataSyncRepository:
                     result = map_model(existing, news_in)
                 else:
                     # Create new
-                    result = CompanyStockNews(**news_in.model_dump(exclude_unset=True))
+                    result = News(**news_in.model_dump(exclude_unset=True))
                     self._db.add(result)
 
                 results.append(result)
@@ -319,16 +231,14 @@ class CompanyMarketDataSyncRepository:
             logger.error(f"Error during upsert_stock_news: {e}")
             raise
 
-    def upsert_general_news(
-        self, news_data: List[CompanyGeneralNewsWrite]
-    ) -> List[CompanyGeneralNews]:
+    def upsert_general_news(self, news_data: List[NewsWrite]) -> List[News]:
         """Bulk upsert general news articles by publisher, title, and published_date."""
         try:
             results = []
             for news_in in news_data:
                 # Find existing record
                 existing = (
-                    self._db.query(CompanyGeneralNews)
+                    self._db.query(News)
                     .filter_by(
                         publisher=news_in.publisher,
                         title=news_in.title,
@@ -342,9 +252,7 @@ class CompanyMarketDataSyncRepository:
                     result = map_model(existing, news_in)
                 else:
                     # Create new
-                    result = CompanyGeneralNews(
-                        **news_in.model_dump(exclude_unset=True)
-                    )
+                    result = News(**news_in.model_dump(exclude_unset=True))
                     self._db.add(result)
 
                 results.append(result)

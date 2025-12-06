@@ -12,14 +12,13 @@ from app.schemas.company_metrics import (
 from app.schemas.quote import CompanyDividendRead, StockPriceRead
 from app.schemas.financial_health import CompanyFinancialHealthRead
 from app.schemas.financial_statements import CompanyFinancialRatioRead
-from app.schemas.market_data import CompanyGradingRead, CompanyGradingSummaryRead
+from app.schemas.market_data import (
+    CompanyGradingRead,
+    CompanyGradingSummaryRead,
+    NewsRead,
+)
 from app.schemas.financial_statements import CompanyIncomeStatementRead
 from app.schemas.company_metrics import CompanyKeyMetricsRead
-from app.schemas.market_data import (
-    CompanyGeneralNewsRead,
-    CompanyGradingNewsRead,
-    CompanyPriceTargetNewsRead,
-)
 from app.schemas.market_data import (
     CompanyPriceTargetRead,
     CompanyPriceTargetSummaryRead,
@@ -93,9 +92,7 @@ class CompanyPageResponse(BaseModel):
     price_target_summary: Optional[CompanyPriceTargetSummaryRead]
     analyst_estimates: List[CompanyAnalystEstimateRead] = []
     latest_gradings: List[CompanyGradingRead] = []
-    price_target_news: List[CompanyPriceTargetNewsRead] = []
-    general_news: List[CompanyGeneralNewsRead] = []
-    grading_news: List[CompanyGradingNewsRead] = []
+    stock_news: List[NewsRead] = []
 
     model_config = ConfigDict(from_attributes=True)
 

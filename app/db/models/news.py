@@ -1,27 +1,16 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import DateTime, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.engine import Base
 
-if TYPE_CHECKING:
-    from app.db.models.company import Company
 
-
-class CompanyStockNews(Base):
-    __tablename__ = "company_stock_news"
-    __table_args__ = (
-        UniqueConstraint("symbol", "news_title", name="uq_stock_news_title"),
-        Index("ix_stock_news_symbol_date", "symbol", "published_date"),
-    )
+class News(Base):
+    __tablename__ = "news"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(
-        ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=True
-    )
-    symbol: Mapped[str] = mapped_column(String(12), nullable=True, index=True)
+    symbol: Mapped[str] = mapped_column(String(12), nullable=True)
 
     published_date: Mapped[datetime] = mapped_column(nullable=False)
     publisher: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -41,148 +30,5 @@ class CompanyStockNews(Base):
         onupdate=func.now(),
     )
 
-    company: Mapped["Company"] = relationship(
-        "Company",
-        back_populates="stock_news",
-        foreign_keys=[company_id],
-        lazy="select",
-    )
-
     def __repr__(self):
-        return f"<CompanyStockNews(symbol={self.symbol}, title={self.news_title})>"
-
-
-class CompanyGeneralNews(Base):
-    __tablename__ = "company_general_news"
-    __table_args__ = (
-        UniqueConstraint("symbol", "news_title", name="uq_general_news_title"),
-        Index("ix_general_news_symbol_date", "symbol", "published_date"),
-    )
-
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(
-        ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=True
-    )
-    symbol: Mapped[str] = mapped_column(String(12), nullable=True, index=True)
-
-    published_date: Mapped[datetime] = mapped_column(nullable=False)
-    publisher: Mapped[str] = mapped_column(String(255), nullable=False)
-    news_title: Mapped[str] = mapped_column(String(500), nullable=False)
-    text: Mapped[str] = mapped_column(Text, nullable=False)
-    image: Mapped[str | None] = mapped_column(String(1000), nullable=True)
-    site: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    news_url: Mapped[str] = mapped_column(String(1000), nullable=False)
-    sentiment: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    company: Mapped["Company"] = relationship(
-        "Company",
-        back_populates="general_news",
-        foreign_keys=[company_id],
-        lazy="select",
-    )
-
-    def __repr__(self):
-        return f"<CompanyGeneralNews(symbol={self.symbol}, title={self.news_title})>"
-
-
-class CompanyPriceTargetNews(Base):
-    __tablename__ = "company_price_target_news"
-    __table_args__ = (
-        UniqueConstraint(
-            "company_id", "news_title", "analyst_name", name="uq_price_target_news"
-        ),
-        Index("ix_price_target_news_symbol_date", "symbol", "published_date"),
-    )
-
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(
-        ForeignKey("companies.id", ondelete="CASCADE"), nullable=False
-    )
-    symbol: Mapped[str] = mapped_column(String(12), index=True)
-    published_date: Mapped[datetime] = mapped_column(nullable=False)
-    news_url: Mapped[str] = mapped_column(String(1000), nullable=False)
-    news_title: Mapped[str] = mapped_column(String(500), nullable=False)
-    analyst_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    price_target: Mapped[float] = mapped_column(nullable=False)
-    adj_price_target: Mapped[float | None] = mapped_column(nullable=True)
-    price_when_posted: Mapped[float] = mapped_column(nullable=False)
-    news_publisher: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    news_base_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    analyst_company: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    sentiment: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    company: Mapped["Company"] = relationship(
-        "Company",
-        back_populates="price_target_news",
-        foreign_keys=[company_id],
-        lazy="select",
-    )
-
-    def __repr__(self):
-        return (
-            f"<CompanyPriceTargetNews(symbol={self.symbol}, title={self.news_title})>"
-        )
-
-
-class CompanyGradingNews(Base):
-    __tablename__ = "company_grading_news"
-    __table_args__ = (
-        UniqueConstraint(
-            "company_id", "news_title", "grading_company", name="uq_grading_news"
-        ),
-        Index("ix_grading_news_symbol_date", "symbol", "published_date"),
-    )
-
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column(
-        ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=False
-    )
-    symbol: Mapped[str] = mapped_column(String(12), index=True)
-    published_date: Mapped[datetime] = mapped_column(nullable=False)
-    news_url: Mapped[str] = mapped_column(String(1000), nullable=False)
-    news_title: Mapped[str] = mapped_column(String(500), nullable=False)
-    news_base_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    news_publisher: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    new_grade: Mapped[str] = mapped_column(String(10), nullable=False)
-    previous_grade: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    grading_company: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    action: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    sentiment: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    price_when_posted: Mapped[float] = mapped_column(nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    company: Mapped["Company"] = relationship(
-        "Company",
-        back_populates="grading_news",
-        foreign_keys=[company_id],
-        lazy="select",
-    )
-
-    def __repr__(self):
-        return f"<CompanyGradingNews(symbol={self.symbol}, title={self.news_title})>"
+        return f"<News(symbol={self.symbol}, title={self.news_title})>"

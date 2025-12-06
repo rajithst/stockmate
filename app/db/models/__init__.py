@@ -24,10 +24,7 @@ from .financial_score import CompanyFinancialScore
 # Market Data Models
 from .grading import CompanyGrading, CompanyGradingSummary
 from .news import (
-    CompanyGeneralNews,
-    CompanyGradingNews,
-    CompanyPriceTargetNews,
-    CompanyStockNews,
+    News
 )
 from .ratings import CompanyRatingSummary
 from .stock import CompanyStockPeer, CompanyStockSplit

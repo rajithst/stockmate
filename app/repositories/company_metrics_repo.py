@@ -3,7 +3,10 @@ import logging
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.models.company_metrics import CompanyAnalystEstimate, CompanyRevenueProductSegmentation
+from app.db.models.company_metrics import (
+    CompanyAnalystEstimate,
+    CompanyRevenueProductSegmentation,
+)
 from app.db.models.company_metrics import CompanyKeyMetrics
 
 logger = logging.getLogger(__name__)

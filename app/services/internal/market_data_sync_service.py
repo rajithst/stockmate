@@ -7,24 +7,18 @@ from app.repositories.internal.market_data_sync_repo import (
     CompanyMarketDataSyncRepository,
 )
 from app.schemas.market_data import (
-    CompanyGeneralNewsRead,
-    CompanyGeneralNewsWrite,
-    CompanyGradingNewsRead,
-    CompanyGradingNewsWrite,
     CompanyGradingRead,
     CompanyGradingSummaryRead,
     CompanyGradingSummaryWrite,
     CompanyGradingWrite,
-    CompanyPriceTargetNewsRead,
-    CompanyPriceTargetNewsWrite,
     CompanyPriceTargetRead,
     CompanyPriceTargetSummaryRead,
     CompanyPriceTargetSummaryWrite,
     CompanyPriceTargetWrite,
     CompanyRatingSummaryRead,
     CompanyRatingSummaryWrite,
-    CompanyStockNewsRead,
-    CompanyStockNewsWrite,
+    NewsRead,
+    NewsWrite,
 )
 from app.services.internal.base_sync_service import BaseSyncService
 
@@ -226,7 +220,7 @@ class CompanyMarketDataSyncService(BaseSyncService):
 
     def upsert_general_news(
         self, from_date: str, to_date: str, limit: int = 100
-    ) -> list[CompanyGeneralNewsRead] | None:
+    ) -> list[NewsRead] | None:
         """
         Fetch and upsert general market news.
 
@@ -247,11 +241,9 @@ class CompanyMarketDataSyncService(BaseSyncService):
                 return None
 
             # Map and validate write schemas
-            news_in = self._add_company_id_to_records(
-                api_data, None, CompanyGeneralNewsWrite
-            )
+            news_in = self._add_company_id_to_records(api_data, None, NewsWrite)
             news = self._repository.upsert_general_news(news_in)
-            result = self._map_schema_list(news, CompanyGeneralNewsRead)
+            result = self._map_schema_list(news, NewsRead)
 
             logger.info(f"Successfully synced {len(result)} general news articles")
             return result
@@ -260,89 +252,43 @@ class CompanyMarketDataSyncService(BaseSyncService):
             logger.error(f"Failed to sync general news: {e}", exc_info=True)
             raise
 
-    def upsert_price_target_news(
-        self, symbol: str, limit: int = 100
-    ) -> list[CompanyPriceTargetNewsRead] | None:
+    def upsert_latest_stock_news(
+        self, from_date: str, to_date: str, limit: int = 100
+    ) -> list[NewsRead] | None:
         """
-        Fetch and upsert price target news for a company.
+        Fetch and upsert latest stock news.
 
         Args:
-            symbol: Stock symbol
+            from_date: Start date for news
+            to_date: End date for news
             limit: Number of records to fetch
 
         Returns:
-            List of upserted price target news records or None if not found
+            List of upserted stock news records or None if not found
         """
         try:
-            company = self._get_company_or_fail(symbol)
-            if not company:
-                return None
-
-            # Explicit control over API call
-            api_data = self._market_api_client.get_price_target_news(symbol)
+            # General news doesn't require company lookup
+            api_data = self._market_api_client.get_latest_stock_news(
+                from_date, to_date, limit
+            )
             if not api_data:
                 return None
 
-            records_to_persist = self._add_company_id_to_records(
-                api_data, company.id, CompanyPriceTargetNewsWrite
-            )
-            news = self._repository.upsert_price_target_news(records_to_persist)
-            result = self._map_schema_list(news, CompanyPriceTargetNewsRead)
+            # Map and validate write schemas
+            news_in = self._add_company_id_to_records(api_data, None, NewsWrite)
+            news = self._repository.upsert_stock_news(news_in)
+            result = self._map_schema_list(news, NewsRead)
 
-            logger.info(
-                f"Successfully synced {len(result)} price target news articles for {symbol}"
-            )
+            logger.info(f"Successfully synced {len(result)} stock news articles")
             return result
 
         except Exception as e:
-            logger.error(
-                f"Failed to sync price target news for {symbol}: {e}", exc_info=True
-            )
-            raise
-
-    def upsert_grading_news(
-        self, symbol: str, limit: int = 100
-    ) -> list[CompanyGradingNewsRead] | None:
-        """
-        Fetch and upsert grading news for a company.
-
-        Args:
-            symbol: Stock symbol
-            limit: Number of records to fetch
-
-        Returns:
-            List of upserted grading news records or None if not found
-        """
-        try:
-            company = self._get_company_or_fail(symbol)
-            if not company:
-                return None
-
-            # Explicit control over API call
-            api_data = self._market_api_client.get_grading_news(symbol)
-            if not api_data:
-                return None
-
-            records_to_persist = self._add_company_id_to_records(
-                api_data, company.id, CompanyGradingNewsWrite
-            )
-            news = self._repository.upsert_grading_news(records_to_persist)
-            result = self._map_schema_list(news, CompanyGradingNewsRead)
-
-            logger.info(
-                f"Successfully synced {len(result)} grading news articles for {symbol}"
-            )
-            return result
-
-        except Exception as e:
-            logger.error(
-                f"Failed to sync grading news for {symbol}: {e}", exc_info=True
-            )
+            logger.error(f"Failed to sync stock news: {e}", exc_info=True)
             raise
 
     def upsert_stock_news(
-        self, symbol: str, limit: int = 100
-    ) -> list[CompanyStockNewsRead] | None:
+        self, symbol: str, from_date: str, to_date: str, limit: int = 100
+    ) -> list[NewsRead] | None:
         """
         Fetch and upsert stock news for a company.
 
@@ -359,15 +305,17 @@ class CompanyMarketDataSyncService(BaseSyncService):
                 return None
 
             # Explicit control over API call
-            api_data = self._market_api_client.get_stock_news(symbol)
+            api_data = self._market_api_client.get_stock_news(
+                symbol, from_date, to_date, limit=limit
+            )
             if not api_data:
                 return None
 
             records_to_persist = self._add_company_id_to_records(
-                api_data, company.id, CompanyStockNewsWrite
+                api_data, company.id, NewsWrite
             )
             news = self._repository.upsert_stock_news(records_to_persist)
-            result = self._map_schema_list(news, CompanyStockNewsRead)
+            result = self._map_schema_list(news, NewsRead)
 
             logger.info(
                 f"Successfully synced {len(result)} stock news articles for {symbol}"

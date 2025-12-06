@@ -128,6 +128,45 @@ class CompanyMetricsSyncService(BaseSyncService):
             )
             return None
 
+    def upsert_key_metrics_ttm(self, symbol: str) -> CompanyKeyMetricsRead | None:
+        """
+        Fetch and upsert trailing twelve months key metrics for a company.
+
+        Args:
+            symbol: Stock symbol
+        Returns:
+            Upserted key metrics record or None if not found
+        """
+        try:
+            company = self._get_company_or_fail(symbol)
+            if not company:
+                return None
+
+            # Explicit control over API call
+            key_metrics_data = self._market_api_client.get_key_metrics_ttm(symbol)
+            if not key_metrics_data:
+                logger.error(f"No data returned for TTM key metrics of {symbol}")
+                return None
+
+            key_metrics_in = self._add_company_id_to_record(
+                key_metrics_data, company.id, CompanyKeyMetricsWrite
+            )
+            key_metrics = self._repository.upsert_key_metrics([key_metrics_in])
+            if not key_metrics:
+                logger.error(f"Failed to upsert TTM key metrics for {symbol}")
+                return None
+
+            result = self._map_schema_single(key_metrics[0], CompanyKeyMetricsRead)
+
+            logger.info(f"Successfully synced TTM key metrics for {symbol}")
+            return result
+
+        except Exception as e:
+            logger.error(
+                f"Error syncing TTM key metrics for {symbol}: {str(e)}", exc_info=True
+            )
+            return None
+
     def upsert_discounted_cash_flow(
         self, symbol: str
     ) -> CompanyDiscountedCashFlowRead | None:

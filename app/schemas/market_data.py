@@ -149,7 +149,7 @@ class CompanyPriceTargetSummaryWrite(CompanyPriceTargetSummary):
 # ========================
 
 
-class CompanyStockNews(BaseModel):
+class News(BaseModel):
     symbol: Optional[str] = None
     published_date: datetime
     publisher: str
@@ -161,91 +161,13 @@ class CompanyStockNews(BaseModel):
     sentiment: Optional[str] = None
 
 
-class CompanyStockNewsRead(CompanyStockNews):
+class NewsRead(News):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class CompanyStockNewsWrite(CompanyStockNews):
+class NewsWrite(News):
     company_id: int
-    model_config = ConfigDict(from_attributes=True)
-
-
-class CompanyGeneralNews(BaseModel):
-    symbol: Optional[str] = None
-    published_date: datetime
-    publisher: str
-    news_title: str
-    news_url: str
-    text: str
-    image: Optional[str] = None
-    site: Optional[str] = None
-    sentiment: Optional[str] = None
-
-
-class CompanyGeneralNewsRead(CompanyGeneralNews):
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class CompanyGeneralNewsWrite(CompanyGeneralNews):
-    company_id: int
-    model_config = ConfigDict(from_attributes=True)
-
-
-class CompanyPriceTargetNews(BaseModel):
-    symbol: str
-    published_date: datetime
-    news_url: str
-    news_title: str
-    analyst_name: str
-    price_target: float
-    adj_price_target: Optional[float] = None
-    price_when_posted: float
-    news_publisher: Optional[str] = None
-    news_base_url: Optional[str] = None
-    analyst_company: Optional[str] = None
-    sentiment: Optional[str] = None
-
-
-class CompanyPriceTargetNewsWrite(CompanyPriceTargetNews):
-    company_id: int
-    model_config = ConfigDict(from_attributes=True)
-
-
-class CompanyPriceTargetNewsRead(CompanyPriceTargetNews):
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class CompanyGradingNews(BaseModel):
-    symbol: str
-    published_date: datetime
-    news_url: str
-    news_title: str
-    news_base_url: Optional[str] = None
-    news_publisher: Optional[str] = None
-    new_grade: str
-    previous_grade: Optional[str] = None
-    grading_company: Optional[str] = None
-    action: Optional[str] = None
-    price_when_posted: float
-    sentiment: Optional[str] = None
-
-
-class CompanyGradingNewsWrite(CompanyGradingNews):
-    company_id: int
-    model_config = ConfigDict(from_attributes=True)
-
-
-class CompanyGradingNewsRead(CompanyGradingNews):
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
     model_config = ConfigDict(from_attributes=True)

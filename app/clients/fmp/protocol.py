@@ -16,10 +16,7 @@ from app.clients.fmp.models.financial_statements import (
     FMPCompanyIncomeStatement,
 )
 from app.clients.fmp.models.news import (
-    FMPGeneralNews,
-    FMPPriceTargetNews,
-    FMPStockGradingNews,
-    FMPStockNews,
+    FMPNews,
 )
 from app.clients.fmp.models.quotes import (
     FMPIndexQuote,
@@ -81,10 +78,18 @@ class FMPClientProtocol(Protocol):
         """Fetches key metrics for a given stock symbol."""
         ...
 
+    def get_key_metrics_ttm(self, symbol: str) -> Optional[FMPKeyMetrics]:
+        """Fetches trailing twelve months key metrics for a given stock symbol."""
+        ...
+
     def get_financial_ratios(
         self, symbol: str, period: str = "annual", limit: int = 5
     ) -> List[FMPFinancialRatios]:
         """Fetches financial ratios for a given stock symbol."""
+        ...
+
+    def get_financial_ratios_ttm(self, symbol: str) -> Optional[FMPFinancialRatios]:
+        """Fetches trailing twelve months financial ratios for a given stock symbol."""
         ...
 
     def get_financial_scores(self, symbol: str) -> Optional[FMPFinancialScores]:
@@ -122,22 +127,17 @@ class FMPClientProtocol(Protocol):
         ...
 
     # News
-    def get_price_target_news(
-        self, symbol: str, page: int = 1, limit: int = 10
-    ) -> List[FMPPriceTargetNews]:
-        """Fetches news related to stock price targets for a given stock symbol."""
-        ...
-
-    def get_grading_news(
-        self, symbol: str, limit: int = 100
-    ) -> List[FMPStockGradingNews]:
-        """Fetches news related to stock grading changes for a given stock symbol."""
-        ...
 
     def get_latest_general_news(
         self, from_date: str, to_date: str, limit: int = 100, page: int = 0
-    ) -> List[FMPGeneralNews]:
+    ) -> List[FMPNews]:
         """Fetches the latest general news articles with pagination."""
+        ...
+
+    def get_latest_stock_news(
+        self, from_date: str, to_date: str, limit: int = 100, page: int = 0
+    ) -> List[FMPNews]:
+        """Fetches the latest stock-specific news articles with pagination."""
         ...
 
     def get_stock_news(
@@ -147,7 +147,7 @@ class FMPClientProtocol(Protocol):
         to_date: Optional[str] = None,
         page: int = 0,
         limit: int = 20,
-    ) -> List[FMPStockNews]:
+    ) -> List[FMPNews]:
         """Fetches stock-specific news articles for given stock symbols within a date range."""
         ...
 

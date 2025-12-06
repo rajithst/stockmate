@@ -202,3 +202,46 @@ class CompanyFinancialStatementsSyncService(BaseSyncService):
                 f"Failed to sync financial ratios for {symbol}: {e}", exc_info=True
             )
             raise
+
+    def upsert_financial_ratios_ttm(
+        self, symbol: str
+    ) -> CompanyFinancialRatioRead | None:
+        """
+        Fetch and upsert trailing twelve months financial ratios for a company.
+
+        Args:
+            symbol: Stock symbol
+        Returns:
+            Upserted financial ratio record or None if not found
+        """
+        try:
+            company = self._get_company_or_fail(symbol)
+            if not company:
+                return None
+
+            # Explicit control over API call with known parameters
+            financial_ratios_data = self._market_api_client.get_financial_ratios_ttm(
+                symbol
+            )
+            if not financial_ratios_data:
+                return None
+
+            record_to_persist = self._add_company_id_to_record(
+                financial_ratios_data, company.id, CompanyFinancialRatioWrite
+            )
+            financial_ratio = self._repository.upsert_financial_ratios(
+                [record_to_persist]
+            )
+            result = CompanyFinancialRatioRead.model_validate(financial_ratio[0])
+
+            logger.info(
+                f"Successfully synced trailing twelve months financial ratios for {symbol}"
+            )
+            return result
+
+        except Exception as e:
+            logger.error(
+                f"Failed to sync trailing twelve months financial ratios for {symbol}: {e}",
+                exc_info=True,
+            )
+            raise

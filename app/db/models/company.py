@@ -17,12 +17,6 @@ if TYPE_CHECKING:
     from app.db.models.grading import CompanyGrading, CompanyGradingSummary
     from app.db.models.financial_statements import CompanyIncomeStatement
     from app.db.models.company_metrics import CompanyKeyMetrics
-    from app.db.models.news import (
-        CompanyGeneralNews,
-        CompanyGradingNews,
-        CompanyPriceTargetNews,
-        CompanyStockNews,
-    )
     from app.db.models.price_target import CompanyPriceTarget, CompanyPriceTargetSummary
     from app.db.models.quote import CompanyStockPrice, CompanyStockPriceChange
     from app.db.models.ratings import CompanyRatingSummary
@@ -122,18 +116,6 @@ class Company(Base):
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
     technical_indicators: Mapped[list["CompanyTechnicalIndicator"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="select"
-    )
-    general_news: Mapped[list["CompanyGeneralNews"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="select"
-    )
-    price_target_news: Mapped[list["CompanyPriceTargetNews"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="select"
-    )
-    grading_news: Mapped[list["CompanyGradingNews"]] = relationship(
-        back_populates="company", cascade="all, delete-orphan", lazy="select"
-    )
-    stock_news: Mapped[list["CompanyStockNews"]] = relationship(
         back_populates="company", cascade="all, delete-orphan", lazy="select"
     )
 

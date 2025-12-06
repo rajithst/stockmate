@@ -14,7 +14,6 @@ from app.repositories.financial_statements_repo import (
 )
 from app.repositories.market_data_repo import (
     CompanyMarketDataRepository,
-    CompanyNewsType,
 )
 from app.repositories.quotes_repo import CompanyQuotesRepository
 from app.schemas.company import (
@@ -38,14 +37,12 @@ from app.schemas.financial_statements import (
     CompanyIncomeStatementRead,
 )
 from app.schemas.market_data import (
-    CompanyGeneralNewsRead,
-    CompanyGradingNewsRead,
     CompanyGradingRead,
     CompanyGradingSummaryRead,
-    CompanyPriceTargetNewsRead,
     CompanyPriceTargetRead,
     CompanyPriceTargetSummaryRead,
     CompanyRatingSummaryRead,
+    NewsRead,
 )
 from app.schemas.quote import (
     CompanyDividendRead,
@@ -367,8 +364,10 @@ class CompanyService:
                 )
             )
             key_metrics = self._metrics_repository.get_key_metrics(symbol)
-            revenue_product_segments = self._metrics_repository.get_revenue_by_product_segments(
-                symbol,
+            revenue_product_segments = (
+                self._metrics_repository.get_revenue_by_product_segments(
+                    symbol,
+                )
             )
 
             # Transform raw data into insights
@@ -381,7 +380,9 @@ class CompanyService:
             )
             fr_insights = self._transform_financial_ratio_data(financial_ratios)
             km_insights = self._transform_key_metrics_data(key_metrics)
-            rps_insights = self._transform_revenue_by_product_segments_data(revenue_product_segments)
+            rps_insights = self._transform_revenue_by_product_segments_data(
+                revenue_product_segments
+            )
 
             return CompanyInsightsResponse(
                 net_income=inc_statement_insights["net_income"],
@@ -435,6 +436,9 @@ class CompanyService:
             dcf = self._fmp_client.get_discounted_cash_flow(symbol)
             analyst_estimates = self._fmp_client.get_analyst_estimates(symbol)
             financial_ratios = self._fmp_client.get_financial_ratios(symbol, limit=1)
+            # stock_news = self._fmp_client.get_stock_news(
+            #     symbol, from_date=one_month_ago_str, to_date=today_str
+            # )
 
             # Build company_read from company_data and latest daily price
             latest_price = daily_prices[0] if daily_prices else None
@@ -488,21 +492,11 @@ class CompanyService:
                 CompanyPriceTargetSummaryRead, price_target_summary
             )
             price_change_read = self._validate_single(StockPriceChangeRead, [])
+            # stock_news_read = self._validate_models(NewsRead, stock_news)
+            stock_news_read = self._validate_models(NewsRead, [])
 
             # Use repository methods for collections
             # latest_gradings = self._validate_models(CompanyGradingRead, gradings)
-
-            general_news_read = self._validate_models(
-                CompanyGeneralNewsRead,
-                [],
-            )
-            price_target_news_read = self._validate_models(
-                CompanyPriceTargetNewsRead, []
-            )
-            grading_news_read = self._validate_models(
-                CompanyGradingNewsRead,
-                [],
-            )
 
             daily_prices_read = self._validate_models(StockPriceRead, daily_prices)
 
@@ -525,9 +519,7 @@ class CompanyService:
                 price_change=price_change_read,
                 latest_gradings=[],
                 analyst_estimates=analyst_estimates_read,
-                price_target_news=price_target_news_read,
-                general_news=general_news_read,
-                grading_news=grading_news_read,
+                stock_news=stock_news_read,
             )
             local_cache[symbol] = {"data": response, "timestamp": datetime.now()}
             return response
@@ -551,8 +543,10 @@ class CompanyService:
             cash_flow_statements = self._fmp_client.get_cash_flow_statements(symbol)
             financial_ratios = self._fmp_client.get_financial_ratios(symbol)
             key_metrics = self._fmp_client.get_key_metrics(symbol)
-            revenue_product_segments = self._metrics_repository.get_revenue_by_product_segments(
-                symbol,
+            revenue_product_segments = (
+                self._fmp_client.get_revenue_product_segmentation(
+                    symbol,
+                )
             )
 
             # Transform raw data into insights
@@ -565,7 +559,9 @@ class CompanyService:
             )
             fr_insights = self._transform_financial_ratio_data(financial_ratios)
             km_insights = self._transform_key_metrics_data(key_metrics)
-            rps_insights = self._transform_revenue_by_product_segments_data(revenue_product_segments)
+            rps_insights = self._transform_revenue_by_product_segments_data(
+                revenue_product_segments
+            )
 
             insights = CompanyInsightsResponse(
                 net_income=inc_statement_insights["net_income"],
@@ -841,9 +837,9 @@ class CompanyService:
         self, revenue_product_segments
     ) -> dict[str, list[dict[str, float | int | str]]]:
         """Transform revenue by product segments records into structured insights.
-        
+
         Groups revenue data by product segment, with quarterly data for each segment.
-        
+
         Example output:
         {
             "Mac": [
@@ -860,22 +856,25 @@ class CompanyService:
             Dictionary with product segment names as keys and list of quarterly data as values
         """
         import json
-        
+
         # Dictionary to store segments with their quarterly data
         segments_by_product: dict[str, list[dict]] = {}
-        
+
         # Iterate through all records (already ordered by date descending)
         for record in revenue_product_segments:
             try:
                 # Parse JSON segments data
-                segments_data = json.loads(record.segments_data)
-                
+                if isinstance(record.segments_data, dict):
+                    segments_data = record.segments_data
+                else:
+                    segments_data = json.loads(record.segments_data)
+
                 # For each product segment in this record
                 for product_name, revenue_value in segments_data.items():
                     # Initialize product list if not exists
                     if product_name not in segments_by_product:
                         segments_by_product[product_name] = []
-                    
+
                     # Add this quarter's data for the product
                     segments_by_product[product_name].append(
                         {
@@ -887,5 +886,5 @@ class CompanyService:
             except (json.JSONDecodeError, AttributeError) as e:
                 logger.warning(f"Error parsing segments data for {record.symbol}: {e}")
                 continue
-        
+
         return segments_by_product
