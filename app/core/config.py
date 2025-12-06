@@ -55,7 +55,9 @@ class Config(BaseSettings):
         )
 
     model_config = SettingsConfigDict(
-        env_file=".env" if not os.getenv("K_SERVICE") else None,
+        # Load from a specific file if ENV_FILE is set (e.g. /secrets/stockmate-setting)
+        # Otherwise default to .env for local development
+        env_file=os.getenv("ENV_FILE", ".env"),
         env_file_encoding="utf-8",
     )
 
